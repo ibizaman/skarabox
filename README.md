@@ -35,6 +35,16 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
    You will be logged in automatically with user `nixos`.
 
+2. Connect to the installer and install
+
+```
+nix run github:nix-community/nixos-anywhere -- --flake '.#remote-installer' --ssh-option "IdentitiesOnly=yes" nixos@<ip>
+```
+
+You will be prompted for a password, enter "skarabox123" without the double quotes. Then, you will
+be prompted for a passphrase which is the passphrase you will need to enter every time you boot the
+server.
+
 ## Contribute
 
 To start a VM with the beacon, run:

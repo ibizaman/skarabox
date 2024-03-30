@@ -8,9 +8,14 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, nixos-generators, ... }: {
+  outputs = { self, nixpkgs, nixos-generators, disko, ... }: {
     packages.x86_64-linux = {
       beacon = nixos-generators.nixosGenerate {
         system = "x86_64-linux";
@@ -86,6 +91,26 @@
           --drive media=cdrom,format=raw,readonly=on,file=${iso}
         
         '');
+    };
+
+    nixosConfigurations.remote-installer = let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+      };
+    in nixpkgs.lib.nixosSystem {
+      inherit system;
+      modules = [
+        disko.nixosModules.disko
+        "${pkgs.path}/nixos/modules/profiles/all-hardware.nix"
+        ./disks.nix
+        ./configuration.nix
+        {
+          hostId = "1e427130";
+          networking.hostName = "skarabox";
+          users.users.skarabox.initialHashedPassword = "$y$j9T$7EZvmryvlpTHSRG7dC5IU1$lBc/nePnkvqZ//jNpx/UpFKze/p6P7AIhJubK/Ghj68";
+        }
+      ];
     };
 
     apps.x86_64-linux = {
