@@ -42,8 +42,7 @@
         rootFsOptions = {
           encryption = "on";
           keyformat = "passphrase";
-          # keylocation = "/tmp/disk.key";
-          keylocation = "prompt";
+          keylocation = "file:///tmp/disk.key";
           compression = "lz4";
           canmount = "off";
           xattr = "sa";
@@ -52,6 +51,11 @@
           recordsize = "1M";
           "com.sun:auto-snapshot" = "false";
         };
+        # Needed to get back a prompt on next boot.
+        # See https://github.com/nix-community/nixos-anywhere/issues/161#issuecomment-1642158475
+        postCreateHook = ''
+          zfs set keylocation="prompt" $name;
+        '';
 
         # Follows https://grahamc.com/blog/erase-your-darlings/
         datasets = {

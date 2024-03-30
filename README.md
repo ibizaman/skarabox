@@ -18,7 +18,7 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
    1. First, create the .iso file.
 
    ```
-   nix build .#beacon
+   nix build github:ibizaman/skarabox#beacon
    ```
 
    2. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
@@ -31,19 +31,31 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
    - Select USB key in row 3.
    - Click write (arrow down) in row 2.
 
-   3. Plug USB in the server. Choose to boot on it.
+   3. Plug the USB stick in the server. Choose to boot on it.
 
    You will be logged in automatically with user `nixos`.
 
+   4. Note down the IP address of the server. For that, follow the steps that appeared when booting
+      on the USB stick.
+
 2. Connect to the installer and install
 
-```
-nix run github:nix-community/nixos-anywhere -- --flake '.#remote-installer' --ssh-option "IdentitiesOnly=yes" nixos@<ip>
-```
+   1. Create a file somewhere containing a long passphrase (must be more than 8 characters) that
+      will be used to encrypt the disk. This means you will need to provide this passphrase every
+      time you boot up the server.
 
-You will be prompted for a password, enter "skarabox123" without the double quotes. Then, you will
-be prompted for a passphrase which is the passphrase you will need to enter every time you boot the
-server.
+   2. Run the following command, replacing `<path/to/passphrase>` with where you saved the file in
+      the previous step and `<ip>` with the IP address you got in the previous step.
+
+   ```
+   nix run github:nix-community/nixos-anywhere -- \
+     --flake '.#remote-installer' \
+     --ssh-option "IdentitiesOnly=yes" \
+     --disk-encryption-keys /tmp/disk.key <path/to/passphrase> \
+     nixos@<ip>
+   ```
+
+   You will be prompted for a password, enter "skarabox123" without the double quotes.
 
 ## Contribute
 
