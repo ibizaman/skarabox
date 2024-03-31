@@ -1,5 +1,14 @@
-{ config, lib, pkgs, ... }: {
-  options = {
+{ config, lib, pkgs, ... }:
+let
+  cfg = config.skarabox;
+in
+{
+  options.skarabox = {
+    username = lib.mkOption {
+      type = lib.types.str;
+      default = "skarabox";
+      description = "Name given to the admin user on the server.";
+    };
   };
 
   config = {
@@ -21,13 +30,13 @@
     powerManagement.cpuFreqGovernor = "performance";
     hardware.cpu.amd.updateMicrocode = true;
 
-    users.users.skarabox = {
+    users.users.${cfg.username} = {
       isNormalUser = true;
       extraGroups = [ "backup" "wheel" ];
     };
 
     security.sudo.extraRules = [
-      { users = [ "skarabox" ];
+      { users = [ cfg.username ];
         commands = [
           { command = "ALL";
             options = [ "NOPASSWD" ];
