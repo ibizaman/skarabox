@@ -41,6 +41,22 @@ in
     hardware.cpu.amd.updateMicrocode = true;
 
     nix.settings.trusted-users = [ cfg.username ];
+    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+    nix.settings.auto-optimise-store = true;
+    nix.gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 30d";
+    };
+
+    # See https://www.freedesktop.org/software/systemd/man/journald.conf.html#SystemMaxUse=
+    services.journald.extraConfig = ''
+    SystemMaxUse=2G
+    SystemKeepFree=4G
+    SystemMaxFileSize=100M
+    MaxFileSec=day
+    '';
+
     users.users.${cfg.username} = {
       isNormalUser = true;
       extraGroups = [ "wheel" ];
