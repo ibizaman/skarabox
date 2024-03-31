@@ -84,6 +84,9 @@
     };
   };
 
+  boot.supportedFilesystems = [ "zfs" ];
+  boot.zfs.forceImportRoot = false;
+
   # Follows https://grahamc.com/blog/erase-your-darlings/
   boot.initrd.postDeviceCommands = lib.mkAfter ''
     zfs rollback -r zpool/local/root@blank

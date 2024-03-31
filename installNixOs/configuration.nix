@@ -27,9 +27,6 @@ in
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
 
-    boot.supportedFilesystems = [ "zfs" ];
-    boot.zfs.forceImportRoot = false;
-
     networking.hostName = cfg.hostname;
     networking.hostId = lib.mkDefault
       (pkgs.lib.readFile ((pkgs.runCommand "hostid.sh" {}
