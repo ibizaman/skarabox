@@ -106,7 +106,6 @@
         ./disks.nix
         ./configuration.nix
         {
-          hostId = "1e427130";
           networking.hostName = "skarabox";
           users.users.skarabox.initialHashedPassword = "$y$j9T$7EZvmryvlpTHSRG7dC5IU1$lBc/nePnkvqZ//jNpx/UpFKze/p6P7AIhJubK/Ghj68";
         }

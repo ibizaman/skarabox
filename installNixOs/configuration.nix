@@ -1,8 +1,5 @@
 { config, lib, pkgs, ... }: {
   options = {
-    hostId = lib.mkOption {
-      type = lib.types.str;
-    };
   };
 
   config = {
@@ -12,7 +9,12 @@
     boot.supportedFilesystems = [ "zfs" ];
     boot.zfs.forceImportRoot = false;
 
-    networking.hostId = config.hostId;
+    networking.hostId = lib.mkDefault
+      (pkgs.lib.readFile ((pkgs.runCommand "hostid.sh" {}
+        ''
+          mkdir -p $out
+          ${pkgs.util-linux}/bin/uuidgen | head -c 8 > $out/hostid
+        '') + "/hostid"));
     networking.useDHCP = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
     nixpkgs.hostPlatform = "x86_64-linux";
