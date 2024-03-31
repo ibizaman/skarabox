@@ -9,6 +9,12 @@ in
       default = "skarabox";
       description = "Name given to the admin user on the server.";
     };
+
+    initialHashedPassword = lib.mkOption {
+      type = lib.types.str;
+      default = "$y$j9T$7EZvmryvlpTHSRG7dC5IU1$lBc/nePnkvqZ//jNpx/UpFKze/p6P7AIhJubK/Ghj68";
+      description = "Initial password for the admin user. Can be changed later. Default is 'skarabox123'.";
+    };
   };
 
   config = {
@@ -33,6 +39,7 @@ in
     users.users.${cfg.username} = {
       isNormalUser = true;
       extraGroups = [ "backup" "wheel" ];
+      inherit (cfg) initialHashedPassword;
     };
 
     security.sudo.extraRules = [
