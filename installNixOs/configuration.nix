@@ -40,6 +40,7 @@ in
     powerManagement.cpuFreqGovernor = "performance";
     hardware.cpu.amd.updateMicrocode = true;
 
+    nix.settings.trusted-users = [ cfg.username ];
     users.users.${cfg.username} = {
       isNormalUser = true;
       extraGroups = [ "wheel" ];
