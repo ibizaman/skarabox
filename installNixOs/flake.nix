@@ -105,9 +105,6 @@
         "${pkgs.path}/nixos/modules/profiles/all-hardware.nix"
         ./disks.nix
         ./configuration.nix
-        {
-          networking.hostName = "skarabox";
-        }
       ];
     };
 

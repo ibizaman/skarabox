@@ -4,6 +4,12 @@ let
 in
 {
   options.skarabox = {
+    hostname = lib.mkOption {
+      type = lib.types.str;
+      default = "skarabox";
+      description = "Hostname to give to the server.";
+    };
+
     username = lib.mkOption {
       type = lib.types.str;
       default = "skarabox";
@@ -24,6 +30,7 @@ in
     boot.supportedFilesystems = [ "zfs" ];
     boot.zfs.forceImportRoot = false;
 
+    networking.hostName = cfg.hostname;
     networking.hostId = lib.mkDefault
       (pkgs.lib.readFile ((pkgs.runCommand "hostid.sh" {}
         ''
