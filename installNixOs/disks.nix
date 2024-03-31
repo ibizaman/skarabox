@@ -88,4 +88,5 @@
   boot.initrd.postDeviceCommands = lib.mkAfter ''
     zfs rollback -r zpool/local/root@blank
   '';
+  services.zfs.autoScrub.enable = true;
 }
