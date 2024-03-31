@@ -93,6 +93,20 @@
         '');
     };
 
+    nixosModules.skarabox = let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+      };
+    in {
+      imports = [
+        disko.nixosModules.disko
+        "${pkgs.path}/nixos/modules/profiles/all-hardware.nix"
+        ./disks.nix
+        ./configuration.nix
+      ];
+    };
+
     nixosConfigurations.remote-installer = let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -101,10 +115,7 @@
     in nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
-        disko.nixosModules.disko
-        "${pkgs.path}/nixos/modules/profiles/all-hardware.nix"
-        ./disks.nix
-        ./configuration.nix
+        self.nixosModules.skarabox
       ];
     };
 
