@@ -45,7 +45,7 @@ in
 
     users.users.${cfg.username} = {
       isNormalUser = true;
-      extraGroups = [ "backup" "wheel" ];
+      extraGroups = [ "wheel" ];
       inherit (cfg) initialHashedPassword;
     };
 
