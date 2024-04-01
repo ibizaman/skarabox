@@ -1,5 +1,17 @@
-{ lib, ... }:
+{ config, lib, ... }:
+let
+  cfg = config.skarabox.disks;
+in
 {
+  options.skarabox.disks = {
+    rootReservation = lib.mkOption {
+      type = lib.types.str;
+      description = "Disk size to reserve for ZFS internals. Should be between 10% and 20% of available size as recorded by zpool.";
+      example = "100G";
+    };
+  };
+
+  config = {
   disko.devices = {
     disk = {
       x = {
@@ -59,6 +71,20 @@
 
         # Follows https://grahamc.com/blog/erase-your-darlings/
         datasets = {
+            "reserved" = {
+              options = {
+                canmount = "off";
+                mountpoint = "none";
+                # TODO: compute this value using percentage
+                # Example to get available on zpool:
+                #   zfs get -Hpo value available zroot
+                # Then to set:
+                #   sudo zfs set reservation=100G zroot
+                reservation = cfg.rootReservation;
+              };
+              type = "zfs_fs";
+            };
+
           "local/root" = {
             type = "zfs_fs";
             mountpoint = "/";
@@ -92,4 +118,5 @@
     zfs rollback -r zpool/local/root@blank
   '';
   services.zfs.autoScrub.enable = true;
+  };
 }
