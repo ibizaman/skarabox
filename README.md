@@ -1,11 +1,27 @@
 # Skarabox
 
-## Why?
+Skarabox is an opinionated and simplified NixOS install for a server. It will format the drives and
+install [Self Host Blocks][SHB] which allows you to self-host services easily.
 
-Install NixOS on a server in two steps.
+[SHB]: https://github.com/ibizaman/selfhostblocks
 
-- The disk will be formatted to use ZFS.
-- [Self Host Blocks](https://github.com/ibizaman/selfhostblocks) project will be used to install services.
+It expects a certain hardware layout:
+- 1 SSD or NVMe drive for the OS. 500Gb or more.
+- 2 Hard drives that will store data.
+- At least 16Gb of RAM.
+- AMD or Intel CPU with embedded graphics. (Personally using AMD Ryzen 5 5600G with great success).
+
+**WARNING: The 3 disks will be formatted and completely wiped out of data.**
+
+The process requires to install itself on a USB key.
+The server will need to be booted on that key.
+The installation is automatic.
+
+At the end of the process, you will have a system with:
+- Encrypted ZFS root partition using the NVMe drive, unlockable remotely through ssh.
+- Encrypted ZFS data hard drives.
+- Server accessible through ssh.
+- Self Host Blocks installed and ready to be configured through the web UI.
 
 ## Caution
 
