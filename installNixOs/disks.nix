@@ -4,6 +4,12 @@ let
 in
 {
   options.skarabox.disks = {
+    rootDisk = lib.mkOption {
+      type = lib.types.str;
+      description = "Disk on which to install.";
+      example = "/dev/sda";
+    };
+
     rootReservation = lib.mkOption {
       type = lib.types.str;
       description = "Disk size to reserve for ZFS internals. Should be between 10% and 20% of available size as recorded by zpool.";
@@ -16,7 +22,7 @@ in
       disk = {
         x = {
           type = "disk";
-          device = "/dev/nvme0n1";
+          device = cfg.rootDisk;
           content = {
             type = "gpt";
             partitions = {
