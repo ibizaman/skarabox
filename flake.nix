@@ -102,8 +102,8 @@
       imports = [
         disko.nixosModules.disko
         "${pkgs.path}/nixos/modules/profiles/all-hardware.nix"
-        ./disks.nix
-        ./configuration.nix
+        ./installNixOs/disks.nix
+        ./installNixOs/configuration.nix
       ];
     };
 
