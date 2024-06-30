@@ -1,27 +1,50 @@
-# Skarabox
+# SkaraboxOS
 
-Skarabox is an opinionated and simplified NixOS install for a server. It will format the drives and
-install [Self Host Blocks][SHB] which allows you to self-host services easily.
+SkaraboxOS is an opinionated and simplified headless NixOS installation for a server geared towards
+self-hosting applications and services. Upon installation, it will format the drives and install
+[Self Host Blocks][SHB].
 
 [SHB]: https://github.com/ibizaman/selfhostblocks
 
-It expects a certain hardware layout:
+## Hardware Requirements
+
+SkaraboxOS expects a certain hardware layout of the server:
 - 1 SSD or NVMe drive for the OS. 500Gb or more.
 - 2 Hard drives that will store data.
-- At least 16Gb of RAM.
-- AMD or Intel CPU with embedded graphics. (Personally using AMD Ryzen 5 5600G with great success).
+  Capacity depends on the amount of data that will be stored.
+  They will be formatted in Raid 1 (mirror) so each hard drive should have the same size.
+- 16Gb or more of RAM.
+- AMD or Intel CPU with embedded graphics.
+  (Personally using AMD Ryzen 5 5600G with great success).
+- *Work In Progress* Optional graphics card.
+  Only needed for speech to text applications like for Home Assistant.
+- Internet access is optional.
+  It is only required:
+  - for updates;
+  - for accessing services from outside the LAN;
+  - for federation (to share documents or pictures across the internet).
 
 **WARNING: The 3 disks will be formatted and completely wiped out of data.**
 
-The process requires to install itself on a USB key.
-The server will need to be booted on that key.
-The installation is automatic.
+## Installation Process Overview
 
-At the end of the process, you will have a system with:
-- Encrypted ZFS root partition using the NVMe drive, unlockable remotely through ssh.
-- Encrypted ZFS data hard drives.
-- Server accessible through ssh.
-- Self Host Blocks installed and ready to be configured through the web UI.
+The process requires to format a USB key.
+The server will need to be booted on that key.
+
+As the server is headless, an external device - laptop or desktop - is required
+to complete the installation process.
+This device will later be used to administer SkaraboxOS
+and will contain all required passwords.
+Other devices can then be configured to administer SkaraboxOS.
+
+Services offered by SkaraboxOS will be accessible from any device - laptop, desktop or smartphone -
+connected in the same LAN as the server or, if configured, from anywhere on the internet.
+
+At the end of the process, the server will:
+- have an encrypted ZFS root partition using the NVMe drive, unlockable remotely through ssh.
+- have an encrypted ZFS data hard drives.
+- be accessible through ssh for administration.
+- have Self Host Blocks installed.
 
 ## Caution
 
@@ -79,6 +102,12 @@ To start a VM with the beacon, run:
 
 ```
 nix run .#beacon-test
+```
+
+To test the installer, run:
+
+```
+nix run github:nix-community/nixos-anywhere -- --flake .#installer --vm-test
 ```
 
 ## Links
