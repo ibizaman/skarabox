@@ -124,6 +124,35 @@ in
       zfs rollback -r zroot/local/root@blank
     '';
 
+    # From https://nixos.wiki/wiki/ZFS#Remote_unlock
+    boot.initrd.network = {
+      # This will use udhcp to get an ip address. Make sure you have added the kernel module for your
+      # network driver to `boot.initrd.availableKernelModules`, so your initrd can load it! Static ip
+      # addresses might be configured using the ip argument in kernel command line:
+      # https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
+      enable = false;
+      ssh = {
+        enable = true;
+        # To prevent ssh clients from freaking out because a different host key is used, a different
+        # port for ssh is useful (assuming the same host has also a regular sshd running)
+        port = 2222;
+        # hostKeys paths must be unquoted strings, otherwise you'll run into issues with
+        # boot.initrd.secrets the keys are copied to initrd from the path specified; multiple keys can
+        # be set you can generate any number of host keys using
+        # `ssh-keygen -t ed25519 -N "" -f /path/to/ssh_host_ed25519_key`
+        hostKeys = [ # ./host_key
+                     "/etc/ssh/initrd"
+                   ];
+        # public ssh key used for login
+        authorizedKeys = [ (builtins.readFile ./host_key.pub) ];
+      };
+
+      postCommands = ''
+      zpool import -a
+      echo "zfs load-key zroot; killall zfs; exit" >> /root/.profile
+      '';
+    };
+
     services.zfs.autoScrub.enable = true;
   };
 }
