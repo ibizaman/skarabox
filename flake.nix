@@ -34,6 +34,20 @@
 
           networking.firewall.allowedTCPPorts = [ 22 ];
 
+          services.hostapd = {
+            enable = true;
+            radios.skarabox = {
+              band = "2g";
+              networks.skarabox = {
+                ssid = "Skarabox";
+                authentication = {
+                  mode = "wpa2-sha256";
+                  wpaPassword = "skarabox";
+                };
+              };
+            };
+          };
+
           services.getty.helpLine = lib.mkForce ''
 
               /           \\
