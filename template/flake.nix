@@ -5,7 +5,7 @@
     skarabox.url = "github:ibizaman/skarabox";
   };
 
-  outputs = { skarabox, ... }:
+  outputs = { self, skarabox }:
     let
       system = "x86_64-linux";
 
@@ -22,6 +22,18 @@
             skarabox.disks.rootReservation = "100G";
             skarabox.hostId = "2f44b40a";
           })
+        ];
+      };
+
+      nixosConfigurations.remote-installer = let
+        system = "x86_64-linux";
+        pkgs = import nixpkgs {
+          inherit system;
+        };
+      in nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          self.nixosModules.skarabox
         ];
       };
     };

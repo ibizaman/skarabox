@@ -127,18 +127,6 @@
       ];
     };
 
-    nixosConfigurations.remote-installer = let
-      system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-      };
-    in nixpkgs.lib.nixosSystem {
-      inherit system;
-      modules = [
-        self.nixosModules.skarabox
-      ];
-    };
-
     apps.x86_64-linux = {
       beacon-test = {
         type = "app";
