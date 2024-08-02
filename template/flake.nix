@@ -7,13 +7,11 @@
 
   outputs = { self, skarabox }:
     let
-      system = "x86_64-linux";
-
       nixpkgs = skarabox.inputs.selfhostblocks.inputs.nixpkgs;
     in
     {
-      nixosConfigurations.skarabox = nixpkgs.lib.nixosSystem {
-        modules = [
+      nixosModules.skarabox = {
+        imports = [
           skarabox.nixosModules.skarabox
           ({ config, ... }: {
             skarabox.hostname = "skarabox";
@@ -27,13 +25,8 @@
         ];
       };
 
-      nixosConfigurations.remote-installer = let
+      nixosConfigurations.skarabox = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
-        pkgs = import nixpkgs {
-          inherit system;
-        };
-      in nixpkgs.lib.nixosSystem {
-        inherit system;
         modules = [
           self.nixosModules.skarabox
         ];
