@@ -145,5 +145,14 @@
         program = "${self.outputs.packages.x86_64-linux.beacon-test}/bin/runner.sh";
       };
     };
+
+    templates = {
+      skarabox = {
+        path = ./template;
+        description = "Skarabox template";
+      };
+
+      default = self.templates.skarabox;
+    };
   };
 }
