@@ -1,1 +1,3 @@
-passphrase
+<generate me>
+Use this command:
+nix run nixpkgs#openssl -- rand -hex 64 > root_passphrase

@@ -19,8 +19,10 @@
             skarabox.hostname = "skarabox";
             skarabox.username = "skarabox";
             skarabox.disks.rootDisk = "/dev/sda";
+            # 10% of size SSD
             skarabox.disks.rootReservation = "100G";
-            skarabox.hostId = "2f44b40a";
+            # Generate me with `uuidgen | head -c 8`
+            skarabox.hostId = "<generate me>";
           })
         ];
       };
