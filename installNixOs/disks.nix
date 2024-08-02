@@ -77,6 +77,7 @@ in
 
           # Follows https://grahamc.com/blog/erase-your-darlings/
           datasets = {
+            # TODO: compute percentage automatically in postCreateHook
             "reserved" = {
               options = {
                 canmount = "off";
@@ -111,6 +112,39 @@ in
               type = "zfs_fs";
               mountpoint = "/persist";
             };
+          };
+        };
+
+        zdata = {
+          type = "zpool";
+          mode = "mirror";
+          options = {
+            ashift = "12";
+            autotrim = "on";
+          };
+          rootFsOptions = {
+            encryption = "on";
+            keyformat = "passphrase";
+            keylocation = "file:///tmp/disk.key";
+            compression = "lz4";
+            canmount = "off";
+            xattr = "sa";
+            atime = "off";
+            acltype = "posixacl";
+            recordsize = "1M";
+            "com.sun:auto-snapshot" = "false";
+          };
+          datasets = {
+            # TODO: create reserved dataset automatically in postCreateHook
+            "backup" = {
+              type = "zfs_fs";
+              mountpoint = "/srv/backup";
+            };
+            # TODO: create datasets automatically upon service installation (e.g. Nextcloud, etc.)
+            #"nextcloud" = {
+            #  type = "zfs_fs";
+            #  mountpoint = "/srv/nextcloud";
+            #};
           };
         };
       };
