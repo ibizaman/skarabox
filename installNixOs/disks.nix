@@ -1,26 +1,67 @@
-{ config, lib, ... }:
+{ config, lib, pkgs, ... }:
 let
   cfg = config.skarabox.disks;
+
+  rootPool = "root";
+  dataPool = "zdata";
 in
 {
   options.skarabox.disks = {
     rootDisk = lib.mkOption {
       type = lib.types.str;
-      description = "Disk on which to install.";
-      example = "/dev/sda";
+      description = "SSD disk on which to install.";
+      example = "/dev/nvme0n1";
     };
 
     rootReservation = lib.mkOption {
       type = lib.types.str;
-      description = "Disk size to reserve for ZFS internals. Should be between 10% and 20% of available size as recorded by zpool.";
+      description = ''
+        Disk size to reserve for ZFS internals. Should be between 10% and 15% of available size as recorded by zpool.
+
+        To get available size on zpool:
+
+           zfs get -Hpo value available ${rootPool}
+
+        Then to set manually, if needed:
+
+           sudo zfs set reservation=100G ${rootPool}
+      '';
       example = "100G";
+    };
+
+    dataDisk1 = lib.mkOption {
+      type = lib.types.str;
+      description = "First disk on which to install the data pool.";
+      example = "/dev/sda";
+    };
+
+    dataDisk2 = lib.mkOption {
+      type = lib.types.str;
+      description = "Second disk on which to install the data pool.";
+      example = "/dev/sdb";
+    };
+
+    dataReservation = lib.mkOption {
+      type = lib.types.str;
+      description = ''
+        Disk size to reserve for ZFS internals. Should be between 5% and 10% of available size as recorded by zpool.
+
+        To get available size on zpool:
+
+           zfs get -Hpo value available ${dataPool}
+
+        Then to set manually, if needed:
+
+           sudo zfs set reservation=100G ${dataPool}
+      '';
+      example = "1T";
     };
   };
 
   config = {
     disko.devices = {
       disk = {
-        x = {
+        root = {
           type = "disk";
           device = cfg.rootDisk;
           content = {
@@ -41,7 +82,39 @@ in
                 size = "100%";
                 content = {
                   type = "zfs";
-                  pool = "zroot";
+                  pool = rootPool;
+                };
+              };
+            };
+          };
+        };
+        data1 = {
+          type = "disk";
+          device = cfg.dataDisk1;
+          content = {
+            type = "gpt";
+            partitions = {
+              zfs = {
+                size = "100%";
+                content = {
+                  type = "zfs";
+                  pool = dataPool;
+                };
+              };
+            };
+          };
+        };
+        data2 = {
+          type = "disk";
+          device = cfg.dataDisk2;
+          content = {
+            type = "gpt";
+            partitions = {
+              zfs = {
+                size = "100%";
+                content = {
+                  type = "zfs";
+                  pool = dataPool;
                 };
               };
             };
@@ -49,7 +122,7 @@ in
         };
       };
       zpool = {
-        zroot = {
+        ${rootPool} = {
           type = "zpool";
           # Only one disk
           mode = "";
@@ -60,7 +133,7 @@ in
           rootFsOptions = {
             encryption = "on";
             keyformat = "passphrase";
-            keylocation = "file:///tmp/disk.key";
+            keylocation = "file:///tmp/root_passphrase";
             compression = "lz4";
             canmount = "off";
             xattr = "sa";
@@ -83,10 +156,6 @@ in
                 canmount = "off";
                 mountpoint = "none";
                 # TODO: compute this value using percentage
-                # Example to get available on zpool:
-                #   zfs get -Hpo value available zroot
-                # Then to set:
-                #   sudo zfs set reservation=100G zroot
                 reservation = cfg.rootReservation;
               };
               type = "zfs_fs";
@@ -95,7 +164,7 @@ in
             "local/root" = {
               type = "zfs_fs";
               mountpoint = "/";
-              postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^zroot/local/root@blank$' || zfs snapshot zroot/local/root@blank";
+              postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^${rootPool}/local/root@blank$' || zfs snapshot ${rootPool}/local/root@blank";
             };
 
             "local/nix" = {
@@ -111,11 +180,15 @@ in
             "safe/persist" = {
               type = "zfs_fs";
               mountpoint = "/persist";
+              # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
+              postMountHook = ''
+                cp /tmp/data_passphrase /mnt/persist/data_passphrase
+              '';
             };
           };
         };
 
-        zdata = {
+        ${dataPool} = {
           type = "zpool";
           mode = "mirror";
           options = {
@@ -125,7 +198,7 @@ in
           rootFsOptions = {
             encryption = "on";
             keyformat = "passphrase";
-            keylocation = "file:///tmp/disk.key";
+            keylocation = "file:///tmp/data_passphrase";
             compression = "lz4";
             canmount = "off";
             xattr = "sa";
@@ -134,8 +207,20 @@ in
             recordsize = "1M";
             "com.sun:auto-snapshot" = "false";
           };
+          postCreateHook = ''
+            zfs set keylocation="file:///persist/data_passphrase" $name;
+          '';
           datasets = {
             # TODO: create reserved dataset automatically in postCreateHook
+            "reserved" = {
+              options = {
+                canmount = "off";
+                mountpoint = "none";
+                # TODO: compute this value using percentage
+                reservation = cfg.dataReservation;
+              };
+              type = "zfs_fs";
+            };
             "backup" = {
               type = "zfs_fs";
               mountpoint = "/srv/backup";
@@ -155,7 +240,7 @@ in
 
     # Follows https://grahamc.com/blog/erase-your-darlings/
     boot.initrd.postDeviceCommands = lib.mkAfter ''
-      zfs rollback -r zroot/local/root@blank
+      zfs rollback -r ${rootPool}/local/root@blank
     '';
 
     # From https://nixos.wiki/wiki/ZFS#Remote_unlock
@@ -183,7 +268,7 @@ in
 
       postCommands = ''
       zpool import -a
-      echo "zfs load-key zroot; killall zfs; exit" >> /root/.profile
+      echo "zfs load-key ${rootPool}; killall zfs; exit" >> /root/.profile
       '';
     };
 

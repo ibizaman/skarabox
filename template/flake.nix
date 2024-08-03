@@ -16,9 +16,13 @@
           ({ config, ... }: {
             skarabox.hostname = "skarabox";
             skarabox.username = "skarabox";
-            skarabox.disks.rootDisk = "/dev/sda";
-            # 10% of size SSD
+            skarabox.disks.rootDisk = "/dev/nvme0n1";
+            # 5% of size SSD
             skarabox.disks.rootReservation = "100G";
+            skarabox.disks.dataDisk1 = "/dev/sda";
+            skarabox.disks.dataDisk2 = "/dev/sdb";
+            # 10% of size SSD
+            skarabox.disks.dataReservation = "1T";
             # Generate me with `uuidgen | head -c 8`
             skarabox.hostId = "<generate me>";
           })
