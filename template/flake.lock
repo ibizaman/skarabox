@@ -244,11 +244,11 @@
         "selfhostblocks": "selfhostblocks"
       },
       "locked": {
-        "lastModified": 1722805782,
-        "narHash": "sha256-HKWga1QzN62Gi5T4IKzQeTunngzBwbixMcHKrUeRpL8=",
+        "lastModified": 1722806472,
+        "narHash": "sha256-fR7crm7JUDRCfxxoTydq/aekja6TlSpWQ3OVBV/Lk3U=",
         "owner": "ibizaman",
         "repo": "skarabox",
-        "rev": "6fa4f072bd68c06c400ef9ff4b83cab292833a73",
+        "rev": "e529aa76a1e76ea1d306e207f472d6962f1c47c6",
         "type": "github"
       },
       "original": {
