@@ -1,18 +1,27 @@
 # SkaraboxOS
 
-SkaraboxOS is an opinionated and simplified headless NixOS installation for a server geared towards
-self-hosting applications and services. Upon installation, it will format the drives and install
-[Self Host Blocks][SHB].
+SkaraboxOS is an opinionated and simplified headless NixOS installer.
 
-[SHB]: https://github.com/ibizaman/selfhostblocks
+It provides a flake [template](./template) which combines:
+- Creating a bootable ISO, installable on an USB key.
+- [nixos-anywhere](https://github.com/nix-community/nixos-anywhere) to install NixOS headlessly.
+- [disko](https://github.com/nix-community/disko) to format the drives.
+- [deploy-rs](https://github.com/serokell/deploy-rs) to deploy updates.
+
+This repository does not invent any of those wonderful tools.
+It merely provides an opinionated way to make them all fit together for a seamless experience.
 
 ## Hardware Requirements
 
-SkaraboxOS expects a certain hardware layout of the server:
-- 1 SSD or NVMe drive for the OS. 500Gb or more.
+SkaraboxOS expects a particular hardware layout:
+
+- 1 SSD or NVMe drive for the OS.
 - 2 Hard drives that will store data.
   Capacity depends on the amount of data that will be stored.
   They will be formatted in Raid 1 (mirror) so each hard drive should have the same size.
+<!--
+This is for Self Host Blocks.
+
 - 16Gb or more of RAM.
 - AMD or Intel CPU with embedded graphics.
   (Personally using AMD Ryzen 5 5600G with great success).
@@ -23,36 +32,32 @@ SkaraboxOS expects a certain hardware layout of the server:
   - for updates;
   - for accessing services from outside the LAN;
   - for federation (to share documents or pictures across the internet).
+-->
 
 **WARNING: The 3 disks will be formatted and completely wiped out of data.**
 
 ## Installation Process Overview
 
-The process requires to format a USB key.
-The server will need to be booted on that key.
-
-As the server is headless, an external device - laptop or desktop - is required
-to complete the installation process.
-This device will later be used to administer SkaraboxOS
-and will contain all required passwords.
-Other devices can then be configured to administer SkaraboxOS.
-
-Services offered by SkaraboxOS will be accessible from any device - laptop, desktop or smartphone -
-connected in the same LAN as the server or, if configured, from anywhere on the internet.
+1. Download the flake template.
+2. Generate a ISO and format a USB key.
+3. Boot server on USB key and get its IP address.
+4. Generate secrets on laptop, update some default values.
+5. Run installer from laptop.
+6. Done!
 
 At the end of the process, the server will:
-- have an encrypted ZFS root partition using the NVMe drive, unlockable remotely through ssh.
-- have an encrypted ZFS data hard drives.
-- be accessible through ssh for administration.
-- have Self Host Blocks installed.
+- Have an encrypted ZFS root partition using the NVMe drive, unlockable remotely through ssh.
+- Have an encrypted ZFS data hard drives.
+- Be accessible through ssh for administration and updates.
+
+Services can then be installed by using NixOS options directly or through [Self Host Blocks](https://github.com/ibizaman/selfhostblocks).
+The latter, similarly to SkaraboxOS, provides an opinionated way to configure services in a seamless way.
 
 ## Caution
 
 Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
-## Usage
-
-### Installation
+## Installation
 
 1. Boot on the NixOS installer. You just need to boot, no need to install.
 
@@ -91,8 +96,9 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
    2. Open the new `flake.nix` file and generate whatever it needs.
    Also, open the other files and see how to generate them too.
+   All the instructions are included.
 
-   Note the root_passphrase file will contain a passphrase that will need to be provided every time the server boots up.
+   Note the `root_passphrase` file will contain a passphrase that will need to be provided every time the server boots up.
 
    3. Run the following command replacing `<ip>` with the IP address you got in the previous step.
 
@@ -135,7 +141,7 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
    ```
 
    You will be prompted a second time, this time to enter the root passphrase.
-   Copy paste the content of the `root_passphrase` file and paste it and press Enter.
+   Copy the content of the `root_passphrase` file and paste it and press Enter.
    No `*` will appear upon pasting but just press Enter.
 
    ```bash
@@ -143,6 +149,7 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
    ```
 
    The connection will disconnect automatically.
+   This is normal behavior.
 
    ```bash
    Connection to <ip> closed.
@@ -153,7 +160,7 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
    It's a good idea to make sure you can login correctly, at least the first time.
    See next section.
 
-### Normal Operations
+## Normal Operations
 
    1. Login
 
@@ -161,7 +168,15 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
    $ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
    ```
 
-   2. Deploy an Update
+   2. Reboot
+
+   ```bash
+   $ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox reboot
+   ```
+
+   You will then be required to decrypt the hard drives as explained above.
+
+   3. Deploy an Update
 
    Modify the `./configuration.nix` file then run:
 
