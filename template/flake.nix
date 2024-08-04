@@ -31,6 +31,7 @@
               "r8169"
             ];
           })
+          ./configuration.nix
         ];
       };
 
