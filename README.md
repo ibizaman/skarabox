@@ -52,6 +52,8 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
 ## Usage
 
+### Installation
+
 1. Boot on the NixOS installer. You just need to boot, no need to install.
 
    1. First, create the .iso file.
@@ -148,12 +150,23 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
    Now, the hard drives are decrypted and the server continues to boot.
 
-   6. Login
+   It's a good idea to make sure you can login correctly, at least the first time.
+   See next section.
 
-   This step is optional for normal operations, but it's a good idea to make sure you can login correctly, at least the first time.
+### Normal Operations
+
+   1. Login
 
    ```bash
-   $ ssh -p 22 skarabox@192.168.1.55 -o IdentitiesOnly=yes -i ssh_skarabox
+   $ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
+   ```
+
+   2. Deploy an Update
+
+   Modify the `./configuration.nix` file then run:
+
+   ```bash
+   nix run nixpkgs#deploy-rs
    ```
 
 ## Contribute

@@ -3,11 +3,26 @@
 
   inputs = {
     skarabox.url = "github:ibizaman/skarabox";
+
+    deploy-rs.url = "github:serokell/deploy-rs";
   };
 
-  outputs = { self, skarabox }:
+  outputs = { self, skarabox, deploy-rs }:
     let
       nixpkgs = skarabox.inputs.selfhostblocks.inputs.nixpkgs;
+
+      system = "x86_64-linux";
+      pkgs = import nixpkgs { inherit system; };
+      # Taken from https://github.com/serokell/deploy-rs?tab=readme-ov-file#overall-usage
+      deployPkgs = import nixpkgs {
+        inherit system;
+        overlays = [
+          deploy-rs.overlay
+          (self: super: { deploy-rs = { inherit (pkgs) deploy-rs; lib = super.deploy-rs.lib; }; })
+        ];
+      };
+
+      ip = "<replace me>";
     in
     {
       nixosModules.skarabox = {
@@ -35,11 +50,27 @@
         ];
       };
 
+      # Used with nixos-anywere for installation.
       nixosConfigurations.skarabox = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           self.nixosModules.skarabox
         ];
       };
+
+      # Used with deploy-rs for updates.
+      deploy.nodes.skarabox = {
+        hostname = ip;
+        sshUser = "skarabox";
+        sshOpts = [ "-o" "IdentitiesOnly=yes" "-i" "ssh_skarabox" ];
+        profiles = {
+          system = {
+            user = "root";
+            path = deployPkgs.deploy-rs.lib.activate.nixos self.nixosConfigurations.skarabox;
+          };
+        };
+      };
+      # From https://github.com/serokell/deploy-rs?tab=readme-ov-file#overall-usage
+      checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
     };
 }
