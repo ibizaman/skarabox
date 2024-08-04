@@ -76,6 +76,11 @@ in
                   mountpoint = "/boot";
                   # Otherwise you get https://discourse.nixos.org/t/security-warning-when-installing-nixos-23-11/37636/2
                   mountOptions = [ "umask=0077" ];
+                  # Copy the host_key needed for initrd in a location accessible on boot.
+                  # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
+                  postMountHook = ''
+                    cp /etc/ssh/ssh_host_ed25519_key /mnt/boot/host_key
+                  '';
                 };
               };
               zfs = {
@@ -145,7 +150,7 @@ in
           # Needed to get back a prompt on next boot.
           # See https://github.com/nix-community/nixos-anywhere/issues/161#issuecomment-1642158475
           postCreateHook = ''
-            zfs set keylocation="prompt" $name;
+            zfs set keylocation="prompt" $name
           '';
 
           # Follows https://grahamc.com/blog/erase-your-darlings/
@@ -237,6 +242,8 @@ in
 
     boot.supportedFilesystems = [ "zfs" ];
     boot.zfs.forceImportRoot = false;
+    # Otherwise the zpool needs to be imported manually.
+    boot.zfs.extraPools = [ dataPool ];
 
     # Follows https://grahamc.com/blog/erase-your-darlings/
     boot.initrd.postDeviceCommands = lib.mkAfter ''
@@ -249,21 +256,15 @@ in
       # network driver to `boot.initrd.availableKernelModules`, so your initrd can load it! Static ip
       # addresses might be configured using the ip argument in kernel command line:
       # https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
-      enable = false;
+      enable = true;
       ssh = {
         enable = true;
         # To prevent ssh clients from freaking out because a different host key is used, a different
-        # port for ssh is useful (assuming the same host has also a regular sshd running)
-        port = 2222;
-        # hostKeys paths must be unquoted strings, otherwise you'll run into issues with
-        # boot.initrd.secrets the keys are copied to initrd from the path specified; multiple keys can
-        # be set you can generate any number of host keys using
-        # `ssh-keygen -t ed25519 -N "" -f /path/to/ssh_host_ed25519_key`
-        hostKeys = [ # ./host_key
-                     "/etc/ssh/initrd"
-                   ];
+        # port for ssh is used.
+        port = lib.mkDefault 2222;
+        hostKeys = [ "/boot/host_key" ];
         # public ssh key used for login
-        authorizedKeys = [ (builtins.readFile ./host_key.pub) ];
+        authorizedKeys = [ (builtins.readFile config.skarabox.sshAuthorizedKeyFile) ];
       };
 
       postCommands = ''

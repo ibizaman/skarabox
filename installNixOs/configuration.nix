@@ -26,6 +26,14 @@ in
       type = lib.types.str;
       description = "8 characters unique identifier for this server. Generate with `uuidgen | head -c 8`.";
     };
+
+    sshAuthorizedKeyFile = lib.mkOption {
+      type = lib.types.path;
+      description = ''
+        Public SSH key used to connect on boot to decrypt the root pool.
+      '';
+      example = "./ssh_skarabox.pub";
+    };
   };
 
   config = {
@@ -68,6 +76,7 @@ in
       isNormalUser = true;
       extraGroups = [ "wheel" ];
       inherit (cfg) initialHashedPassword;
+      openssh.authorizedKeys.keyFiles = [ cfg.sshAuthorizedKeyFile ];
     };
 
     security.sudo.extraRules = [

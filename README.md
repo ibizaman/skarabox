@@ -56,14 +56,14 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
    1. First, create the .iso file.
 
-   ```
-   nix build github:ibizaman/skarabox#beacon
+   ```bash
+   $ nix build github:ibizaman/skarabox#beacon
    ```
 
    2. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
 
-   ```
-   nix run nixpkgs#usbimager
+   ```bash
+   $ nix run nixpkgs#usbimager
    ```
 
    - Select `./result/iso/beacon.iso` file in row 1 (`...`).
@@ -79,22 +79,82 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
 2. Connect to the installer and install
 
-   1. Create a file somewhere containing a long passphrase (must be more than 8 characters) that
-      will be used to encrypt the disk. This means you will need to provide this passphrase every
-      time you boot up the server.
+   1. Create a directory and download the template.
 
-   2. Run the following command, replacing `<path/to/passphrase>` with where you saved the file in
-      the previous step and `<ip>` with the IP address you got in the previous step.
-
+   ```bash
+   $ mkdir myskarabox
+   $ cd myskarabox
+   $ nix flake init --template github:ibizaman/skarabox
    ```
-   nix run github:nix-community/nixos-anywhere -- \
-     --flake '.#remote-installer' \
+
+   2. Open the new `flake.nix` file and generate whatever it needs.
+   Also, open the other files and see how to generate them too.
+
+   Note the root_passphrase file will contain a passphrase that will need to be provided every time the server boots up.
+
+   3. Run the following command replacing `<ip>` with the IP address you got in the previous step.
+
+   ```bash
+   $ nix run github:nix-community/nixos-anywhere -- \
+     --flake .#skarabox' \
      --ssh-option "IdentitiesOnly=yes" \
-     --disk-encryption-keys /tmp/disk.key <path/to/passphrase> \
+     --disk-encryption-keys /tmp/root_passphrase root_passphrase \
+     --disk-encryption-keys /tmp/data_passphrase data_passphrase \
      nixos@<ip>
    ```
 
    You will be prompted for a password, enter "skarabox123" without the double quotes.
+
+   4. The server will reboot into NixOS on its own.
+
+   5. Decrypt the SSD and the Hard Drives.
+
+   Run the following command.
+
+   ```bash
+   $ ssh -p 2222 root@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
+   ```
+
+   It will prompt you a first time to verify the key fingerprint.
+
+   ```bash
+   The authenticity of host '[<ip>]:2222 ([<ip>]:2222)' can't be established.
+   ED25519 key fingerprint is SHA256:<redacted>.
+   This key is not known by any other names.
+   Are you sure you want to continue connecting (yes/no/[fingerprint])?
+   ```
+
+   Just enter `"yes"` followed by pressing on the Enter key.
+   Next time the server will boot, you will not need to do this step.
+
+   ```bash
+   Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+   Warning: Permanently added '[<ip>]:2222' (ED25519) to the list of known hosts.
+   ```
+
+   You will be prompted a second time, this time to enter the root passphrase.
+   Copy paste the content of the `root_passphrase` file and paste it and press Enter.
+   No `*` will appear upon pasting but just press Enter.
+
+   ```bash
+   Enter passphrase for 'root':
+   ```
+
+   The connection will disconnect automatically.
+
+   ```bash
+   Connection to <ip> closed.
+   ```
+
+   Now, the hard drives are decrypted and the server continues to boot.
+
+   6. Login
+
+   This step is optional for normal operations, but it's a good idea to make sure you can login correctly, at least the first time.
+
+   ```bash
+   $ ssh -p 22 skarabox@192.168.1.55 -o IdentitiesOnly=yes -i ssh_skarabox
+   ```
 
 ## Contribute
 

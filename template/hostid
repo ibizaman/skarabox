@@ -1,0 +1,3 @@
+<generate me>
+Use this command:
+uuidgen | head -c 8 > hostid
