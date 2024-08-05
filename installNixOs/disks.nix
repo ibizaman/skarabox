@@ -169,23 +169,27 @@ in
             "local/root" = {
               type = "zfs_fs";
               mountpoint = "/";
+              options.mountpoint = "legacy";
               postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^${rootPool}/local/root@blank$' || zfs snapshot ${rootPool}/local/root@blank";
             };
 
             "local/nix" = {
               type = "zfs_fs";
               mountpoint = "/nix";
+              options.mountpoint = "legacy";
             };
 
             "safe/home" = {
               type = "zfs_fs";
               mountpoint = "/home";
+              options.mountpoint = "legacy";
             };
 
             "safe/persist" = {
               type = "zfs_fs";
               mountpoint = "/persist";
               # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
+              options.mountpoint = "legacy";
               postMountHook = ''
                 cp /tmp/data_passphrase /mnt/persist/data_passphrase
               '';
@@ -211,6 +215,7 @@ in
             acltype = "posixacl";
             recordsize = "1M";
             "com.sun:auto-snapshot" = "false";
+            mountpoint = "none";
           };
           postCreateHook = ''
             zfs set keylocation="file:///persist/data_passphrase" $name;
@@ -229,6 +234,7 @@ in
             "backup" = {
               type = "zfs_fs";
               mountpoint = "/srv/backup";
+              options.mountpoint = "legacy";
             };
             # TODO: create datasets automatically upon service installation (e.g. Nextcloud, etc.)
             #"nextcloud" = {
@@ -239,6 +245,7 @@ in
         };
       };
     };
+    fileSystems."/srv/backup".options = [ "nofail" ];
 
     boot.supportedFilesystems = [ "zfs" ];
     boot.zfs.forceImportRoot = false;
