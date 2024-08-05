@@ -2,15 +2,16 @@
   description = "Example flake.nix for skarabox.";
 
   inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
     skarabox.url = "github:ibizaman/skarabox";
+    skarabox.inputs.nixpkgs.follows = "nixpkgs";
 
     deploy-rs.url = "github:serokell/deploy-rs";
   };
 
-  outputs = { self, skarabox, deploy-rs }:
+  outputs = { self, nixpkgs, skarabox, deploy-rs }:
     let
-      nixpkgs = skarabox.inputs.selfhostblocks.inputs.nixpkgs;
-
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
       # Taken from https://github.com/serokell/deploy-rs?tab=readme-ov-file#overall-usage
