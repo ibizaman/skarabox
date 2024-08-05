@@ -6,6 +6,7 @@ It provides a flake [template](./template) which combines:
 - Creating a bootable ISO, installable on an USB key.
 - [nixos-anywhere](https://github.com/nix-community/nixos-anywhere) to install NixOS headlessly.
 - [disko](https://github.com/nix-community/disko) to format the drives.
+- [sops-nix](https://github.com/Mic92/sops-nix) to handle secrets.
 - [deploy-rs](https://github.com/serokell/deploy-rs) to deploy updates.
 
 This repository does not invent any of those wonderful tools.
@@ -182,6 +183,12 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
    ```bash
    nix run nixpkgs#deploy-rs
+   ```
+
+   4. Edit secrets
+
+   ```bash
+   nix run nixpkgs#sops secrets.yaml
    ```
 
 ## Contribute

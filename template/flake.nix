@@ -8,9 +8,11 @@
     skarabox.inputs.nixpkgs.follows = "nixpkgs";
 
     deploy-rs.url = "github:serokell/deploy-rs";
+
+    sops-nix.url = "github:Mic92/sops-nix";
   };
 
-  outputs = { self, nixpkgs, skarabox, deploy-rs }:
+  outputs = { self, nixpkgs, skarabox, sops-nix, deploy-rs }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
@@ -29,6 +31,7 @@
       nixosModules.skarabox = {
         imports = [
           skarabox.nixosModules.skarabox
+          sops-nix.nixosModules.default
           ({ config, ... }: {
             skarabox.hostname = "skarabox";
             skarabox.username = "skarabox";
@@ -46,6 +49,10 @@
               "rtw88_8821ce"
               "r8169"
             ];
+            sops.defaultSopsFile = ./secrets.yaml;
+            sops.age = {
+              sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+            };
           })
           ./configuration.nix
         ];

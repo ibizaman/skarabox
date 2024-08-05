@@ -1,0 +1,13 @@
+keys:
+  # To obtain the age key for &me, run:
+  #   nix shell nixpkgs#age --command age-keygen -y sops.key
+  - &me <replace me with the public key of sops.key file>
+  # To obtain the age key for &server, run:
+  #   ssh -p 22345 skarabox@jeanpen.com -o IdentitiesOnly=yes -i ssh_skarabox cat /etc/ssh/ssh_host_ed25519_key.pub | nix run nixpkgs#ssh-to-age
+  - &server <replace me with the age key of the server>
+creation_rules:
+  - path_regex: secrets\.yaml$
+    key_groups:
+    - age:
+      - *me
+      - *server
