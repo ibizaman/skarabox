@@ -2,26 +2,22 @@
   description = "Skarabox's flake to install NixOS";
 
   inputs = {
-    selfhostblocks = {
-      url = "github:ibizaman/selfhostblocks";
+    nixpkgs = {
+      url = "github:nixos/nixpkgs/nixos-unstable";
     };
 
     nixos-generators = {
       url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "selfhostblocks/nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     disko = {
       url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "selfhostblocks/nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, selfhostblocks, nixos-generators, disko, ... }:
-    let
-      nixpkgs = selfhostblocks.inputs.nixpkgs;
-    in
-    {
+  outputs = { self, nixpkgs, nixos-generators, disko, ... }: {
     packages.x86_64-linux = {
       beacon = nixos-generators.nixosGenerate {
         system = "x86_64-linux";
