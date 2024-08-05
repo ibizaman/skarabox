@@ -97,7 +97,7 @@ in
     services.openssh.enable = true;
     services.openssh.settings = {
       PermitRootLogin = "no";
-      PasswordAuthentication = true;
+      PasswordAuthentication = false;
     };
 
     system.stateVersion = "23.11";
