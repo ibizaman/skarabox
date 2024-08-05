@@ -142,11 +142,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1722862644,
-        "narHash": "sha256-3SiJcMSc4L9E0h8Tbw4Cr06MMxaJI6dnOPHL57uwYic=",
+        "lastModified": 1722894468,
+        "narHash": "sha256-29F0ViNUH0IILczwZfxSg/isNHdCJdSXeOTq4hKUyEQ=",
         "owner": "ibizaman",
         "repo": "skarabox",
-        "rev": "789f988118abe766de02b4a1dc9a10b5fb7a6670",
+        "rev": "e9f031dd9d48e51399b030834ebf8adc5ad1fe82",
         "type": "github"
       },
       "original": {
