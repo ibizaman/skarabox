@@ -12,6 +12,15 @@ It provides a flake [template](./template) which combines:
 This repository does not invent any of those wonderful tools.
 It merely provides an opinionated way to make them all fit together for a seamless experience.
 
+## Why?
+
+Because the landscape of installing NixOS could be better and this repository is an attempt at that.
+By being more opinionated, it allows you to get setup faster.
+
+By the way, the name SkaraboxOS comes from the scarab (the animal), box (for the server) and OS (for Operating System).
+Scarab is spelled with a _k_ because it's kool.
+A scarab is a _very_ [strong](https://en.wikipedia.org/wiki/Dung_beetle#Ecology_and_behavior) animal representing well what this repository's intention.
+
 ## Hardware Requirements
 
 SkaraboxOS expects a particular hardware layout:
