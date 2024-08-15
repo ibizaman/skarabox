@@ -1,12 +1,16 @@
-{ config, lib, pkgs, ... }:
+{ config, options, lib, pkgs, ... }:
 let
   cfg = config.skarabox.disks;
-
-  rootPool = "root";
-  dataPool = "zdata";
+  opt = options.skarabox.disks;
 in
 {
   options.skarabox.disks = {
+    rootPool = lib.mkOption {
+      type = lib.types.str;
+      description = "Name of the root pool";
+      default = "root";
+    };
+
     rootDisk = lib.mkOption {
       type = lib.types.str;
       description = "SSD disk on which to install.";
@@ -20,13 +24,19 @@ in
 
         To get available size on zpool:
 
-           zfs get -Hpo value available ${rootPool}
+           zfs get -Hpo value available ${opt.rootPool}
 
         Then to set manually, if needed:
 
-           sudo zfs set reservation=100G ${rootPool}
+           sudo zfs set reservation=100G ${opt.rootPool}
       '';
       example = "100G";
+    };
+
+    dataPool = lib.mkOption {
+      type = lib.types.str;
+      description = "Name of the data pool";
+      default = "zdata";
     };
 
     dataDisk1 = lib.mkOption {
@@ -48,11 +58,11 @@ in
 
         To get available size on zpool:
 
-           zfs get -Hpo value available ${dataPool}
+           zfs get -Hpo value available ${opt.dataPool}
 
         Then to set manually, if needed:
 
-           sudo zfs set reservation=100G ${dataPool}
+           sudo zfs set reservation=100G ${opt.dataPool}
       '';
       example = "1T";
     };
@@ -87,7 +97,7 @@ in
                 size = "100%";
                 content = {
                   type = "zfs";
-                  pool = rootPool;
+                  pool = cfg.rootPool;
                 };
               };
             };
@@ -103,7 +113,7 @@ in
                 size = "100%";
                 content = {
                   type = "zfs";
-                  pool = dataPool;
+                  pool = cfg.dataPool;
                 };
               };
             };
@@ -119,7 +129,7 @@ in
                 size = "100%";
                 content = {
                   type = "zfs";
-                  pool = dataPool;
+                  pool = cfg.dataPool;
                 };
               };
             };
@@ -127,7 +137,7 @@ in
         };
       };
       zpool = {
-        ${rootPool} = {
+        ${cfg.rootPool} = {
           type = "zpool";
           # Only one disk
           mode = "";
@@ -170,7 +180,7 @@ in
               type = "zfs_fs";
               mountpoint = "/";
               options.mountpoint = "legacy";
-              postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^${rootPool}/local/root@blank$' || zfs snapshot ${rootPool}/local/root@blank";
+              postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^${cfg.rootPool}/local/root@blank$' || zfs snapshot ${cfg.rootPool}/local/root@blank";
             };
 
             "local/nix" = {
@@ -197,7 +207,7 @@ in
           };
         };
 
-        ${dataPool} = {
+        ${cfg.dataPool} = {
           type = "zpool";
           mode = "mirror";
           options = {
@@ -250,11 +260,11 @@ in
     boot.supportedFilesystems = [ "zfs" ];
     boot.zfs.forceImportRoot = false;
     # Otherwise the zpool needs to be imported manually.
-    boot.zfs.extraPools = [ dataPool ];
+    boot.zfs.extraPools = [ cfg.dataPool ];
 
     # Follows https://grahamc.com/blog/erase-your-darlings/
     boot.initrd.postDeviceCommands = lib.mkAfter ''
-      zfs rollback -r ${rootPool}/local/root@blank
+      zfs rollback -r ${cfg.rootPool}/local/root@blank
     '';
 
     # From https://nixos.wiki/wiki/ZFS#Remote_unlock
@@ -276,7 +286,7 @@ in
 
       postCommands = ''
       zpool import -a
-      echo "zfs load-key ${rootPool}; killall zfs; exit" >> /root/.profile
+      echo "zfs load-key ${cfg.rootPool}; killall zfs; exit" >> /root/.profile
       '';
     };
 
