@@ -66,6 +66,12 @@ in
       '';
       example = "1T";
     };
+
+    initialBackupDataset = lib.mkOption {
+      type = lib.types.bool;
+      description = "Create the backup dataset.";
+      default = true;
+    };
   };
 
   config = {
@@ -241,6 +247,7 @@ in
               };
               type = "zfs_fs";
             };
+          } // lib.optionalAttrs cfg.initialBackupDataset {
             "backup" = {
               type = "zfs_fs";
               mountpoint = "/srv/backup";
@@ -255,7 +262,9 @@ in
         };
       };
     };
-    fileSystems."/srv/backup".options = [ "nofail" ];
+    fileSystems."/srv/backup" = lib.mkIf cfg.initialBackupDataset {
+      options = [ "nofail" ];
+    };
 
     boot.supportedFilesystems = [ "zfs" ];
     boot.zfs.forceImportRoot = false;
