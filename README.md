@@ -5,7 +5,7 @@ SkaraboxOS is an opinionated and simplified headless NixOS installer.
 It provides a flake [template](./template) which combines:
 - Creating a bootable ISO, installable on an USB key.
 - [nixos-anywhere](https://github.com/nix-community/nixos-anywhere) to install NixOS headlessly.
-- [disko](https://github.com/nix-community/disko) to format the drives.
+- [disko](https://github.com/nix-community/disko) to format the drives using native ZFS encryption with remote unlocking through ssh.
 - [sops-nix](https://github.com/Mic92/sops-nix) to handle secrets.
 - [deploy-rs](https://github.com/serokell/deploy-rs) to deploy updates.
 
