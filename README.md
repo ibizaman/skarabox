@@ -206,6 +206,31 @@ These items act as a checklist that you should go through to make sure your inst
 How to proceed with each item is highly dependent on which hardware you have so it is hard for Skarabox to give a detailed explanation here.
 If you have any question, don't hesitate to open a [GitHub issue](https://github.com/ibizaman/skarabox/issues/new).
 
+### Secrets with SOPS
+
+To setup secrets with SOPS, you must retrieve the box's host key with:
+
+```bash
+$ ssh-keyscan -p 22 -t ed25519 -4 <ip>
+<ip> ssh-ed25519 AAAAC3NzaC1lXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+Then transform it to an `age` key with:
+
+```bash
+$ nix shell nixpkgs#ssh-to-age --command sh -c "echo ssh-ed25519 AAAAC3NzaC1lXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX | ssh-to-age"
+age10gclXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+```
+
+Finally, allow that key to decrypt the secrets file:
+
+```bash
+SOPS_AGE_KEY_FILE=sops.key \
+  nix run --impure nixpkgs#sops -- --config .sops.yaml -r -i \
+  --add-age "age10gclXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
+  secrets.yaml
+```
+
 ### Domain Name
 
 Get your external IP Address by connecting to your home network and going to [https://api.ipify.org/](https://api.ipify.org/).
