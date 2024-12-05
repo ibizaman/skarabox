@@ -1,5 +1,5 @@
 {
-  description = "Example flake.nix for skarabox.";
+  description = "Flake for skarabox.";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -16,6 +16,7 @@
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs { inherit system; };
+
       # Taken from https://github.com/serokell/deploy-rs?tab=readme-ov-file#overall-usage
       deployPkgs = import nixpkgs {
         inherit system;
