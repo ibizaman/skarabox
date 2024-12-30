@@ -114,7 +114,7 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
    ```bash
    $ nix run github:nix-community/nixos-anywhere -- \
-     --flake .#skarabox' \
+     --flake '.#skarabox' \
      --ssh-option "IdentitiesOnly=yes" \
      --disk-encryption-keys /tmp/root_passphrase root_passphrase \
      --disk-encryption-keys /tmp/data_passphrase data_passphrase \
