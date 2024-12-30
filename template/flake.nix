@@ -36,12 +36,14 @@
           ({ config, ... }: {
             skarabox.hostname = "skarabox";
             skarabox.username = "skarabox";
-            skarabox.disks.rootDisk = "/dev/nvme0n1";
-            # 10% of size SSD
+            skarabox.disks.rootDisk = "/dev/nvme0n1";  # Update with result of running `fdisk -l` on the USB stick.
+            # 10% of size SSD.
             skarabox.disks.rootReservation = "100G";
-            skarabox.disks.dataDisk1 = "/dev/sda";
-            skarabox.disks.dataDisk2 = "/dev/sdb";
-            # 5% of size Hard Drives
+            skarabox.disks.dataDisk1 = "/dev/sda";  # Update with result of running `fdisk -l` on the USB stick.
+            skarabox.disks.dataDisk2 = "/dev/sdb";  # Update with result of running `fdisk -l` on the USB stick.
+            # Disable if only an SSD for root is present.
+            skarabox.disks.enableDataPool = true;
+            # 5% of size Hard Drives.
             skarabox.disks.dataReservation = "500G";
             skarabox.sshAuthorizedKeyFile = ./ssh_skarabox.pub;
             skarabox.hostId = builtins.readFile ./hostid;

@@ -26,7 +26,7 @@ A scarab is a _very_ [strong](https://en.wikipedia.org/wiki/Dung_beetle#Ecology_
 SkaraboxOS expects a particular hardware layout:
 
 - 1 SSD or NVMe drive for the OS.
-- 2 Hard drives that will store data.
+- 0 or 2 Hard drives that will store data.
   Capacity depends on the amount of data that will be stored.
   They will be formatted in Raid 1 (mirror) so each hard drive should have the same size.
 <!--
@@ -91,8 +91,8 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
    You will be logged in automatically with user `nixos`.
 
-   4. Note down the IP address of the server. For that, follow the steps that appeared when booting
-      on the USB stick.
+   4. Note down the IP address and disk layout of the server.
+      For that, follow the steps that appeared when booting on the USB stick.
 
 2. Connect to the installer and install
 
