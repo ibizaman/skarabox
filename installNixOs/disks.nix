@@ -2,6 +2,8 @@
 let
   cfg = config.skarabox.disks;
   opt = options.skarabox.disks;
+
+  inherit (lib) optionals;
 in
 {
   options.skarabox.disks = {
@@ -32,6 +34,8 @@ in
       '';
       example = "100G";
     };
+
+    enableDataPool = lib.mkEnableOption "data pool on separate hard drives.";
 
     dataPool = lib.mkOption {
       type = lib.types.str;
@@ -109,7 +113,7 @@ in
             };
           };
         };
-        data1 = {
+        data1 = lib.mkIf cfg.enableDataPool {
           type = "disk";
           device = cfg.dataDisk1;
           content = {
@@ -125,7 +129,7 @@ in
             };
           };
         };
-        data2 = {
+        data2 = lib.mkIf cfg.enableDataPool {
           type = "disk";
           device = cfg.dataDisk2;
           content = {
@@ -213,7 +217,7 @@ in
           };
         };
 
-        ${cfg.dataPool} = {
+        ${cfg.dataPool} = lib.mkIf cfg.enableDataPool {
           type = "zpool";
           mode = "mirror";
           options = {
@@ -262,14 +266,14 @@ in
         };
       };
     };
-    fileSystems."/srv/backup" = lib.mkIf cfg.initialBackupDataset {
+    fileSystems."/srv/backup" = lib.mkIf (cfg.enableDataPool && cfg.initialBackupDataset) {
       options = [ "nofail" ];
     };
 
     boot.supportedFilesystems = [ "zfs" ];
     boot.zfs.forceImportRoot = false;
-    # Otherwise the zpool needs to be imported manually.
-    boot.zfs.extraPools = [ cfg.dataPool ];
+    # To import the zpool automatically
+    boot.zfs.extraPools = optionals cfg.enableDataPool [ cfg.dataPool ];
 
     # Follows https://grahamc.com/blog/erase-your-darlings/
     boot.initrd.postDeviceCommands = lib.mkAfter ''

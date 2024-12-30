@@ -77,15 +77,25 @@
             For a wired network connection, just plug in an ethernet cable from your router
             to this server. The connection will be made automatically.
 
-            If the server is equipped with a WiFi card, a WiFi network called "skarabox" will
-            be available. Connect your laptop to that WiFi network. This network will only be
-            available during installation.
+            If you need a wireless connection, configure a network by typing the command
+            "wpa_cli" without the enclosing double quotes.
 
-            A wired network connection is available if you connect an Ethernet cable. If you
-            need a wireless connection, configure a network by typing the command "wpa_cli"
-            without the enclosing double quotes.
+            * Step 2.  Identify the disk layout.
 
-            * Step 2.  Run the installer.
+            To know what disk existing in the system, type the command "fdisk -l" without
+            the double quotes. This will show lines like so:
+
+            Disk /dev/nvme0n1       This is an NVMe drive
+            Disk /dev/sda           This is an SSD or HDD drive
+            Disk /dev/sdb           This is an SSD or HDD drive
+
+            With the above setup, in the flake.nix template, set the following options:
+
+                skarabox.disks.rootDisk = "/dev/nvme0n1"
+                skarabox.disks.dataDisk1 = "/dev/sda"
+                skarabox.disks.dataDisk2 = "/dev/sdb"
+
+            * Step 3.  Run the installer.
 
             When running the installer, you will need to enter the password "skarabox123" as
             well as the IP address of this server. To know the IP address, first follow the
@@ -97,9 +107,9 @@
               192.168.1.15
               10.0.2.15
 
-            * Step 3.
+            * Step 4.
 
-            No step 3. The server will reboot automatically in the new system as soon as the
+            No step 4. The server will reboot automatically in the new system as soon as the
             installer ran successfully. Enjoy your NixOS system powered by Skarabox!
           '';
         })];
