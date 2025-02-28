@@ -1,26 +1,26 @@
-{ config, options, lib, pkgs, ... }:
+{ config, options, lib, ... }:
 let
   cfg = config.skarabox.disks;
   opt = options.skarabox.disks;
 
-  inherit (lib) optionals;
+  inherit (lib) mkIf mkOption optionals types;
 in
 {
   options.skarabox.disks = {
-    rootPool = lib.mkOption {
-      type = lib.types.str;
+    rootPool = mkOption {
+      type = types.str;
       description = "Name of the root pool";
       default = "root";
     };
 
-    rootDisk = lib.mkOption {
-      type = lib.types.str;
+    rootDisk = mkOption {
+      type = types.str;
       description = "SSD disk on which to install.";
       example = "/dev/nvme0n1";
     };
 
-    rootReservation = lib.mkOption {
-      type = lib.types.str;
+    rootReservation = mkOption {
+      type = types.str;
       description = ''
         Disk size to reserve for ZFS internals. Should be between 10% and 15% of available size as recorded by zpool.
 
@@ -37,26 +37,26 @@ in
 
     enableDataPool = lib.mkEnableOption "data pool on separate hard drives.";
 
-    dataPool = lib.mkOption {
-      type = lib.types.str;
+    dataPool = mkOption {
+      type = types.str;
       description = "Name of the data pool";
       default = "zdata";
     };
 
-    dataDisk1 = lib.mkOption {
-      type = lib.types.str;
+    dataDisk1 = mkOption {
+      type = types.str;
       description = "First disk on which to install the data pool.";
       example = "/dev/sda";
     };
 
-    dataDisk2 = lib.mkOption {
-      type = lib.types.str;
+    dataDisk2 = mkOption {
+      type = types.str;
       description = "Second disk on which to install the data pool.";
       example = "/dev/sdb";
     };
 
-    dataReservation = lib.mkOption {
-      type = lib.types.str;
+    dataReservation = mkOption {
+      type = types.str;
       description = ''
         Disk size to reserve for ZFS internals. Should be between 5% and 10% of available size as recorded by zpool.
 
@@ -71,8 +71,8 @@ in
       example = "1T";
     };
 
-    initialBackupDataset = lib.mkOption {
-      type = lib.types.bool;
+    initialBackupDataset = mkOption {
+      type = types.bool;
       description = "Create the backup dataset.";
       default = true;
     };
@@ -113,7 +113,7 @@ in
             };
           };
         };
-        data1 = lib.mkIf cfg.enableDataPool {
+        data1 = mkIf cfg.enableDataPool {
           type = "disk";
           device = cfg.dataDisk1;
           content = {
@@ -129,7 +129,7 @@ in
             };
           };
         };
-        data2 = lib.mkIf cfg.enableDataPool {
+        data2 = mkIf cfg.enableDataPool {
           type = "disk";
           device = cfg.dataDisk2;
           content = {
@@ -217,7 +217,7 @@ in
           };
         };
 
-        ${cfg.dataPool} = lib.mkIf cfg.enableDataPool {
+        ${cfg.dataPool} = mkIf cfg.enableDataPool {
           type = "zpool";
           mode = "mirror";
           options = {
@@ -266,7 +266,7 @@ in
         };
       };
     };
-    fileSystems."/srv/backup" = lib.mkIf (cfg.enableDataPool && cfg.initialBackupDataset) {
+    fileSystems."/srv/backup" = mkIf (cfg.enableDataPool && cfg.initialBackupDataset) {
       options = [ "nofail" ];
     };
 

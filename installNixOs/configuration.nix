@@ -1,34 +1,36 @@
 { config, lib, pkgs, ... }:
 let
   cfg = config.skarabox;
+
+  inherit (lib) mkOption types;
 in
 {
   options.skarabox = {
-    hostname = lib.mkOption {
-      type = lib.types.str;
+    hostname = mkOption {
+      type = types.str;
       default = "skarabox";
       description = "Hostname to give to the server.";
     };
 
-    username = lib.mkOption {
-      type = lib.types.str;
+    username = mkOption {
+      type = types.str;
       default = "skarabox";
       description = "Name given to the admin user on the server.";
     };
 
-    initialHashedPassword = lib.mkOption {
-      type = lib.types.str;
+    initialHashedPassword = mkOption {
+      type = types.str;
       default = "$y$j9T$7EZvmryvlpTHSRG7dC5IU1$lBc/nePnkvqZ//jNpx/UpFKze/p6P7AIhJubK/Ghj68";
       description = "Initial password for the admin user. Can be changed later. Default is 'skarabox123'.";
     };
 
-    hostId = lib.mkOption {
-      type = lib.types.str;
+    hostId = mkOption {
+      type = types.str;
       description = "8 characters unique identifier for this server. Generate with `uuidgen | head -c 8`.";
     };
 
-    sshAuthorizedKeyFile = lib.mkOption {
-      type = lib.types.path;
+    sshAuthorizedKeyFile = mkOption {
+      type = types.path;
       description = ''
         Public SSH key used to connect on boot to decrypt the root pool.
       '';
