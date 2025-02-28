@@ -35,7 +35,9 @@ in
       example = "100G";
     };
 
-    enableDataPool = lib.mkEnableOption "data pool on separate hard drives.";
+    enableDataPool = lib.mkEnableOption "data pool on separate hard drives." // {
+      default = true;
+    };
 
     dataPool = mkOption {
       type = types.str;
