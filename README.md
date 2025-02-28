@@ -25,10 +25,11 @@ A scarab is a _very_ [strong](https://en.wikipedia.org/wiki/Dung_beetle#Ecology_
 
 SkaraboxOS expects a particular hardware layout:
 
-- 1 SSD or NVMe drive for the OS.
+- 1 or 2 SSD or NVMe drive for the OS.
+  If 2, they will be formatted in Raid 1 (mirror) so each hard drive should have the same size.
 - 0 or 2 Hard drives that will store data.
   Capacity depends on the amount of data that will be stored.
-  They will be formatted in Raid 1 (mirror) so each hard drive should have the same size.
+  If 2, they will too be formatted in Raid 1.
 <!--
 This is for Self Host Blocks.
 
@@ -44,7 +45,7 @@ This is for Self Host Blocks.
   - for federation (to share documents or pictures across the internet).
 -->
 
-**WARNING: The 3 disks will be formatted and completely wiped out of data.**
+**WARNING: The disks will be formatted and completely wiped out of data.**
 
 ## Installation Process Overview
 

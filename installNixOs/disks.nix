@@ -3,7 +3,7 @@ let
   cfg = config.skarabox.disks;
   opt = options.skarabox.disks;
 
-  inherit (lib) mkIf mkOption optionals types;
+  inherit (lib) mkIf mkOption optionals optionalString types;
 in
 {
   options.skarabox.disks = {
@@ -17,6 +17,12 @@ in
       type = types.str;
       description = "SSD disk on which to install.";
       example = "/dev/nvme0n1";
+    };
+
+    rootDisk2 = mkOption {
+      type = types.nullOr types.str;
+      description = "Second SSD disk on which to install.";
+      example = "/dev/nvme0n2";
     };
 
     rootReservation = mkOption {
@@ -82,28 +88,35 @@ in
 
   config = {
     disko.devices = {
-      disk = {
-        root = {
+      disk = let
+        hasRaid = cfg.rootDisk2 != null;
+
+        rootSoleContent = {
+          type = "filesystem";
+          format = "vfat";
+          mountpoint = "/boot";
+          # Otherwise you get https://discourse.nixos.org/t/security-warning-when-installing-nixos-23-11/37636/2
+          mountOptions = [ "umask=0077" ];
+          # Copy the host_key needed for initrd in a location accessible on boot.
+          # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
+          postMountHook = ''
+            cp /etc/ssh/ssh_host_ed25519_key /mnt/boot/host_key
+          '';
+        };
+        rootRaidContent = {
+          type = "mdraid";
+          name = "boot";
+        };
+        mkRoot = rootDisk: {
           type = "disk";
-          device = cfg.rootDisk;
+          device = rootDisk;
           content = {
             type = "gpt";
             partitions = {
               ESP = {
-                size = "128M";
+                size = "500M";
                 type = "EF00";
-                content = {
-                  type = "filesystem";
-                  format = "vfat";
-                  mountpoint = "/boot";
-                  # Otherwise you get https://discourse.nixos.org/t/security-warning-when-installing-nixos-23-11/37636/2
-                  mountOptions = [ "umask=0077" ];
-                  # Copy the host_key needed for initrd in a location accessible on boot.
-                  # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
-                  postMountHook = ''
-                    cp /etc/ssh/ssh_host_ed25519_key /mnt/boot/host_key
-                  '';
-                };
+                content = if hasRaid then rootRaidContent else rootSoleContent;
               };
               zfs = {
                 size = "100%";
@@ -115,9 +128,10 @@ in
             };
           };
         };
-        data1 = mkIf cfg.enableDataPool {
+
+        mkDataDisk = dataDisk: {
           type = "disk";
-          device = cfg.dataDisk1;
+          device = dataDisk;
           content = {
             type = "gpt";
             partitions = {
@@ -131,20 +145,27 @@ in
             };
           };
         };
-        data2 = mkIf cfg.enableDataPool {
-          type = "disk";
-          device = cfg.dataDisk2;
+      in {
+        root = mkRoot cfg.rootDisk;
+        root1 = mkIf hasRaid (mkRoot cfg.rootDisk2);
+        data1 = mkIf cfg.enableDataPool (mkDataDisk cfg.dataDisk1);
+        data2 = mkIf cfg.enableDataPool (mkDataDisk cfg.dataDisk2);
+      };
+      mdadm = {
+        boot = mkIf (cfg.rootDisk2 != null) {
+          type = "mdadm";
+          level = 1;
+          metadata = "1.0";
           content = {
-            type = "gpt";
-            partitions = {
-              zfs = {
-                size = "100%";
-                content = {
-                  type = "zfs";
-                  pool = cfg.dataPool;
-                };
-              };
-            };
+            type = "filesystem";
+            format = "vfat";
+            mountpoint = "/boot";
+            mountOptions = [ "umask=0077" ];
+            # Copy the host_key needed for initrd in a location accessible on boot.
+            # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
+            postMountHook = ''
+              cp /etc/ssh/ssh_host_ed25519_key /mnt/boot/host_key
+            '';
           };
         };
       };
@@ -212,7 +233,7 @@ in
               mountpoint = "/persist";
               # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
               options.mountpoint = "legacy";
-              postMountHook = ''
+              postMountHook = optionalString cfg.enableDataPool ''
                 cp /tmp/data_passphrase /mnt/persist/data_passphrase
               '';
             };
