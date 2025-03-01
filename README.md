@@ -36,6 +36,7 @@ This is for Self Host Blocks.
 - 16Gb or more of RAM.
 - AMD or Intel CPU with embedded graphics.
   (Personally using AMD Ryzen 5 5600G with great success).
+- Supports x86_64 and aarch64 platform.
 - *Work In Progress* Optional graphics card.
   Only needed for speech to text applications like for Home Assistant.
 - Internet access is optional.

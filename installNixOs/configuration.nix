@@ -53,7 +53,7 @@ in
       #   '') + "/hostid"));
     networking.useDHCP = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
-    nixpkgs.hostPlatform = "x86_64-linux";
+    nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
     powerManagement.cpuFreqGovernor = "performance";
     hardware.cpu.amd.updateMicrocode = true;
 

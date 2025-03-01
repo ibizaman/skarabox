@@ -33,6 +33,7 @@
         imports = [
           skarabox.nixosModules.skarabox
           sops-nix.nixosModules.default
+          "${pkgs.path}/nixos/modules/profiles/all-hardware.nix"
           ({ config, ... }: {
             skarabox.hostname = "skarabox";
             skarabox.username = "skarabox";
