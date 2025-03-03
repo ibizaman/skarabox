@@ -8,6 +8,7 @@ It provides a flake [template](./template) which combines:
 - [disko](https://github.com/nix-community/disko) to format the drives using native ZFS encryption with remote unlocking through ssh.
 - [sops-nix](https://github.com/Mic92/sops-nix) to handle secrets.
 - [deploy-rs](https://github.com/serokell/deploy-rs) to deploy updates.
+- Which supports x86_64 and aarch64 platform.
 
 This repository does not invent any of those wonderful tools.
 It merely provides an opinionated way to make them all fit together for a seamless experience.
@@ -36,7 +37,6 @@ This is for Self Host Blocks.
 - 16Gb or more of RAM.
 - AMD or Intel CPU with embedded graphics.
   (Personally using AMD Ryzen 5 5600G with great success).
-- Supports x86_64 and aarch64 platform.
 - *Work In Progress* Optional graphics card.
   Only needed for speech to text applications like for Home Assistant.
 - Internet access is optional.
