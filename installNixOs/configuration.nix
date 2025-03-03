@@ -55,7 +55,6 @@ in
 
     nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
     powerManagement.cpuFreqGovernor = "performance";
-    hardware.cpu.amd.updateMicrocode = true;
 
     nix.settings.trusted-users = [ cfg.username ];
     nix.settings.experimental-features = [ "nix-command" "flakes" ];
