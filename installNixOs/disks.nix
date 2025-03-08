@@ -23,6 +23,7 @@ in
       type = types.nullOr types.str;
       description = "Second SSD disk on which to install.";
       example = "/dev/nvme0n2";
+      default = null;
     };
 
     rootReservation = mkOption {
