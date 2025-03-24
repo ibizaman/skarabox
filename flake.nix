@@ -161,8 +161,8 @@
       nixosModules.skarabox = {
         imports = [
           disko.nixosModules.disko
-          ./installNixOs/disks.nix
-          ./installNixOs/configuration.nix
+          ./modules/disks.nix
+          ./modules/configuration.nix
         ];
       };
     };
