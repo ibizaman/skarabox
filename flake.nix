@@ -11,8 +11,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    disko = {
-      url = "github:nix-community/disko";
+    nixos-anywhere = {
+      url = "github:nix-community/nixos-anywhere";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -21,7 +21,7 @@
     };
   };
 
-  outputs = inputs@{ self, flake-parts, nixpkgs, nixos-generators, disko, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs@{ self, flake-parts, nixpkgs, nixos-generators, nixos-anywhere, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -56,6 +56,11 @@
           type = "app";
           program = "${self'.packages.beacon-test}/bin/runner.sh";
         };
+
+        nixos-anywhere = {
+          type = "app";
+          program = "${nixos-anywhere.packages.${system}.nixos-anywhere}/bin/nixos-anywhere";
+        };
       };
     };
 
@@ -72,7 +77,7 @@
 
       nixosModules.skarabox = {
         imports = [
-          disko.nixosModules.disko
+          nixos-anywhere.inputs.disko.nixosModules.disko
           ./modules/disks.nix
           ./modules/configuration.nix
         ];

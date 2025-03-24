@@ -115,7 +115,7 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
    3. Run the following command replacing `<ip>` with the IP address you got in the previous step.
 
    ```bash
-   $ nix run github:nix-community/nixos-anywhere -- \
+   $ nix run .#nixos-anywhere -- \
      --flake '.#skarabox' \
      --ssh-option "IdentitiesOnly=yes" \
      --disk-encryption-keys /tmp/root_passphrase root_passphrase \
@@ -283,7 +283,7 @@ nix run .#beacon-test
 To test the installer, run:
 
 ```
-nix run github:nix-community/nixos-anywhere -- --flake .#installer --vm-test
+nix run .#nixos-anywhere -- --flake .#skarabox-test --vm-test
 ```
 
 ## Links
