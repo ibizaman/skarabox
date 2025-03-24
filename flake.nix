@@ -43,8 +43,10 @@
           };
           iso = "${self'.packages.beacon}/iso/beacon.iso";
           hostSshPort = 2222;
+          nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
+          qemu = nixos-qemu.qemuBinary pkgs.qemu;
         in (pkgs.writeShellScriptBin "runner.sh" ''
-          ${pkgs.qemu}/bin/qemu-system-x86_64 \
+          ${qemu} \
             -m 2048M \
             -nic hostfwd=tcp::${toString hostSshPort}-:22 \
             --drive media=cdrom,format=raw,readonly=on,file=${iso}
