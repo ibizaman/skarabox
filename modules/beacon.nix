@@ -1,4 +1,4 @@
-{ lib, ... }: let
+{ config, lib, pkgs, ... }: let
   inherit (lib) mkForce;
 in {
   users.users.nixos.initialHashedPassword = mkForce "$y$j9T$7EZvmryvlpTHSRG7dC5IU1$lBc/nePnkvqZ//jNpx/UpFKze/p6P7AIhJubK/Ghj68";
@@ -89,4 +89,12 @@ in {
     No step 4. The server will reboot automatically in the new system as soon as the
     installer ran successfully. Enjoy your NixOS system powered by Skarabox!
   '';
+
+  environment.systemPackages = let
+    skarabox-help = pkgs.writeText "skarabox-help" config.services.getty.helpLine;
+  in [
+    (pkgs.writeShellScriptBin "skarabox" ''
+     cat ${skarabox-help}
+     '')
+  ];
 }
