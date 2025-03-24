@@ -191,10 +191,14 @@ in
             recordsize = "1M";
             "com.sun:auto-snapshot" = "false";
           };
+          # Need to use another variable name otherwise I get SC2030 and SC2031 errors.
+          preCreateHook = ''
+            pname=$name
+          '';
           # Needed to get back a prompt on next boot.
           # See https://github.com/nix-community/nixos-anywhere/issues/161#issuecomment-1642158475
           postCreateHook = ''
-            zfs set keylocation="prompt" $name
+            zfs set keylocation="prompt" $pname
           '';
 
           # Follows https://grahamc.com/blog/erase-your-darlings/
@@ -261,8 +265,12 @@ in
             "com.sun:auto-snapshot" = "false";
             mountpoint = "none";
           };
+          # Need to use another variable name otherwise I get SC2030 and SC2031 errors.
+          preCreateHook = ''
+            pname=$name
+          '';
           postCreateHook = ''
-            zfs set keylocation="file:///persist/data_passphrase" $name;
+            zfs set keylocation="file:///persist/data_passphrase" $pname;
           '';
           datasets = {
             # TODO: create reserved dataset automatically in postCreateHook
