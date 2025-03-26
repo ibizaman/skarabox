@@ -308,7 +308,8 @@ in
     boot.zfs.extraPools = optionals cfg.enableDataPool [ cfg.dataPool ];
 
     # Follows https://grahamc.com/blog/erase-your-darlings/
-    boot.initrd.postDeviceCommands = lib.mkAfter ''
+    # https://github.com/NixOS/nixpkgs/pull/346247/files
+    boot.initrd.postResumeCommands = lib.mkAfter ''
       zfs rollback -r ${cfg.rootPool}/local/root@blank
     '';
 
