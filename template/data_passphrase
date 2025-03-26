@@ -1,3 +1,3 @@
 <generate me, only if enableDataPool = true, otherwise delete this file>
 Use this command:
-nix run nixpkgs#openssl -- rand -hex 64 > data_passphrase
+nix run .#openssl -- rand -hex 64 > data_passphrase
