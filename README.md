@@ -95,6 +95,7 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
    4. Note down the IP address and disk layout of the server.
       For that, follow the steps that appeared when booting on the USB stick.
+      To reprint the step, run the command `skarabox-help`.
 
 2. Connect to the installer and install
 
