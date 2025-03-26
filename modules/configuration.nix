@@ -2,7 +2,7 @@
 let
   cfg = config.skarabox;
 
-  inherit (lib) mkOption types;
+  inherit (lib) mkOption optionals types;
 in
 {
   options.skarabox = {
@@ -30,7 +30,8 @@ in
     };
 
     sshAuthorizedKeyFile = mkOption {
-      type = types.path;
+      type = types.nullOr types.path;
+      default = null;
       description = ''
         Public SSH key used to connect on boot to decrypt the root pool.
       '';
@@ -39,6 +40,10 @@ in
   };
 
   config = {
+    warnings = optionals (cfg.sshAuthorizedKeyFile == null) [
+      "The config.skarabox.sshAuthorizedKeyFile option is null, this should only be the case in tests."
+    ];
+
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
 
@@ -77,7 +82,7 @@ in
       isNormalUser = true;
       extraGroups = [ "wheel" ];
       inherit (cfg) initialHashedPassword;
-      openssh.authorizedKeys.keyFiles = [ cfg.sshAuthorizedKeyFile ];
+      openssh.authorizedKeys.keyFiles = optionals (cfg.sshAuthorizedKeyFile != null) [ cfg.sshAuthorizedKeyFile ];
     };
 
     security.sudo.extraRules = [

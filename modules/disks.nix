@@ -314,7 +314,7 @@ in
     '';
 
     # From https://nixos.wiki/wiki/ZFS#Remote_unlock
-    boot.initrd.network = {
+    boot.initrd.network = mkIf (config.skarabox.sshAuthorizedKeyFile != null) {
       # This will use udhcp to get an ip address. Make sure you have added the kernel module for your
       # network driver to `boot.initrd.availableKernelModules`, so your initrd can load it! Static ip
       # addresses might be configured using the ip argument in kernel command line:

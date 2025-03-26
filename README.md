@@ -277,15 +277,17 @@ I do recommend using the sibling project [Self Host Blocks](https://github.com/i
 
 To start a VM with the beacon, run:
 
-```
-nix run .#beacon-test
+```bash
+nix run .#beacon-vm
 ```
 
 To test the installer, run:
 
+```bash
+nix run .#install-on-beacon-vm
 ```
-nix run .#nixos-anywhere -- --flake .#skarabox-test --vm-test
-```
+
+Password is `skarabox123`.
 
 ## Links
 
