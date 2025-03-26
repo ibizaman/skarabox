@@ -8,33 +8,42 @@ Follow the steps outlined at https://github.com/ibizaman/skarabox?tab=readme-ov-
 
 ## Normal Operations
 
-   1. Login
+1. Decrypt root pool after boot
 
-   ```bash
-   $ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
-   ```
+2. Login
 
-   2. Reboot
+```bash
+$ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
+```
 
-   ```bash
-   $ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox reboot
-   ```
+3. Reboot
 
-   You will then be required to decrypt the hard drives as explained above.
+```bash
+$ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox reboot
+```
 
-   3. Deploy an Update
+You will then be required to decrypt the hard drives as explained above.
 
-   Modify the `./configuration.nix` file then run:
+4. Deploy an Update
 
-   ```bash
-   nix run nixpkgs#deploy-rs
-   ```
+Modify the `./configuration.nix` file then run:
 
-   4. Edit secrets
+```bash
+nix run .#deploy-rs
+```
 
-   ```bash
-   nix run nixpkgs#sops secrets.yaml
-   ```
+5. Update dependencies
+
+```bash
+nix flake update
+nix run .#deploy-rs
+```
+
+6. Edit secrets
+
+```bash
+nix run .#sops secrets.yaml
+```
 
 ## Post Installation Checklist
 
@@ -54,7 +63,7 @@ $ ssh-keyscan -p 22 -t ed25519 -4 <ip>
 Then transform it to an `age` key with:
 
 ```bash
-$ nix shell nixpkgs#ssh-to-age --command sh -c "echo ssh-ed25519 AAAAC3NzaC1lXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX | ssh-to-age"
+$ nix shell .#ssh-to-age --command sh -c "echo ssh-ed25519 AAAAC3NzaC1lXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX | ssh-to-age"
 age10gclXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
@@ -62,7 +71,7 @@ Finally, allow that key to decrypt the secrets file:
 
 ```bash
 SOPS_AGE_KEY_FILE=sops.key \
-  nix run --impure nixpkgs#sops -- --config .sops.yaml -r -i \
+  nix run --impure .#sops -- --config .sops.yaml -r -i \
   --add-age "age10gclXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
   secrets.yaml
 ```

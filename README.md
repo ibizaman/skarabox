@@ -13,10 +13,12 @@ It provides a flake [template](./template) which combines:
 This repository does not invent any of those wonderful tools.
 It merely provides an opinionated way to make them all fit together for a seamless experience.
 
+It has a [demo](#demo) which lets you install SkaraboxOS on a VM!
+
 ## Why?
 
 Because the landscape of installing NixOS could be better and this repository is an attempt at that.
-By being more opinionated, it allows you to get setup faster.
+By being more opinionated, it allows you to get set up faster.
 
 By the way, the name SkaraboxOS comes from the scarab (the animal), box (for the server) and OS (for Operating System).
 Scarab is spelled with a _k_ because it's kool.
@@ -69,20 +71,69 @@ The latter, similarly to SkaraboxOS, provides an opinionated way to configure se
 
 Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
+## Demo
+
+This demo will install SkaraboxOS on a VM locally on your computer.
+The VM has 3 hard drives, one for the OS
+and two in raid 1 for the data.
+
+Launch the VM that listens on ports 2222 for normal ssh access
+and 2223 for ssh access during boot:
+
+```bash
+nix run github:ibizaman/skarabox#demo-beacon 2222 2223
+```
+
+_Compared to the real installation, this step replaces installing
+the beacon on an USB key and booting on it._
+
+When the installer did boot up and you see the `[nixos@nixos:~]$` prompt,
+install SkaraboxOS on the VM with:
+
+```bash
+nix run github:ibizaman/skarabox#demo-install-on-beacon 127.0.0.1 2222
+```
+
+When you see the line `(nixos@127.0.0.1) Password:`, enter `skarabox123`.
+
+Then when the system reboots - actually every time it will boot -
+you will be prompted with `Enter passphrase for 'root'` which
+waits for the passphrase to decrypt the root partition.
+Enter `rootpassphrase` (yes, I know, it's original :D).
+
+When that's done, the boot up will continue and you will see the prompt
+`skarabox login`. Enter `skarabox` as username and `skarabox123` as password.
+
+Now you're logged into the VM on a brand new SkaraboxOS installation!
+
+You can test accessing through ssh with:
+
+```
+nix run github:ibizaman/skarabox#demo-ssh 127.0.0.1 2222
+```
+
 ## Installation
 
-1. Boot on the NixOS installer. You just need to boot, no need to install.
+1. Create a directory and download the template.
+
+```bash
+$ mkdir myskarabox
+$ cd myskarabox
+$ nix flake init --template github:ibizaman/skarabox
+```
+
+2. Boot on the NixOS installer. You just need to boot, there is nothing to install just yet.
 
    1. First, create the .iso file.
 
    ```bash
-   $ nix build github:ibizaman/skarabox#beacon
+   $ nix build .#beacon
    ```
 
    2. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
 
    ```bash
-   $ nix run nixpkgs#usbimager
+   $ nix run .#usbimager
    ```
 
    - Select `./result/iso/beacon.iso` file in row 1 (`...`).
@@ -95,40 +146,27 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
    4. Note down the IP address and disk layout of the server.
       For that, follow the steps that appeared when booting on the USB stick.
-      To reprint the step, run the command `skarabox-help`.
+      To reprint the steps, run the command `skarabox-help`.
 
-2. Connect to the installer and install
-
-   1. Create a directory and download the template.
-
-   ```bash
-   $ mkdir myskarabox
-   $ cd myskarabox
-   $ nix flake init --template github:ibizaman/skarabox
-   ```
-
-   2. Open the new `flake.nix` file and generate whatever it needs.
-   Also, open the other files and see how to generate them too.
-   All the instructions are included.
+   5. Open the `configuration.nix` file and tweak values to match you hardware.
+      Also, open the other files and see how to generate them too.
+      All the instructions are included.
 
    Note the `root_passphrase` file will contain a passphrase that will need to be provided every time the server boots up.
 
-   3. Run the following command replacing `<ip>` with the IP address you got in the previous step.
+3. Run the installation process
+
+   1. Run the following command replacing `<ip>` with the IP address you got in the previous step.
 
    ```bash
-   $ nix run .#nixos-anywhere -- \
-     --flake '.#skarabox' \
-     --ssh-option "IdentitiesOnly=yes" \
-     --disk-encryption-keys /tmp/root_passphrase root_passphrase \
-     --disk-encryption-keys /tmp/data_passphrase data_passphrase \
-     nixos@<ip>
+   $ nix run .#install-on-beacon skarabox <ip>
    ```
 
    You will be prompted for a password, enter "skarabox123" without the double quotes.
 
-   4. The server will reboot into NixOS on its own.
+   2. The server will reboot into NixOS on its own.
 
-   5. Decrypt the SSD and the Hard Drives.
+   3. Decrypt the SSD and the Hard Drives.
 
    Run the following command.
 
@@ -175,117 +213,11 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
 ## Normal Operations
 
-   1. Login
-
-   ```bash
-   $ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
-   ```
-
-   2. Reboot
-
-   ```bash
-   $ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox reboot
-   ```
-
-   You will then be required to decrypt the hard drives as explained above.
-
-   3. Deploy an Update
-
-   Modify the `./configuration.nix` file then run:
-
-   ```bash
-   nix run nixpkgs#deploy-rs
-   ```
-
-   4. Edit secrets
-
-   ```bash
-   nix run nixpkgs#sops secrets.yaml
-   ```
-
-## Post Installation Checklist
-
-These items act as a checklist that you should go through to make sure your installation is robust.
-How to proceed with each item is highly dependent on which hardware you have so it is hard for Skarabox to give a detailed explanation here.
-If you have any question, don't hesitate to open a [GitHub issue](https://github.com/ibizaman/skarabox/issues/new).
-
-### Secrets with SOPS
-
-To setup secrets with SOPS, you must retrieve the box's host key with:
-
-```bash
-$ ssh-keyscan -p 22 -t ed25519 -4 <ip>
-<ip> ssh-ed25519 AAAAC3NzaC1lXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-```
-
-Then transform it to an `age` key with:
-
-```bash
-$ nix shell nixpkgs#ssh-to-age --command sh -c "echo ssh-ed25519 AAAAC3NzaC1lXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX | ssh-to-age"
-age10gclXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-```
-
-Finally, allow that key to decrypt the secrets file:
-
-```bash
-SOPS_AGE_KEY_FILE=sops.key \
-  nix run --impure nixpkgs#sops -- --config .sops.yaml -r -i \
-  --add-age "age10gclXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" \
-  secrets.yaml
-```
-
-### Domain Name
-
-Get your external IP Address by connecting to your home network and going to [https://api.ipify.org/](https://api.ipify.org/).
-
-- Buy a cheap domain name.
-  I recommend [https://porkbun.com/](https://porkbun.com/) because I use it and know it works but others work too.
-- Configure the domain's DNS entries to have:
-  - A record: Your domain name to your external IP Address.
-  - A record: `*` (yes, a literal "asterisk") to your external IP Address.
-
-To check if this setup works, you will first need to go through the step below too.
-
-### Router Configuration
-
-These items should happen on your router.
-Usually, connecting to it is done by entering one of the following IP addresses in your browser: `192.168.1.1` or `192.168.1.254`.
-
-- Reduce the DHCP pool to the bounds .100 to .200, inclusive.
-  This way, you are left with some space to statically allocate some IPs.
-- Statically assign the IP address of the server.
-- Enable port redirection for ports to the server IP:
-  - 80 to 80.
-  - 443 to 443.
-  - A random port to 22 to be able to ssh into your server from abroad.
-  - A random port to 2222 to be able to start the server from abroad.
-
-To check if this setup works,
-you can connect to another network (like using the tethered connection from your phone or connecting to another WiFi network)
-and then ssh into your server like above,
-but instead of using the IP address, use the domain name:
-
-```bash
-$ ssh -p 22 skarabox@<domainname> -o IdentitiesOnly=yes -i ssh_skarabox
-```
-
-### Add Services
-
-I do recommend using the sibling project [Self Host Blocks](https://github.com/ibizaman/selfhostblocks) to setup services like Vaultwarden, Nextcloud and others.
+Those can be found in the template's [readme](./template/README.md).
 
 ## Contribute
 
-To start a VM with the beacon, run:
-
-```
-nix run .#beacon-test
-```
-
-To test the installer, run:
-
-```
-nix run .#nixos-anywhere -- --flake .#skarabox-test --vm-test
-```
+Contributions are very welcomed!
 
 ## Links
 
