@@ -34,6 +34,9 @@
 
           modules = [
             ./modules/beacon.nix
+            {
+              boot.zfs.devNodes = "/dev/disk/by-uuid"; # needed because /dev/disk/by-id is empty in qemu-vms
+            }
           ];
         };
 
@@ -52,12 +55,17 @@
           ${qemu} \
             -m 2048M \
             -nic hostfwd=tcp::${toString hostSshPort}-:22 \
+            --virtfs local,path=/nix/store,security_model=none,mount_tag=nix-store \
+            --boot menu=on \
             --drive media=cdrom,format=raw,readonly=on,file=${iso} \
-            --drive id=disk1,format=qcow2,if=virtio,file=disk1.qcow2 \
-            --drive id=disk2,format=qcow2,if=virtio,file=disk2.qcow2 \
-            --drive id=disk3,format=qcow2,if=virtio,file=disk3.qcow2 \
+            --drive format=qcow2,file=disk1.qcow2,if=none,id=nvm \
+            --device nvme,serial=deadbeef,drive=nvm,bootindex=1 \
             $@
           '');
+            # --drive id=disk2,format=qcow2,if=none,file=disk2.qcow2 \
+            # --device ide-hd,drive=disk2 \
+            # --drive id=disk3,format=qcow2,if=none,file=disk3.qcow2 \
+            # --device ide-hd,drive=disk3 \
 
         install-on-beacon-vm = let
           pkgs = import nixpkgs {
@@ -109,11 +117,11 @@
 
         skarabox.hostname = "skarabox";
         skarabox.username = "skarabox";
-        skarabox.disks.rootDisk = "/dev/vda";
+        skarabox.disks.rootDisk = "/dev/nvme0n1";
         skarabox.disks.rootReservation = "500M";
-        skarabox.disks.enableDataPool = true;
-        skarabox.disks.dataDisk1 = "/dev/vdb";
-        skarabox.disks.dataDisk2 = "/dev/vdc";
+        skarabox.disks.enableDataPool = false;
+        skarabox.disks.dataDisk1 = "/dev/sda";
+        skarabox.disks.dataDisk2 = "/dev/sdb";
         skarabox.disks.dataReservation = "10G";
         skarabox.hostId = "12345678";
       };
