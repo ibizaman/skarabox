@@ -3,7 +3,8 @@
 in {
   users.users.nixos.initialHashedPassword = mkForce "$y$j9T$7EZvmryvlpTHSRG7dC5IU1$lBc/nePnkvqZ//jNpx/UpFKze/p6P7AIhJubK/Ghj68";
 
-  isoImage.isoName = mkForce "beacon.iso";
+  image.fileName = mkForce "beacon.iso";
+  image.baseName = mkForce "beacon";
 
   networking.firewall.allowedTCPPorts = [ 22 ];
 

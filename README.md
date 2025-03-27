@@ -95,6 +95,7 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 
    4. Note down the IP address and disk layout of the server.
       For that, follow the steps that appeared when booting on the USB stick.
+      To reprint the step, run the command `skarabox-help`.
 
 2. Connect to the installer and install
 
@@ -276,15 +277,17 @@ I do recommend using the sibling project [Self Host Blocks](https://github.com/i
 
 To start a VM with the beacon, run:
 
-```
-nix run .#beacon-test
+```bash
+nix run .#beacon-vm
 ```
 
 To test the installer, run:
 
+```bash
+nix run .#install-on-beacon-vm
 ```
-nix run .#nixos-anywhere -- --flake .#skarabox-test --vm-test
-```
+
+Password is `skarabox123`.
 
 ## Links
 
