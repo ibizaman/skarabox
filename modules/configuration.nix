@@ -26,7 +26,9 @@ in
 
     hostId = mkOption {
       type = types.str;
-      description = "8 characters unique identifier for this server. Generate with `uuidgen | head -c 8`.";
+      description = ''
+        8 characters unique identifier for this server. Generate with `uuidgen | head -c 8`.
+      '';
     };
 
     sshAuthorizedKeyFile = mkOption {
@@ -36,6 +38,20 @@ in
       '';
       example = "./ssh_skarabox.pub";
     };
+
+    setupLanWithDHCP = mkOption {
+      type = types.bool;
+      description = ''
+        Sets up a default IPV4 network on lan.
+
+        This should suit most needs but if not,
+        disable this and set it manually.
+        The [wiki][] is very useful.
+
+        [wiki]: https://wiki.nixos.org/wiki/Systemd/networkd
+      '';
+      default = true;
+    };
   };
 
   config = {
@@ -44,14 +60,16 @@ in
 
     networking.hostName = cfg.hostname;
     networking.hostId = cfg.hostId;
-      # TODO: this was a good idea but generating a new hostId every time is not what's needed. The
-      # generation should only happen once.
-      # (pkgs.lib.readFile ((pkgs.runCommand "hostid.sh" {}
-      #   ''
-      #     mkdir -p $out
-      #     ${pkgs.util-linux}/bin/uuidgen | head -c 8 > $out/hostid
-      #   '') + "/hostid"));
     networking.useDHCP = lib.mkDefault config.hardware.enableRedistributableFirmware;
+
+    # https://wiki.nixos.org/wiki/Systemd/networkd
+    systemd.network = lib.mkIf cfg.setupLanWithDHCP {
+      enable = true;
+      networks."10-lan" = {
+        matchConfig.Name = "en*";
+        networkConfig.DHCP = "ipv4";
+      };
+    };
 
     nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
     powerManagement.cpuFreqGovernor = "performance";
