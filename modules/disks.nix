@@ -85,6 +85,12 @@ in
       description = "Create the backup dataset.";
       default = true;
     };
+
+    networkCardKernelModules = mkOption {
+      type = types.listOf types.str;
+      description = "Kernel modules needed to active network card.";
+      default = [ "rtw88_8821ce" "r8169" ];
+    };
   };
 
   config = {
@@ -313,7 +319,9 @@ in
       zfs rollback -r ${cfg.rootPool}/local/root@blank
     '';
 
-    # From https://nixos.wiki/wiki/ZFS#Remote_unlock
+    boot.initrd.kernelModules = cfg.networkCardKernelModules;
+    boot.kernelModules = cfg.networkCardKernelModules;
+    # From https://wiki.nixos.org/wiki/ZFS#Remote_unlock
     boot.initrd.network = {
       # This will use udhcp to get an ip address. Make sure you have added the kernel module for your
       # network driver to `boot.initrd.availableKernelModules`, so your initrd can load it! Static ip
