@@ -60,7 +60,6 @@ in
 
     networking.hostName = cfg.hostname;
     networking.hostId = cfg.hostId;
-    networking.useDHCP = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
     # https://wiki.nixos.org/wiki/Systemd/networkd
     systemd.network = lib.mkIf cfg.setupLanWithDHCP {

@@ -319,6 +319,8 @@ in
       zfs rollback -r ${cfg.rootPool}/local/root@blank
     '';
 
+    # Needed for DHCP in initrd.
+    networking.useDHCP = true;
     boot.initrd.kernelModules = cfg.networkCardKernelModules;
     boot.kernelModules = cfg.networkCardKernelModules;
     # From https://wiki.nixos.org/wiki/ZFS#Remote_unlock
