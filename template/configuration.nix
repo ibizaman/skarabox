@@ -30,13 +30,8 @@ in
       skarabox.hostId = builtins.readFile ./hostid;
 
       hardware.enableAllHardware = true;
-      # Usually needed to be able to ssh to decrypt the SSD.
-      # You can try to remove but risk not being able to ssh in after a reboot.
-      boot.initrd.availableKernelModules = [
-        "rtw88_8821ce"
-        "r8169"
-      ];
       boot.initrd.network.ssh.port = 2222;
+
       sops.defaultSopsFile = ./secrets.yaml;
       sops.age = {
         sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
