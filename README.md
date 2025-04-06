@@ -15,6 +15,8 @@ It merely provides an opinionated way to make them all fit together for a seamle
 
 It has a [demo](#demo) which lets you install SkaraboxOS on a VM!
 
+[![Screencast of the steps outlined in the demo](https://img.youtube.com/vi/pXuKwhtC-0I/0.jpg)](https://www.youtube.com/watch?v=pXuKwhtC-0I)
+
 ## Why?
 
 Because the landscape of installing NixOS could be better and this repository is an attempt at that.
@@ -76,6 +78,9 @@ Following the steps WILL ERASE THE CONTENT of any disk on that server.
 This demo will install SkaraboxOS on a VM locally on your computer.
 The VM has 3 hard drives, one for the OS
 and two in raid 1 for the data.
+
+See the [introduction section](#skaraboxos)
+for a screencast of the steps outlined here.
 
 Launch the VM that listens on ports 2222 for normal ssh access
 and 2223 for ssh access during boot:
