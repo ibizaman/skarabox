@@ -320,7 +320,7 @@ in
     '';
 
     # Needed for DHCP in initrd.
-    networking.useDHCP = true;
+    networking.useDHCP = lib.mkDefault true;
     boot.initrd.kernelModules = cfg.networkCardKernelModules;
     boot.kernelModules = cfg.networkCardKernelModules;
     # From https://wiki.nixos.org/wiki/ZFS#Remote_unlock
