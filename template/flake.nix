@@ -59,7 +59,7 @@
         };
       in {
         hostname = builtins.readFile ./ip;
-        sshUser = self.nixosModules.skarabox.config.skarabox.username;
+        sshUser = self.nixosConfigurations.skarabox.config.skarabox.username;
         sshOpts = [ "-o" "IdentitiesOnly=yes" "-i" "ssh_skarabox" ];
         profiles = {
           system = {
