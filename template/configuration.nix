@@ -28,6 +28,7 @@ in
       skarabox.disks.dataReservation = "500G";  # Set to 5% of size Hard Drives.
       skarabox.sshAuthorizedKeyFile = ./ssh_skarabox.pub;
       skarabox.hostId = builtins.readFile ./hostid;
+      skarabox.setupLanWithDHCP = true;  # Set to false to override catch-all network configuration
 
       hardware.enableAllHardware = true;
       boot.initrd.network.ssh.port = 2222;
