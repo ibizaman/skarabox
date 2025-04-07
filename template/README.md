@@ -29,14 +29,14 @@ You will then be required to decrypt the hard drives as explained above.
 Modify the `./configuration.nix` file then run:
 
 ```bash
-nix run .#deploy-rs
+nix run .#deploy
 ```
 
 5. Update dependencies
 
 ```bash
 nix flake update
-nix run .#deploy-rs
+nix run .#deploy
 ```
 
 6. Edit secrets

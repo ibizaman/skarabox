@@ -24,6 +24,10 @@
 
         inherit (inputs.nixpkgs.legacyPackages) age usbimager util-linux ssh-to-age sops openssl;
       };
+
+      apps = {
+        deploy = inputs.deploy-rs.apps.x86_64-linux.deploy-rs;
+      };
     };
 
     flake = let
