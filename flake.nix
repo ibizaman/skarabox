@@ -126,13 +126,19 @@
           ${pkgs.openssh}/bin/ssh -p ''${2:-22} skarabox@''$1 -o IdentitiesOnly=yes -i ssh_skarabox
         '';
 
-        # nix run .#demo-ssh <ip> [<port>]
+        # nix run .#demo-ssh <ip> [<port> [<command> ...]]
         # nix run .#demo-ssh
         # nix run .#demo-ssh 127.0.0.1
         # nix run .#demo-ssh 127.0.0.1 2222
+        # nix run .#demo-ssh 127.0.0.1 2222 echo "hello from inside"
         # Intended to be run from the template.
         demo-ssh = pkgs.writeShellScriptBin "ssh.sh" ''
-          ${pkgs.openssh}/bin/ssh -p ''${2:-2222} skarabox@''${1:-127.0.0.1} -o IdentitiesOnly=yes -i ${sshPriv}
+          ip=$1
+          shift
+          port=$1
+          shift
+
+          ${pkgs.openssh}/bin/ssh -p ''${port:-2222} skarabox@''${ip:-127.0.0.1} -o IdentitiesOnly=yes -i ${sshPriv} $@
         '';
       };
 
