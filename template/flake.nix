@@ -22,7 +22,7 @@
       packages = {
         inherit (inputs'.skarabox.packages) beacon install-on-beacon ssh;
 
-        inherit (inputs.nixpkgs) age deploy-rs usbimager util-linux ssh-to-age sops openssl;
+        inherit (inputs.nixpkgs.legacyPackages) age usbimager util-linux ssh-to-age sops openssl;
       };
     };
 
