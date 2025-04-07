@@ -20,7 +20,7 @@
 
     perSystem = { inputs', ... }: {
       packages = {
-        inherit (inputs'.skarabox.packages) beacon beacon-vm install-on-beacon install-on-beacon-vm ssh ssh-vm;
+        inherit (inputs'.skarabox.packages) beacon install-on-beacon ssh;
 
         inherit (inputs.nixpkgs) age deploy-rs usbimager util-linux ssh-to-age sops openssl;
       };
@@ -44,7 +44,6 @@
           self.nixosModules.skarabox
         ];
       };
-      nixosConfigurations.skarabox-vm = skarabox.nixosConfigurations.skarabox-vm;
 
       # Used with deploy-rs for updates.
       deploy.nodes.skarabox = let
