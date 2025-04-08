@@ -26,13 +26,24 @@
       pkgs = import nixpkgs {
         system = "x86_64-linux";
       };
-      key = pkgs.runCommand "sharedkey" {} ''
+
+      demoSSHKey = pkgs.runCommand "sshkey" {} ''
         mkdir -p $out
         ${pkgs.openssh}/bin/ssh-keygen -N "" -t ed25519 -f $out/key
       '';
+      demoSSHPriv = "${demoSSHKey}/key";
+      demoSSHPub = "${demoSSHKey}/key.pub";
 
-      sshPriv = "${key}/key";
-      sshPub = "${key}/key.pub";
+      demoHostKey = pkgs.runCommand "hostkey" {} ''
+        mkdir -p $out
+        ${pkgs.openssh}/bin/ssh-keygen -N "" -t ed25519 -f $out/key
+      '';
+      demoHostKeyPriv = "${demoHostKey}/key";
+      demoKnownKeyFile = (pkgs.runCommand "knownhosts" {} ''
+        mkdir -p $out/.ssh
+        echo -n '* ' > $out/known_hosts
+        cat ${demoHostKey}/key.pub | ${pkgs.coreutils}/bin/cut -d' ' -f-2 >> $out/known_hosts
+      '') + "/known_hosts";
     in {
     systems = [
       "x86_64-linux"
@@ -55,6 +66,12 @@
               ];
 
               boot.loader.systemd-boot.enable = true;
+
+              services.openssh.hostKeys = pkgs.lib.mkForce [];
+              environment.etc."ssh/ssh_host_ed25519_key" = {
+                source = demoHostKeyPriv;
+                mode = "0600";
+              };
             })
           ];
         };
@@ -118,12 +135,17 @@
             nixos@''${1:-127.0.0.1}
         '';
 
-        # nix run .#ssh <ip> [<port>]
+        # nix run .#ssh <ip> [<port> [<command> ...]]
         # nix run .#ssh 192.168.1.10
         # nix run .#ssh 192.168.1.10 22
         # Intended to be run from the template.
         ssh = pkgs.writeShellScriptBin "ssh.sh" ''
-          ${pkgs.openssh}/bin/ssh -p ''${2:-22} skarabox@''$1 -o IdentitiesOnly=yes -i ssh_skarabox
+          ip=$1
+          shift
+          port=$1
+          shift
+
+          ${pkgs.openssh}/bin/ssh -p ''${port:-22} skarabox@''$ip -o IdentitiesOnly=yes -i ssh_skarabox $@
         '';
 
         # nix run .#demo-ssh <ip> [<port> [<command> ...]]
@@ -138,7 +160,9 @@
           port=$1
           shift
 
-          ${pkgs.openssh}/bin/ssh -p ''${port:-2222} skarabox@''${ip:-127.0.0.1} -o IdentitiesOnly=yes -i ${sshPriv} $@
+          set -x
+
+          ${pkgs.openssh}/bin/ssh -v -p ''${port:-2222} skarabox@''${ip:-127.0.0.1} -o IdentitiesOnly=yes -i ${demoSSHPriv} -o UserKnownHostsFile=${demoKnownKeyFile} $@
         '';
       };
 
@@ -178,7 +202,7 @@
         ];
         skarabox.hostname = "skarabox";
         skarabox.username = "skarabox";
-        skarabox.sshAuthorizedKeyFile = sshPub;
+        skarabox.sshAuthorizedKeyFile = demoSSHPub;
         skarabox.disks.rootDisk = "/dev/nvme0n1";
         skarabox.disks.rootReservation = "500M";
         skarabox.disks.enableDataPool = true;
