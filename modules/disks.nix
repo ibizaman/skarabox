@@ -1,4 +1,4 @@
-{ config, options, lib, ... }:
+{ config, options, lib, pkgs, ... }:
 let
   cfg = config.skarabox.disks;
   opt = options.skarabox.disks;
@@ -89,7 +89,7 @@ in
     networkCardKernelModules = mkOption {
       type = types.listOf types.str;
       description = "Kernel modules needed to active network card.";
-      default = [ "rtw88_8821ce" "r8169" ];
+      default = [];# [ "rtw88_8821ce" "r8169" ];
     };
   };
 
@@ -319,11 +319,17 @@ in
       zfs rollback -r ${cfg.rootPool}/local/root@blank
     '';
 
+    hardware.enableAllHardware = true;
+    hardware.firmware = [ pkgs.linux-firmware ];
+
     # Needed for DHCP in initrd.
-    networking.useDHCP = lib.mkDefault true;
+    # networking.useDHCP = lib.mkDefault true;
     boot.initrd.kernelModules = cfg.networkCardKernelModules;
     boot.kernelModules = cfg.networkCardKernelModules;
     # From https://wiki.nixos.org/wiki/ZFS#Remote_unlock
+    boot.kernelParams = [ "ip=dhcp" "rd.systemd.debug_shell" ];
+    boot.initrd.systemd.additionalUpstreamUnits = ["debug-shell.service"];
+    boot.initrd.systemd.enable = true;
     boot.initrd.network = {
       # This will use udhcp to get an ip address. Make sure you have added the kernel module for your
       # network driver to `boot.initrd.availableKernelModules`, so your initrd can load it! Static ip
