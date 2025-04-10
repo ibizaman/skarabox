@@ -28,8 +28,17 @@ in
       skarabox.disks.dataReservation = "500G";  # Set to 5% of size Hard Drives.
       skarabox.sshAuthorizedKeyFile = ./ssh_skarabox.pub;
       skarabox.hostId = builtins.readFile ./hostid;
-      skarabox.setupLanWithDHCP = true;  # Set to false to override catch-all network configuration
+      skarabox.setupLanWithDHCP = true;  # Set to false to disable the catch-all network configuration from skarabox and instead set your own
 
+      # This setting is needed if the ssh server does not start on boot.
+      # The default sets a large panel of drivers so it might be enough.
+      # If not, to find out which driver you need, run:
+      #   nix shell nixpkgs#pciutils --command lspci -v | grep -iA8 'network\|ethernet'
+      # For example: skarabox.disks.networkCardKernelModules = [ "e1000" ];
+      # skarabox.disks.networkCardKernelModules = [  ];
+
+      # You can remove this line and enable firmwares one by one
+      # but only do this if you know what you're doing.
       hardware.enableAllHardware = true;
       boot.initrd.network.ssh.port = 2222;
 

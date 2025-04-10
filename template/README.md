@@ -10,6 +10,10 @@ Follow the steps outlined at https://github.com/ibizaman/skarabox?tab=readme-ov-
 
 1. Decrypt root pool after boot
 
+```bash
+$ ssh -p 2222 root@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
+```
+
 2. Login
 
 ```bash

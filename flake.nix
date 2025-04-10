@@ -188,13 +188,17 @@
           user=$1
           shift
 
-          set -x
+          mkdir -p .skarabox-demo
+          key=.skarabox-demo/key
+          cp ${demoSSHPriv} "$key"
+          chmod 600 "$key"
 
-          ${pkgs.openssh}/bin/ssh -v \
+          ${pkgs.openssh}/bin/ssh \
             -p ''${port:-2222} \
             ''${user:-skarabox}@''${ip:-127.0.0.1} \
             -o IdentitiesOnly=yes \
-            -i ${demoSSHPriv} \
+            -o ConnectTimeout=10 \
+            -i "$key" \
             -o UserKnownHostsFile=${demoKnownKeyFile} \
             $@
         '';
@@ -243,6 +247,8 @@
         skarabox.disks.dataDisk1 = "/dev/sda";
         skarabox.disks.dataDisk2 = "/dev/sdb";
         skarabox.disks.dataReservation = "10G";
+        # e1000 found by running lspci -v | grep -iA8 'network\|ethernet' in the beacon VM
+        skarabox.disks.networkCardKernelModules = [ "e1000" ];
         skarabox.hostId = "12345678";
       };
 
