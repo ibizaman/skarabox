@@ -99,12 +99,15 @@ install SkaraboxOS on the VM with:
 nix run github:ibizaman/skarabox#demo-install-on-beacon 127.0.0.1 2222
 ```
 
-When you see the line `(nixos@127.0.0.1) Password:`, enter `skarabox123`.
-
 Then when the system reboots - actually every time it will boot -
 you will be prompted with `Enter passphrase for 'root'` which
 waits for the passphrase to decrypt the root partition.
-Enter `rootpassphrase` (yes, I know, it's original :D).
+The password is `rootpassphrase` (yes, I know, it's original :D).
+but don't enter it through the VM, we can ssh in to enter it:
+
+```bash
+printf "rootpassphrase" | nix run github:ibizaman/skarabox#demo-ssh 127.0.0.1 2223 root
+```
 
 When that's done, the boot up will continue and you will see the prompt
 `skarabox login`. Enter `skarabox` as username and `skarabox123` as password.
