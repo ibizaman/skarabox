@@ -323,7 +323,7 @@ in
     hardware.firmware = [ pkgs.linux-firmware ];
 
     # Enables DHCP in stage-1 even if networking.useDHCP is false.
-    boot.initrd.network.udhcpc.enable = lib.mkDefault config.skarabox.setupLanWithDHCP;
+    boot.initrd.network.udhcpc.enable = lib.mkDefault true;
     boot.initrd.availableKernelModules = cfg.networkCardKernelModules;
     # From https://wiki.nixos.org/wiki/ZFS#Remote_unlock
     boot.initrd.network = {
