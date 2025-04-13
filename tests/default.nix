@@ -33,11 +33,19 @@
     ${nix} run ${../.}#demo-install-on-beacon 127.0.0.1 2222 ${../.}
     e "Installation succeeded."
 
+    e "Decrypting root dataset."
+    printf "rootpassphrase" | ${nix} run ${../.}#demo-ssh 127.0.0.1 2223 root
+    e "Decryption done."
+
     e "Rebooting to confirm we can connect after a reboot."
     ${nix} run ${../.}#demo-ssh 127.0.0.1 2222 skarabox sudo reboot
     e "Rebooting in progress."
 
-    e "Shutting down"
+    e "Decrypting root dataset."
+    printf "rootpassphrase" | ${nix} run ${../.}#demo-ssh 127.0.0.1 2223 root
+    e "Decryption done."
+
+    e "Connecting and shutting down"
     ${nix} run ${../.}#demo-ssh 127.0.0.1 2222 skarabox sudo shutdown
     e "Shutdown complete."
   '');
