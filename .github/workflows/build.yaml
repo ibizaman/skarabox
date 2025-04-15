@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-matrix:
+  demo:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
