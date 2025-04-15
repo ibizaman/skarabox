@@ -27,24 +27,15 @@
         system = "x86_64-linux";
       };
 
-      demoSSHKey = pkgs.runCommand "sshkey" {} ''
-        mkdir -p $out
-        ${pkgs.openssh}/bin/ssh-keygen -N "" -t ed25519 -f $out/key
-        chmod 400 $out/key
-        chmod 400 $out/key.pub
-      '';
-      demoSSHPriv = "${demoSSHKey}/key";
-      demoSSHPub = "${demoSSHKey}/key.pub";
+      demoSSHPriv = ./tests/one;
+      demoSSHPub = ./tests/one.pub;
 
-      demoHostKey = pkgs.runCommand "hostkey" {} ''
-        mkdir -p $out
-        ${pkgs.openssh}/bin/ssh-keygen -N "" -t ed25519 -f $out/key
-      '';
-      demoHostKeyPriv = "${demoHostKey}/key";
+      demoHostKeyPriv = ./tests/two;
+      demoHostKeyPub = ./tests/two.pub;
       demoKnownKeyFile = (pkgs.runCommand "knownhosts" {} ''
         mkdir -p $out/.ssh
         echo -n '* ' > $out/known_hosts
-        cat ${demoHostKey}/key.pub | ${pkgs.coreutils}/bin/cut -d' ' -f-2 >> $out/known_hosts
+        cat ${demoHostKeyPub} | ${pkgs.coreutils}/bin/cut -d' ' -f-2 >> $out/known_hosts
       '') + "/known_hosts";
     in {
     systems = [
