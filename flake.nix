@@ -185,6 +185,7 @@
           chmod 600 "$key"
 
           ${pkgs.openssh}/bin/ssh \
+            -F none \
             -p ''${port:-2222} \
             ''${user:-skarabox}@''${ip:-127.0.0.1} \
             -o IdentitiesOnly=yes \
