@@ -11,6 +11,8 @@
       echo -e "\e[1;31mSKARABOX-DEMO:\e[0m \e[1;0m$@\e[0m"
     }
 
+    set -x
+
     # Kills all children bash processes,
     # like the one that will run in the background hereunder.
     # https://stackoverflow.com/a/2173421/1013628
