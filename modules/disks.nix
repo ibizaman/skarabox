@@ -1,4 +1,4 @@
-{ config, options, lib, ... }:
+{ config, options, lib, pkgs, ... }:
 let
   cfg = config.skarabox.disks;
   opt = options.skarabox.disks;
@@ -89,7 +89,7 @@ in
     networkCardKernelModules = mkOption {
       type = types.listOf types.str;
       description = "Kernel modules needed to active network card.";
-      default = [ "rtw88_8821ce" "r8169" ];
+      default = [ "e1000" "e1000e" "igb" "rtw88_8821ce" "r8169" ];
     };
   };
 
@@ -106,6 +106,7 @@ in
           mountOptions = [ "umask=0077" ];
           # Copy the host_key needed for initrd in a location accessible on boot.
           # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
+          # We're using the same host key because, well, it's the same host!
           postMountHook = ''
             cp /etc/ssh/ssh_host_ed25519_key /mnt/boot/host_key
           '';
@@ -319,10 +320,11 @@ in
       zfs rollback -r ${cfg.rootPool}/local/root@blank
     '';
 
-    # Needed for DHCP in initrd.
-    networking.useDHCP = lib.mkDefault true;
-    boot.initrd.kernelModules = cfg.networkCardKernelModules;
-    boot.kernelModules = cfg.networkCardKernelModules;
+    hardware.firmware = [ pkgs.linux-firmware ];
+
+    # Enables DHCP in stage-1 even if networking.useDHCP is false.
+    boot.initrd.network.udhcpc.enable = lib.mkDefault true;
+    boot.initrd.availableKernelModules = cfg.networkCardKernelModules;
     # From https://wiki.nixos.org/wiki/ZFS#Remote_unlock
     boot.initrd.network = {
       # This will use udhcp to get an ip address. Make sure you have added the kernel module for your
@@ -332,12 +334,19 @@ in
       enable = true;
       ssh = {
         enable = true;
-        # To prevent ssh clients from freaking out because a different host key is used, a different
-        # port for ssh is used.
+        # To prevent ssh clients from freaking out because a different host key is used,
+        # a different port for ssh is used.
         port = lib.mkDefault 2222;
         hostKeys = [ "/boot/host_key" ];
-        # public ssh key used for login
-        authorizedKeys = [ (builtins.readFile config.skarabox.sshAuthorizedKeyFile) ];
+        # Public ssh key used for login.
+        # This should contain just one line and removing the trailing
+        # newline could be fixed with a removeSuffix call but treating
+        # it as a file containing multiple lines makes this forward compatible.
+        authorizedKeys = let
+          f = builtins.readFile config.skarabox.sshAuthorizedKeyFile;
+          keys = lib.remove "" (lib.splitString "\n" f);
+        in
+          keys;
       };
 
       postCommands = ''

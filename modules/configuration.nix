@@ -112,11 +112,19 @@ in
       pkgs.curl
     ];
 
-    services.openssh.enable = true;
-    services.openssh.settings = {
-      PermitRootLogin = "no";
-      PasswordAuthentication = false;
+    services.openssh = {
+      enable = true;
+      settings = {
+        PermitRootLogin = "no";
+        PasswordAuthentication = false;
+      };
+      # Empty to not let sshd generate any host key
+      # since we'll supply it ourselves.
+      hostKeys = [];
     };
+    systemd.services.sshd.preStart = ''
+      cp /boot/host_key /etc/ssh/ssh_host_ed25519_key
+    '';
 
     system.stateVersion = "23.11";
   };
