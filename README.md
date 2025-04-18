@@ -53,12 +53,12 @@ This is for Self Host Blocks.
 
 ## Installation Process Overview
 
-1. Download the flake template.
+1. Download the flake template
+   which automatically generates secrets.
 2. Generate a ISO and format a USB key.
 3. Boot server on USB key and get its IP address.
-4. Generate secrets on laptop, update some default values.
-5. Run installer from laptop.
-6. Done!
+4. Run installer from laptop.
+5. Done!
 
 At the end of the process, the server will:
 - Have an encrypted ZFS root partition using the NVMe drive, unlockable remotely through ssh.
