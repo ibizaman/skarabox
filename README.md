@@ -179,27 +179,10 @@ $ nix flake init --template github:ibizaman/skarabox
    Run the following command.
 
    ```bash
-   $ ssh -p 2222 root@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
+   $ nix run .#boot-ssh
    ```
 
-   It will prompt you a first time to verify the key fingerprint.
-
-   ```bash
-   The authenticity of host '[<ip>]:2222 ([<ip>]:2222)' can't be established.
-   ED25519 key fingerprint is SHA256:<redacted>.
-   This key is not known by any other names.
-   Are you sure you want to continue connecting (yes/no/[fingerprint])?
-   ```
-
-   Just enter `"yes"` followed by pressing on the Enter key.
-   Next time the server will boot, you will not need to do this step.
-
-   ```bash
-   Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-   Warning: Permanently added '[<ip>]:2222' (ED25519) to the list of known hosts.
-   ```
-
-   You will be prompted a second time, this time to enter the root passphrase.
+   You will be prompted to enter the root passphrase.
    Copy the content of the `root_passphrase` file and paste it and press Enter.
    No `*` will appear upon pasting but just press Enter.
 
@@ -216,8 +199,11 @@ $ nix flake init --template github:ibizaman/skarabox
 
    Now, the hard drives are decrypted and the server continues to boot.
 
-   It's a good idea to make sure you can login correctly, at least the first time.
-   See next section.
+   It's a good idea to make sure you can SSH in correctly, at least the first time:
+
+   ```bash
+   nix run .#ssh
+   ```
 
 ## Normal Operations
 

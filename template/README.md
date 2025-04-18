@@ -11,19 +11,21 @@ Follow the steps outlined at https://github.com/ibizaman/skarabox?tab=readme-ov-
 1. Decrypt root pool after boot
 
 ```bash
-$ ssh -p 2222 root@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
+nix run .#boot-ssh
 ```
+
+Then, enter the `./root_passphrase`.
 
 2. Login
 
 ```bash
-$ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
+nix run .#ssh
 ```
 
 3. Reboot
 
 ```bash
-$ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox reboot
+nix run .#ssh sudo reboot
 ```
 
 You will then be required to decrypt the hard drives as explained above.
@@ -109,11 +111,7 @@ Usually, connecting to it is done by entering one of the following IP addresses 
 To check if this setup works,
 you can connect to another network (like using the tethered connection from your phone or connecting to another WiFi network)
 and then ssh into your server like above,
-but instead of using the IP address, use the domain name:
-
-```bash
-$ ssh -p 22 skarabox@<domainname> -o IdentitiesOnly=yes -i ssh_skarabox
-```
+but instead of using the IP address, use the domain name in `./ip`.
 
 ### Add Services
 

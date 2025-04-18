@@ -41,7 +41,11 @@ in
       # You can remove this line and enable firmwares one by one
       # but only do this if you know what you're doing.
       hardware.enableAllHardware = true;
-      boot.initrd.network.ssh.port = 2222;
+      services.openssh.ports = [
+        (lib.toInt (builtins.readFile ./ssh_port))
+      ];
+      # For security by obscurity, we choose another ssh port here than the default 22.
+      boot.initrd.network.ssh.port = lib.toInt (builtins.readFile ./ssh_boot_port);
 
       sops.defaultSopsFile = ./secrets.yaml;
       sops.age = {
