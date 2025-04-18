@@ -30,10 +30,11 @@ in
       skarabox.hostId = builtins.readFile ./hostid;
       skarabox.setupLanWithDHCP = true;  # Set to false to disable the catch-all network configuration from skarabox and instead set your own
 
-      # This setting is needed if the ssh server does not start on boot.
-      # The default sets a large panel of drivers so it might be enough.
-      # If not, to find out which driver you need, run:
+      # This setting is needed if the ssh server does not start on boot in stage-1,
+      # to decrypt the root partition.
+      # If not, to find out which driver you need, run on the machine you want to install:
       #   nix shell nixpkgs#pciutils --command lspci -v | grep -iA8 'network\|ethernet'
+      # Running this command works if you boot the server on the beacon too.
       # For example: skarabox.disks.networkCardKernelModules = [ "e1000" ];
       # skarabox.disks.networkCardKernelModules = [  ];
 
