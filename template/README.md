@@ -6,6 +6,32 @@ This repository originates from https://github.com/ibizaman/skarabox.
 
 Follow the steps outlined at https://github.com/ibizaman/skarabox?tab=readme-ov-file#installation once.
 
+## Test on a VM
+
+Assuming the `configuration.nix` file is left untouched,
+after generating all needed files,
+you can test the installation process on a VM.
+This VM has 3 hard drives, one for the OS
+and two in raid for the data.
+
+To do that, first start the VM:
+
+```bash
+echo 2222 > ssh_port
+echo 2223 > ssh_boot_port
+nix run .#demo-beacon 2222 2223
+```
+
+Then start the installation process:
+
+
+```bash
+nix run .#install-on-beacon 127.0.0.1 2222 .#skarabox
+```
+
+When the VM rebooted, you'll need to decrypt the root partition
+as explained in the next section.
+
 ## Normal Operations
 
 1. Decrypt root pool after boot

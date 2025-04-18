@@ -170,8 +170,6 @@ $ nix flake init --template github:ibizaman/skarabox
    $ nix run .#install-on-beacon <ip> 22 .#skarabox
    ```
 
-   You will be prompted for a password, enter "skarabox123" without the double quotes.
-
    2. The server will reboot into NixOS on its own.
 
    3. Decrypt the SSD and the Hard Drives.
