@@ -27,15 +27,15 @@
         system = "x86_64-linux";
       };
 
-      demoSSHPriv = ./tests/one;
-      demoSSHPub = ./tests/one.pub;
+      beaconSSHPriv = ./tests/one;
+      beaconSSHPub = ./tests/one.pub;
 
-      demoHostKeyPriv = ./tests/two;
-      demoHostKeyPub = ./tests/two.pub;
-      demoKnownKeyFile = (pkgs.runCommand "knownhosts" {} ''
+      beaconHostKeyPriv = ./tests/two;
+      beaconHostKeyPub = ./tests/two.pub;
+      beaconKnownKeyFile = (pkgs.runCommand "knownhosts" {} ''
         mkdir -p $out/.ssh
         echo -n '* ' > $out/known_hosts
-        cat ${demoHostKeyPub} | ${pkgs.coreutils}/bin/cut -d' ' -f-2 >> $out/known_hosts
+        cat ${beaconHostKeyPub} | ${pkgs.coreutils}/bin/cut -d' ' -f-2 >> $out/known_hosts
       '') + "/known_hosts";
     in {
     systems = [
@@ -111,42 +111,40 @@
             $@
           '');
 
-        # nix run .#install-on-beacon <flake> <ip> [<port>]
-        # nix run .#install-on-beacon skarabox 192.168.1.10
-        # nix run .#install-on-beacon skarabox 192.168.1.10 22
+        # nix run .#install-on-beacon <ip> <port> <flake>
+        # nix run .#install-on-beacon 192.168.1.10 22 .#skarabox
         # Intended to be run from the template.
         install-on-beacon = pkgs.writeShellScriptBin "runner.sh" ''
-          ${inputs'.nixos-anywhere.packages.nixos-anywhere}/bin/nixos-anywhere \
-            --flake .#$1 \
-            --disk-encryption-keys /tmp/root_passphrase root_passphrase \
-            --disk-encryption-keys /tmp/data_passphrase data_passphrase \
-            --ssh-port ''${3:-22} \
-            nixos@''$2
-        '';
-
-        # nix run .#demo-install-on-beacon <flake> [<ip> [<port>]]
-        # nix run .#demo-install-on-beacon
-        # nix run .#demo-install-on-beacon 127.0.0.1
-        # nix run .#demo-install-on-beacon 127.0.0.1 2222
-        # nix run .#demo-install-on-beacon 127.0.0.1 2222 ../skarabox
-        # Intended to be run from the template.
-        demo-install-on-beacon = pkgs.writeShellScriptBin "runner.sh" ''
           mkdir -p .skarabox-tmp
           key=.skarabox-tmp/key
-          cp ${demoSSHPriv} "$key"
+          cp ${beaconSSHPriv} "$key"
           chmod 600 "$key"
 
+          if [ -f root_passphrase ]; then
+            root_passphrase=root_passphrase
+          else
+            root_passphrase=.skarabox-tmp/root_passphrase
+            echo rootpassphrase > $root_passphrase
+          fi
+
+          if [ -f data_passphrase ]; then
+            data_passphrase=data_passphrase
+          else
+            data_passphrase=.skarabox-tmp/data_passphrase
+            echo datapassphrase > $data_passphrase
+          fi
+
           ${inputs'.nixos-anywhere.packages.nixos-anywhere}/bin/nixos-anywhere \
-            --flake ''${3:-github:ibizaman/skarabox}#demo-skarabox \
-            --disk-encryption-keys /tmp/root_passphrase <(echo rootpassphrase) \
-            --disk-encryption-keys /tmp/data_passphrase <(echo datapassphrase) \
+            --flake $3 \
+            --disk-encryption-keys /tmp/root_passphrase $root_passphrase \
+            --disk-encryption-keys /tmp/data_passphrase $data_passphrase \
             -i "$key" \
-            --ssh-option "UserKnownHostsFile=${demoKnownKeyFile}" \
-            --ssh-port ''${2:-2222} \
-            nixos@''${1:-127.0.0.1}
+            --ssh-option "UserKnownHostsFile=${beaconKnownKeyFile}" \
+            --ssh-port ''$2 \
+            nixos@''$1
         '';
 
-        # nix run .#ssh <ip> [<port> [<command> ...]]
+        # nix run .#ssh <ip> [<port> [<user> [<command> ...]]]
         # nix run .#ssh 192.168.1.10
         # nix run .#ssh 192.168.1.10 22
         # Intended to be run from the template.
@@ -155,23 +153,25 @@
           shift
           port=$1
           shift
+          user=$1
+          shift
 
           ${pkgs.openssh}/bin/ssh \
             -p ''${port:-22} \
-            skarabox@''$ip \
+            ''${user:-skarabox}@''$ip \
             -o IdentitiesOnly=yes \
             -i ssh_skarabox \
             $@
         '';
 
-        # nix run .#demo-ssh <ip> [<port> [<user> [<command> ...]]]
-        # nix run .#demo-ssh
-        # nix run .#demo-ssh 127.0.0.1
-        # nix run .#demo-ssh 127.0.0.1 2222
-        # nix run .#demo-ssh 127.0.0.1 2222 nixos
-        # nix run .#demo-ssh 127.0.0.1 2222 echo "hello from inside"
+        # nix run .#beacon-ssh <ip> [<port> [<user> [<command> ...]]]
+        # nix run .#beacon-ssh
+        # nix run .#beacon-ssh 127.0.0.1
+        # nix run .#beacon-ssh 127.0.0.1 2222
+        # nix run .#beacon-ssh 127.0.0.1 2222 nixos
+        # nix run .#beacon-ssh 127.0.0.1 2222 echo "hello from inside"
         # Intended to be run from the template.
-        demo-ssh = pkgs.writeShellScriptBin "ssh.sh" ''
+        beacon-ssh = pkgs.writeShellScriptBin "ssh.sh" ''
           ip=$1
           shift
           port=$1
@@ -181,7 +181,7 @@
 
           mkdir -p .skarabox-tmp
           key=.skarabox-tmp/key
-          cp ${demoSSHPriv} "$key"
+          cp ${beaconSSHPriv} "$key"
           chmod 600 "$key"
 
           ${pkgs.openssh}/bin/ssh \
@@ -191,13 +191,13 @@
             -o IdentitiesOnly=yes \
             -o ConnectTimeout=10 \
             -i "$key" \
-            -o UserKnownHostsFile=${demoKnownKeyFile} \
+            -o UserKnownHostsFile=${beaconKnownKeyFile} \
             $@
         '';
       };
 
       checks = import ./tests {
-        inherit pkgs inputs;
+        inherit pkgs inputs system;
       };
     };
 
@@ -232,7 +232,7 @@
         ];
         skarabox.hostname = "skarabox";
         skarabox.username = "skarabox";
-        skarabox.sshAuthorizedKeyFile = demoSSHPub;
+        skarabox.sshAuthorizedKeyFile = beaconSSHPub;
         skarabox.disks.rootDisk = "/dev/nvme0n1";
         skarabox.disks.rootReservation = "500M";
         skarabox.disks.enableDataPool = true;

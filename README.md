@@ -96,7 +96,7 @@ When the installer did boot up and you see the `[nixos@nixos:~]$` prompt,
 install SkaraboxOS on the VM with:
 
 ```bash
-nix run github:ibizaman/skarabox#demo-install-on-beacon 127.0.0.1 2222
+nix run github:ibizaman/skarabox#install-on-beacon 127.0.0.1 2222 github:ibizaman/skarabox
 ```
 
 Then when the system reboots - actually every time it will boot -
@@ -106,7 +106,7 @@ The password is `rootpassphrase` (yes, I know, it's original :D).
 but don't enter it through the VM, we can ssh in to enter it:
 
 ```bash
-printf "rootpassphrase" | nix run github:ibizaman/skarabox#demo-ssh 127.0.0.1 2223 root
+printf "rootpassphrase" | nix run github:ibizaman/skarabox#beacon-ssh 127.0.0.1 2223 root
 ```
 
 When that's done, the boot up will continue and you will see the prompt
@@ -117,7 +117,7 @@ Now you're logged into the VM on a brand new SkaraboxOS installation!
 You can test accessing through ssh with:
 
 ```
-nix run github:ibizaman/skarabox#demo-ssh 127.0.0.1 2222
+nix run github:ibizaman/skarabox#beacon-ssh 127.0.0.1 2222
 ```
 
 ## Installation
@@ -167,7 +167,7 @@ $ nix flake init --template github:ibizaman/skarabox
    1. Run the following command replacing `<ip>` with the IP address you got in the previous step.
 
    ```bash
-   $ nix run .#install-on-beacon skarabox <ip>
+   $ nix run .#install-on-beacon <ip> 22 .#skarabox
    ```
 
    You will be prompted for a password, enter "skarabox123" without the double quotes.
