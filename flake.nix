@@ -82,11 +82,11 @@
           nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
           qemu = nixos-qemu.qemuBinary pkgs.qemu;
         in (pkgs.writeShellScriptBin "runner.sh" ''
-          disk1=.skarabox-demo/disk1.qcow2
-          disk2=.skarabox-demo/disk2.qcow2
-          disk3=.skarabox-demo/disk3.qcow2
+          disk1=.skarabox-tmp/disk1.qcow2
+          disk2=.skarabox-tmp/disk2.qcow2
+          disk3=.skarabox-tmp/disk3.qcow2
 
-          mkdir -p .skarabox-demo
+          mkdir -p .skarabox-tmp
           for d in $disk1 $disk2 $disk3; do
             [ ! -f $d ] && ${pkgs.qemu}/bin/qemu-img create -f qcow2 $d 20G
           done
@@ -131,8 +131,8 @@
         # nix run .#demo-install-on-beacon 127.0.0.1 2222 ../skarabox
         # Intended to be run from the template.
         demo-install-on-beacon = pkgs.writeShellScriptBin "runner.sh" ''
-          mkdir -p .skarabox-demo
-          key=.skarabox-demo/key
+          mkdir -p .skarabox-tmp
+          key=.skarabox-tmp/key
           cp ${demoSSHPriv} "$key"
           chmod 600 "$key"
 
@@ -179,8 +179,8 @@
           user=$1
           shift
 
-          mkdir -p .skarabox-demo
-          key=.skarabox-demo/key
+          mkdir -p .skarabox-tmp
+          key=.skarabox-tmp/key
           cp ${demoSSHPriv} "$key"
           chmod 600 "$key"
 

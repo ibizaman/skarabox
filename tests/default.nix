@@ -4,7 +4,7 @@ let
 in
 {
   demo = pkgs.writeShellScriptBin "demo-test" ''
-    rm -rf .skarabox-demo
+    rm -rf .skarabox-tmp
 
     set -e
 
