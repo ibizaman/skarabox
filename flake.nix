@@ -44,7 +44,7 @@
     ];
     perSystem = { self', inputs', pkgs, system, ... }: {
       packages = {
-        # nix run .#beacon
+        # nix build .#beacon
         # Intended to be run from the template.
         beacon = nixos-generators.nixosGenerate {
           inherit system;
@@ -52,26 +52,12 @@
 
           modules = [
             ./modules/beacon.nix
+            self.nixosModules.beacon
             ({ modulesPath, ... }: {
               imports = [
                 (modulesPath + "/profiles/qemu-guest.nix")
-                (modulesPath + "/profiles/minimal.nix")
               ];
-
-              boot.loader.systemd-boot.enable = true;
             })
-            { # Set shared host key
-              services.openssh.hostKeys = pkgs.lib.mkForce [];
-              environment.etc."ssh/ssh_host_ed25519_key" = {
-                source = demoHostKeyPriv;
-                mode = "0600";
-              };
-            }
-            { # Set shared ssh key
-              users.users."nixos" = {
-                openssh.authorizedKeys.keyFiles = [ demoSSHPub ];
-              };
-            }
           ];
         };
 
@@ -209,6 +195,31 @@
         };
 
         default = self.templates.skarabox;
+      };
+
+      nixosModules.beacon = {
+        imports = [
+          ./modules/beacon.nix
+          ({ modulesPath, ... }: {
+            imports = [
+              (modulesPath + "/profiles/minimal.nix")
+            ];
+
+            boot.loader.systemd-boot.enable = true;
+          })
+          { # Set shared host key
+            services.openssh.hostKeys = pkgs.lib.mkForce [];
+            environment.etc."ssh/ssh_host_ed25519_key" = {
+              source = beaconHostKeyPriv;
+              mode = "0600";
+            };
+          }
+          { # Set shared ssh key
+            users.users."nixos" = {
+              openssh.authorizedKeys.keyFiles = [ beaconSSHPub ];
+            };
+          }
+        ];
       };
 
       nixosModules.skarabox = {
