@@ -44,6 +44,10 @@
     ];
     perSystem = { self', inputs', pkgs, system, ... }: {
       packages = {
+        inherit (inputs'.nixpkgs.legacyPackages) age util-linux openssl openssh;
+
+        init = import ./modules/initialgen.nix { inherit pkgs; };
+
         # nix build .#beacon
         # Intended to be run from the template.
         beacon = nixos-generators.nixosGenerate {
