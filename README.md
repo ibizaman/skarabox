@@ -14,8 +14,7 @@ This repository does not invent any of those wonderful tools.
 It merely provides an opinionated way to make them all fit together for a seamless experience.
 
 It has a [demo](#demo) which lets you install SkaraboxOS on a VM!
-
-[![Screencast of the steps outlined in the demo](https://img.youtube.com/vi/pXuKwhtC-0I/0.jpg)](https://www.youtube.com/watch?v=pXuKwhtC-0I)
+The demo even has a screencast.
 
 ## Why?
 
@@ -79,8 +78,9 @@ This demo will install SkaraboxOS on a VM locally on your computer.
 The VM has 3 hard drives, one for the OS
 and two in raid 1 for the data.
 
-See the [introduction section](#skaraboxos)
-for a screencast of the steps outlined here.
+Here's a screencast of it:
+
+[![Screencast of the steps outlined in the demo](https://img.youtube.com/vi/pXuKwhtC-0I/0.jpg)](https://www.youtube.com/watch?v=pXuKwhtC-0I)
 
 Launch the VM that listens on ports 2222 for normal ssh access
 and 2223 for ssh access during boot:
