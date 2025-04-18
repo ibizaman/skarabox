@@ -1,8 +1,9 @@
 { inputs, pkgs }:
+let
+  nix = "${pkgs.nix}/bin/nix --extra-experimental-features nix-command -L";
+in
 {
-  vm = pkgs.writeShellScriptBin "vm-test" (let
-    nix = "${pkgs.nix}/bin/nix --extra-experimental-features nix-command -L";
-  in ''
+  demo = pkgs.writeShellScriptBin "demo-test" ''
     rm -rf .skarabox-demo
 
     set -e
