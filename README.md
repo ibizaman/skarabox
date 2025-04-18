@@ -213,6 +213,13 @@ Those can be found in the template's [readme](./template/README.md).
 
 Contributions are very welcomed!
 
+To push to the cache, run for example:
+
+```
+nix build --no-link --print-out-paths .#packages.x86_64-linux.demo-beacon  \
+  | nix run nixpkgs#cachix push selfhostblocks
+```
+
 ## Links
 
 - https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/profiles/installation-device.nix
