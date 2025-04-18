@@ -93,6 +93,8 @@ in
     # https://stackoverflow.com/a/2173421/1013628
     # trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
+    cd $(mktemp -d)
+
     e "Initialising template"
     ${nix} run ${../.}#init -- -y
     ${nix} flake update --override-input skarabox ${../.} skarabox
