@@ -20,7 +20,7 @@ jobs:
         with:
           name: selfhostblocks
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - name: Run Demo
+      - name: Run demo test
         run: |
           nix run .#checks.x86_64-linux.demo
 
@@ -39,6 +39,6 @@ jobs:
         with:
           name: selfhostblocks
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - name: Run Demo
+      - name: Run template test
         run: |
           nix run .#checks.x86_64-linux.template
