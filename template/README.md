@@ -6,24 +6,52 @@ This repository originates from https://github.com/ibizaman/skarabox.
 
 Follow the steps outlined at https://github.com/ibizaman/skarabox?tab=readme-ov-file#installation once.
 
+## Test on a VM
+
+Assuming the `configuration.nix` file is left untouched,
+after generating all needed files,
+you can test the installation process on a VM.
+This VM has 3 hard drives, one for the OS
+and two in raid for the data.
+
+To do that, first start the VM:
+
+```bash
+echo 2222 > ssh_port
+echo 2223 > ssh_boot_port
+nix run .#demo-beacon 2222 2223
+```
+
+Then start the installation process:
+
+
+```bash
+nix run .#install-on-beacon 127.0.0.1 2222 .#skarabox
+```
+
+When the VM rebooted, you'll need to decrypt the root partition
+as explained in the next section.
+
 ## Normal Operations
 
 1. Decrypt root pool after boot
 
 ```bash
-$ ssh -p 2222 root@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
+nix run .#boot-ssh
 ```
+
+Then, enter the `./root_passphrase`.
 
 2. Login
 
 ```bash
-$ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
+nix run .#ssh
 ```
 
 3. Reboot
 
 ```bash
-$ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox reboot
+nix run .#ssh sudo reboot
 ```
 
 You will then be required to decrypt the hard drives as explained above.
@@ -109,11 +137,7 @@ Usually, connecting to it is done by entering one of the following IP addresses 
 To check if this setup works,
 you can connect to another network (like using the tethered connection from your phone or connecting to another WiFi network)
 and then ssh into your server like above,
-but instead of using the IP address, use the domain name:
-
-```bash
-$ ssh -p 22 skarabox@<domainname> -o IdentitiesOnly=yes -i ssh_skarabox
-```
+but instead of using the IP address, use the domain name in `./ip`.
 
 ### Add Services
 

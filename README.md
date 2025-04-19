@@ -14,8 +14,7 @@ This repository does not invent any of those wonderful tools.
 It merely provides an opinionated way to make them all fit together for a seamless experience.
 
 It has a [demo](#demo) which lets you install SkaraboxOS on a VM!
-
-[![Screencast of the steps outlined in the demo](https://img.youtube.com/vi/pXuKwhtC-0I/0.jpg)](https://www.youtube.com/watch?v=pXuKwhtC-0I)
+The demo even has a screencast.
 
 ## Why?
 
@@ -54,12 +53,12 @@ This is for Self Host Blocks.
 
 ## Installation Process Overview
 
-1. Download the flake template.
+1. Download the flake template
+   which automatically generates secrets.
 2. Generate a ISO and format a USB key.
 3. Boot server on USB key and get its IP address.
-4. Generate secrets on laptop, update some default values.
-5. Run installer from laptop.
-6. Done!
+4. Run installer from laptop.
+5. Done!
 
 At the end of the process, the server will:
 - Have an encrypted ZFS root partition using the NVMe drive, unlockable remotely through ssh.
@@ -79,8 +78,9 @@ This demo will install SkaraboxOS on a VM locally on your computer.
 The VM has 3 hard drives, one for the OS
 and two in raid 1 for the data.
 
-See the [introduction section](#skaraboxos)
-for a screencast of the steps outlined here.
+Here's a screencast of it:
+
+[![Screencast of the steps outlined in the demo](https://img.youtube.com/vi/pXuKwhtC-0I/0.jpg)](https://www.youtube.com/watch?v=pXuKwhtC-0I)
 
 Launch the VM that listens on ports 2222 for normal ssh access
 and 2223 for ssh access during boot:
@@ -96,7 +96,7 @@ When the installer did boot up and you see the `[nixos@nixos:~]$` prompt,
 install SkaraboxOS on the VM with:
 
 ```bash
-nix run github:ibizaman/skarabox#demo-install-on-beacon 127.0.0.1 2222
+nix run github:ibizaman/skarabox#install-on-beacon 127.0.0.1 2222 github:ibizaman/skarabox
 ```
 
 Then when the system reboots - actually every time it will boot -
@@ -106,7 +106,7 @@ The password is `rootpassphrase` (yes, I know, it's original :D).
 but don't enter it through the VM, we can ssh in to enter it:
 
 ```bash
-printf "rootpassphrase" | nix run github:ibizaman/skarabox#demo-ssh 127.0.0.1 2223 root
+printf "rootpassphrase" | nix run github:ibizaman/skarabox#beacon-ssh 127.0.0.1 2223 root
 ```
 
 When that's done, the boot up will continue and you will see the prompt
@@ -117,7 +117,7 @@ Now you're logged into the VM on a brand new SkaraboxOS installation!
 You can test accessing through ssh with:
 
 ```
-nix run github:ibizaman/skarabox#demo-ssh 127.0.0.1 2222
+nix run github:ibizaman/skarabox#beacon-ssh 127.0.0.1 2222
 ```
 
 ## Installation
@@ -167,10 +167,8 @@ $ nix flake init --template github:ibizaman/skarabox
    1. Run the following command replacing `<ip>` with the IP address you got in the previous step.
 
    ```bash
-   $ nix run .#install-on-beacon skarabox <ip>
+   $ nix run .#install-on-beacon <ip> 22 .#skarabox
    ```
-
-   You will be prompted for a password, enter "skarabox123" without the double quotes.
 
    2. The server will reboot into NixOS on its own.
 
@@ -179,27 +177,10 @@ $ nix flake init --template github:ibizaman/skarabox
    Run the following command.
 
    ```bash
-   $ ssh -p 2222 root@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
+   $ nix run .#boot-ssh
    ```
 
-   It will prompt you a first time to verify the key fingerprint.
-
-   ```bash
-   The authenticity of host '[<ip>]:2222 ([<ip>]:2222)' can't be established.
-   ED25519 key fingerprint is SHA256:<redacted>.
-   This key is not known by any other names.
-   Are you sure you want to continue connecting (yes/no/[fingerprint])?
-   ```
-
-   Just enter `"yes"` followed by pressing on the Enter key.
-   Next time the server will boot, you will not need to do this step.
-
-   ```bash
-   Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-   Warning: Permanently added '[<ip>]:2222' (ED25519) to the list of known hosts.
-   ```
-
-   You will be prompted a second time, this time to enter the root passphrase.
+   You will be prompted to enter the root passphrase.
    Copy the content of the `root_passphrase` file and paste it and press Enter.
    No `*` will appear upon pasting but just press Enter.
 
@@ -216,8 +197,11 @@ $ nix flake init --template github:ibizaman/skarabox
 
    Now, the hard drives are decrypted and the server continues to boot.
 
-   It's a good idea to make sure you can login correctly, at least the first time.
-   See next section.
+   It's a good idea to make sure you can SSH in correctly, at least the first time:
+
+   ```bash
+   nix run .#ssh
+   ```
 
 ## Normal Operations
 
@@ -226,6 +210,13 @@ Those can be found in the template's [readme](./template/README.md).
 ## Contribute
 
 Contributions are very welcomed!
+
+To push to the cache, run for example:
+
+```
+nix build --no-link --print-out-paths .#packages.x86_64-linux.demo-beacon  \
+  | nix run nixpkgs#cachix push selfhostblocks
+```
 
 ## Links
 

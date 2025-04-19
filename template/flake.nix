@@ -18,11 +18,33 @@
       "aarch64-linux"
     ];
 
-    perSystem = { inputs', ... }: {
+    perSystem = { inputs', pkgs, ... }: {
       packages = {
-        inherit (inputs'.skarabox.packages) beacon install-on-beacon ssh;
+        inherit (inputs'.skarabox.packages) beacon demo-beacon install-on-beacon beacon-ssh;
 
-        inherit (inputs.nixpkgs.legacyPackages) age usbimager util-linux ssh-to-age sops openssl;
+        inherit (inputs'.nixpkgs.legacyPackages) age usbimager util-linux ssh-to-age sops openssl;
+
+        # nix run .#boot-ssh [<command> ...]
+        # nix run .#boot-ssh
+        # nix run .#boot-ssh echo hello
+        boot-ssh = pkgs.writeShellScriptBin "ssh.sh" ''
+        ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
+          "${builtins.readFile ./ip}" \
+          "${builtins.readFile ./ssh_boot_port}" \
+          root \
+          $@
+        '';
+
+        # nix run .#ssh [<command> ...]
+        # nix run .#ssh
+        # nix run .#ssh echo hello
+        ssh = pkgs.writeShellScriptBin "ssh.sh" ''
+        ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
+          "${builtins.readFile ./ip}" \
+          "${builtins.readFile ./ssh_port}" \
+          ${self.nixosConfigurations.skarabox.config.skarabox.username} \
+          $@
+        '';
       };
 
       apps = {
@@ -64,7 +86,7 @@
       in {
         hostname = builtins.readFile ./ip;
         sshUser = self.nixosConfigurations.skarabox.config.skarabox.username;
-        sshOpts = [ "-o" "IdentitiesOnly=yes" "-i" "ssh_skarabox" ];
+        sshOpts = [ "-o" "IdentitiesOnly=yes" "-i" "ssh_skarabox" "-p" (builtins.readFile ./ssh_port) ];
         profiles = {
           system = {
             user = "root";
