@@ -91,6 +91,12 @@ in
       description = "Kernel modules needed to active network card.";
       default = [ "e1000" "e1000e" "igb" "rtw88_8821ce" "r8169" ];
     };
+
+    bootSSHPort = mkOption {
+      type = types.port;
+      description = "Port the SSH daemon used to decrypt the root partition listens to.";
+      default = 2222;
+    };
   };
 
   config = {
@@ -336,7 +342,7 @@ in
         enable = true;
         # To prevent ssh clients from freaking out because a different host key is used,
         # a different port for ssh is used.
-        port = lib.mkDefault 2222;
+        port = lib.mkDefault cfg.bootSSHPort;
         hostKeys = [ "/boot/host_key" ];
         # Public ssh key used for login.
         # This should contain just one line and removing the trailing

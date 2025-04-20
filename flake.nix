@@ -308,6 +308,8 @@
         skarabox.disks.dataReservation = "10G";
         # e1000 found by running lspci -v | grep -iA8 'network\|ethernet' in the beacon VM
         skarabox.disks.networkCardKernelModules = [ "e1000" ];
+        skarabox.disks.bootSSHPort = 2223;
+        skarabox.sshPorts = [ 2222 ];
         skarabox.hostId = "12345678";
       };
 

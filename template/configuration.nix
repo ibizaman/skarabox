@@ -26,6 +26,9 @@ in
       skarabox.disks.dataDisk2 = "/dev/sdb";  # Update with result of running `fdisk -l` on the USB stick.
       skarabox.disks.enableDataPool = true;  # Disable if only an SSD for root is present.
       skarabox.disks.dataReservation = "10G";  # Set to 5% of size Hard Drives.
+      # For security by obscurity, we choose another ssh port here than the default 22.
+      skarabox.disks.bootSSHPort = lib.toInt (builtins.readFile ./ssh_boot_port);
+      skarabox.sshPorts = [ (lib.toInt (builtins.readFile ./ssh_port)) ];
       skarabox.sshAuthorizedKeyFile = ./ssh_skarabox.pub;
       skarabox.hostId = lib.trim (builtins.readFile ./hostid);
       skarabox.setupLanWithDHCP = true;  # Set to false to disable the catch-all network configuration from skarabox and instead set your own
@@ -41,11 +44,6 @@ in
       # You can remove this line and enable firmwares one by one
       # but only do this if you know what you're doing.
       hardware.enableAllHardware = true;
-      services.openssh.ports = [
-        (lib.toInt (builtins.readFile ./ssh_port))
-      ];
-      # For security by obscurity, we choose another ssh port here than the default 22.
-      boot.initrd.network.ssh.port = lib.toInt (builtins.readFile ./ssh_boot_port);
 
       sops.defaultSopsFile = ./secrets.yaml;
       sops.age = {

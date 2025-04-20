@@ -34,8 +34,10 @@ echo 2223 > ssh_boot_port
 nix run .#demo-beacon
 ```
 
-_We override the default ports. When done testing on the VM,
-you can change back the ports to 22 and 2222 respectively._
+_We override the default ports. Currently, this 2222 port for
+ssh_port is fixed when testing with the VM. When done testing on
+the VM, you can change back the ports to 22 and 2222 respectively
+or any other values that suits you._
 
 Then start the installation process:
 
