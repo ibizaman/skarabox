@@ -73,14 +73,16 @@
         # setup imitates a real server with one SSD disk for
         # the OS and two HDDs in mirror for the data.
         #
-        #   nix run .#demo-beacon [<port> [<boot-port>]]
+        #   nix run .#demo-beacon [<fw-port> [<fw-boot-port>]]
         #
-        #   port: (default: 2222)        port on which the SSH server
-        #                                when the VM is booted will listen.
-        #   boot-port: (default: 2223)   port on which the SSH server used to
-        #                                decrypt the root partition will listen
-        #                                upon booting or rebooting after the
-        #                                installation process is done.
+        #   fw-port:          port forwarding for the SSH server
+        #                     when the VM is booted.
+        #                     (default: 2222-:2222)
+        #   fw-boot-port:     port forwarding for the SSH server
+        #                     used to decrypt the root partition
+        #                     upon booting or rebooting after the
+        #                     installation process is done.
+        #                     (default: 2223-:2223)
         #
         demo-beacon = let
           beacon-vm = nixos-generators.nixosGenerate {
@@ -133,7 +135,7 @@
           ${qemu} \
             -m 2048M \
             -device virtio-rng-pci \
-            -net nic -net user,hostfwd=tcp::''${port:-2222}-:22,hostfwd=tcp::''${bootport:-2223}-:2222 \
+            -net nic -net user,hostfwd=tcp::''${port:-2222-:2222},hostfwd=tcp::''${bootport:-2223-:2223} \
             --virtfs local,path=/nix/store,security_model=none,mount_tag=nix-store \
             --drive if=pflash,format=raw,unit=0,readonly=on,file=${pkgs.OVMF.firmware} \
             --drive media=cdrom,format=raw,readonly=on,file=${iso} \
