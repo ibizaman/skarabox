@@ -120,7 +120,7 @@ in
     e "Beacon VM has started."
 
     e "Starting installation on beacon VM."
-    ${nix} run .#install-on-beacon 127.0.0.1 2222 .#skarabox
+    ${nix} run .#install-on-beacon .#skarabox
     e "Installation succeeded."
 
     e "Starting ssh loop to figure out when VM is ready to receive root passphrase."

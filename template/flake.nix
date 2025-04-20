@@ -22,30 +22,39 @@
 
     perSystem = { inputs', pkgs, ... }: {
       packages = {
-        inherit (inputs'.skarabox.packages) beacon demo-beacon install-on-beacon beacon-ssh;
+        inherit (inputs'.skarabox.packages) beacon install-on-beacon beacon-ssh;
 
         inherit (inputs'.nixpkgs.legacyPackages) age usbimager util-linux ssh-to-age sops openssl;
+
+        demo-beacon = pkgs.writeShellScriptBin "demo-beacon.sh" ''
+          ssh_port=${readFile ./ssh_port}
+          ssh_boot_port=${readFile ./ssh_boot_port}
+          ${inputs'.skarabox.packages.demo-beacon}/bin/demo-beacon.sh \
+            ''${ssh_port}-:''${ssh_port} \
+            ''${ssh_boot_port}-:''${ssh_boot_port} \
+            $@
+        '';
 
         # nix run .#boot-ssh [<command> ...]
         # nix run .#boot-ssh
         # nix run .#boot-ssh echo hello
         boot-ssh = pkgs.writeShellScriptBin "ssh.sh" ''
-        ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
-          "${readFile ./ip}" \
-          "${readFile ./ssh_boot_port}" \
-          root \
-          $@
+          ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
+            "${readFile ./ip}" \
+            "${readFile ./ssh_boot_port}" \
+            root \
+            $@
         '';
 
         # nix run .#ssh [<command> ...]
         # nix run .#ssh
         # nix run .#ssh echo hello
         ssh = pkgs.writeShellScriptBin "ssh.sh" ''
-        ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
-          "${readFile ./ip}" \
-          "${readFile ./ssh_port}" \
-          ${self.nixosConfigurations.skarabox.config.skarabox.username} \
-          $@
+          ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
+            "${readFile ./ip}" \
+            "${readFile ./ssh_port}" \
+            ${self.nixosConfigurations.skarabox.config.skarabox.username} \
+            $@
         '';
       };
 

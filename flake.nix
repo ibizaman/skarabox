@@ -117,7 +117,7 @@
           iso = "${beacon-vm}/iso/beacon.iso";
           nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
           qemu = nixos-qemu.qemuBinary pkgs.qemu;
-        in (pkgs.writeShellScriptBin "runner.sh" ''
+        in (pkgs.writeShellScriptBin "demo-beacon.sh" ''
           disk1=.skarabox-tmp/disk1.qcow2
           disk2=.skarabox-tmp/disk2.qcow2
           disk3=.skarabox-tmp/disk3.qcow2
