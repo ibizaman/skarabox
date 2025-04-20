@@ -48,8 +48,14 @@
 
         init = import ./modules/initialgen.nix { inherit pkgs; };
 
-        # nix build .#beacon
-        # Intended to be run from the template.
+        # Create an ISO file with the beacon.
+        #
+        # This ISO file will need to be burned on a USB stick.
+        # This can be done for example with usbimager that's
+        # included in the template.
+        #
+        #   nix build .#beacon
+        #
         beacon = nixos-generators.nixosGenerate {
           inherit system;
           format = "install-iso";
@@ -59,8 +65,23 @@
           ];
         };
 
-        # nix run .#demo-beacon [<port> [<boot-port>]]
-        # Intended to be run from the template.
+        # Create and Start a VM that boots the ISO file with the beacon.
+        #
+        # Useful for testing a full installation.
+        # This VM comes with 3 disks, one under /dev/nvme0n1
+        # and the two other under /dev/sda and /dev/sdb. This
+        # setup imitates a real server with one SSD disk for
+        # the OS and two HDDs in mirror for the data.
+        #
+        #   nix run .#demo-beacon [<port> [<boot-port>]]
+        #
+        #   port: (default: 2222)        port on which the SSH server
+        #                                when the VM is booted will listen.
+        #   boot-port: (default: 2223)   port on which the SSH server used to
+        #                                decrypt the root partition will listen
+        #                                upon booting or rebooting after the
+        #                                installation process is done.
+        #
         demo-beacon = let
           beacon-vm = nixos-generators.nixosGenerate {
             inherit system;
@@ -125,9 +146,17 @@
             $@
           '');
 
-        # nix run .#install-on-beacon <ip> <port> <flake>
-        # nix run .#install-on-beacon 192.168.1.10 22 .#skarabox
-        # Intended to be run from the template.
+        # Install a nixosConfigurations instance (<flake>) on a server.
+        #
+        # This command is intended to be run against a server which
+        # was booted on the beacon. Although, the server could be booted
+        # on any OS supported by nixos-anywhere. The latter was not tested.
+        #
+        # It is intended to run this command from the template.
+        #
+        #   nix run .#install-on-beacon <ip> <port> <flake>
+        #   nix run .#install-on-beacon 192.168.1.10 22 .#skarabox
+        #
         install-on-beacon = pkgs.writeShellScriptBin "runner.sh" ''
           mkdir -p .skarabox-tmp
           key=.skarabox-tmp/key
@@ -158,6 +187,7 @@
             nixos@''$1
         '';
 
+        # SSH into a host installed
         # nix run .#ssh <ip> [<port> [<user> [<command> ...]]]
         # nix run .#ssh 192.168.1.10
         # nix run .#ssh 192.168.1.10 22
@@ -182,8 +212,8 @@
         # nix run .#beacon-ssh
         # nix run .#beacon-ssh 127.0.0.1
         # nix run .#beacon-ssh 127.0.0.1 2222
-        # nix run .#beacon-ssh 127.0.0.1 2222 nixos
-        # nix run .#beacon-ssh 127.0.0.1 2222 echo "hello from inside"
+        # nix run .#beacon-ssh 127.0.0.1 2222 skarabox
+        # nix run .#beacon-ssh 127.0.0.1 2222 skarabox echo "hello from inside"
         # Intended to be run from the template.
         beacon-ssh = pkgs.writeShellScriptBin "ssh.sh" ''
           ip=$1

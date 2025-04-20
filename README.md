@@ -58,12 +58,16 @@ This is for Self Host Blocks.
 2. Generate a ISO and format a USB key.
 3. Boot server on USB key and get its IP address.
 4. Run installer from laptop.
-5. Done!
+   Server will reboot and ask for passphrase to decrypt root partition.
+5. SSH in to decrypt root partition.
+6. Server boots and you can SSH in.
 
 At the end of the process, the server will:
 - Have an encrypted ZFS root partition using the NVMe drive, unlockable remotely through ssh.
 - Have an encrypted ZFS data hard drives.
 - Be accessible through ssh for administration and updates.
+
+See [Installation](./template/README.md#installation) section for detailed process.
 
 Services can then be installed by using NixOS options directly or through [Self Host Blocks](https://github.com/ibizaman/selfhostblocks).
 The latter, similarly to SkaraboxOS, provides an opinionated way to configure services in a seamless way.
@@ -119,93 +123,6 @@ You can test accessing through ssh with:
 ```
 nix run github:ibizaman/skarabox#beacon-ssh 127.0.0.1 2222
 ```
-
-## Installation
-
-1. Create a directory and download the template.
-
-```bash
-$ mkdir myskarabox
-$ cd myskarabox
-$ nix flake init --template github:ibizaman/skarabox
-```
-
-2. Boot on the NixOS installer. You just need to boot, there is nothing to install just yet.
-
-   1. First, create the .iso file.
-
-   ```bash
-   $ nix build .#beacon
-   ```
-
-   2. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
-
-   ```bash
-   $ nix run .#usbimager
-   ```
-
-   - Select `./result/iso/beacon.iso` file in row 1 (`...`).
-   - Select USB key in row 3.
-   - Click write (arrow down) in row 2.
-
-   3. Plug the USB stick in the server. Choose to boot on it.
-
-   You will be logged in automatically with user `nixos`.
-
-   4. Note down the IP address and disk layout of the server.
-      For that, follow the steps that appeared when booting on the USB stick.
-      To reprint the steps, run the command `skarabox-help`.
-
-   5. Open the `configuration.nix` file and tweak values to match you hardware.
-      Also, open the other files and see how to generate them too.
-      All the instructions are included.
-
-   Note the `root_passphrase` file will contain a passphrase that will need to be provided every time the server boots up.
-
-3. Run the installation process
-
-   1. Run the following command replacing `<ip>` with the IP address you got in the previous step.
-
-   ```bash
-   $ nix run .#install-on-beacon <ip> 22 .#skarabox
-   ```
-
-   2. The server will reboot into NixOS on its own.
-
-   3. Decrypt the SSD and the Hard Drives.
-
-   Run the following command.
-
-   ```bash
-   $ nix run .#boot-ssh
-   ```
-
-   You will be prompted to enter the root passphrase.
-   Copy the content of the `root_passphrase` file and paste it and press Enter.
-   No `*` will appear upon pasting but just press Enter.
-
-   ```bash
-   Enter passphrase for 'root':
-   ```
-
-   The connection will disconnect automatically.
-   This is normal behavior.
-
-   ```bash
-   Connection to <ip> closed.
-   ```
-
-   Now, the hard drives are decrypted and the server continues to boot.
-
-   It's a good idea to make sure you can SSH in correctly, at least the first time:
-
-   ```bash
-   nix run .#ssh
-   ```
-
-## Normal Operations
-
-Those can be found in the template's [readme](./template/README.md).
 
 ## Contribute
 
