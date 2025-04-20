@@ -55,20 +55,43 @@
           format = "install-iso";
 
           modules = [
-            ./modules/beacon.nix
             self.nixosModules.beacon
-            ({ modulesPath, ... }: {
-              imports = [
-                (modulesPath + "/profiles/qemu-guest.nix")
-              ];
-            })
           ];
         };
 
         # nix run .#demo-beacon [<port> [<boot-port>]]
         # Intended to be run from the template.
         demo-beacon = let
-          iso = "${self'.packages.beacon}/iso/beacon.iso";
+          beacon-vm = nixos-generators.nixosGenerate {
+            inherit system;
+            format = "install-iso";
+
+            modules = [
+              self.nixosModules.beacon
+              ({ lib, modulesPath, ... }: {
+                imports = [
+                  # This profile adds virtio drivers needed in the guest to be able to share the /nix/store folder.
+                  (modulesPath + "/profiles/qemu-guest.nix")
+                ];
+                # Share the host's nix store instead of the one created for the ISO.
+                config.lib.isoFileSystems = {
+                  "/nix/.ro-store" = lib.mkForce {
+                    device = "nix-store";
+                    fsType = "9p";
+                    neededForBoot = true;
+                    options = [
+                      "trans=virtio"
+                      "version=9p2000.L"
+                      "msize=16384"
+                      "x-systemd.requires=modprobe@9pnet_virtio.service"
+                      "cache=loose"
+                    ];
+                  };
+                };
+              })
+            ];
+          };
+          iso = "${beacon-vm}/iso/beacon.iso";
           nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
           qemu = nixos-qemu.qemuBinary pkgs.qemu;
         in (pkgs.writeShellScriptBin "runner.sh" ''
@@ -88,6 +111,7 @@
 
           ${qemu} \
             -m 2048M \
+            -device virtio-rng-pci \
             -net nic -net user,hostfwd=tcp::''${port:-2222}-:22,hostfwd=tcp::''${bootport:-2223}-:2222 \
             --virtfs local,path=/nix/store,security_model=none,mount_tag=nix-store \
             --drive if=pflash,format=raw,unit=0,readonly=on,file=${pkgs.OVMF.firmware} \
@@ -201,29 +225,25 @@
         default = self.templates.skarabox;
       };
 
-      nixosModules.beacon = {
+      nixosModules.beacon = { lib, modulesPath, ... }: {
         imports = [
           ./modules/beacon.nix
-          ({ modulesPath, ... }: {
-            imports = [
-              (modulesPath + "/profiles/minimal.nix")
-            ];
-
-            boot.loader.systemd-boot.enable = true;
-          })
-          { # Set shared host key
-            services.openssh.hostKeys = pkgs.lib.mkForce [];
-            environment.etc."ssh/ssh_host_ed25519_key" = {
-              source = beaconHostKeyPriv;
-              mode = "0600";
-            };
-          }
-          { # Set shared ssh key
-            users.users."nixos" = {
-              openssh.authorizedKeys.keyFiles = [ beaconSSHPub ];
-            };
-          }
+          (modulesPath + "/profiles/minimal.nix")
         ];
+
+        boot.loader.systemd-boot.enable = true;
+
+        # Set shared host key
+        services.openssh.hostKeys = pkgs.lib.mkForce [];
+        environment.etc."ssh/ssh_host_ed25519_key" = {
+          source = beaconHostKeyPriv;
+          mode = "0600";
+        };
+
+        # Set shared ssh key
+        users.users."nixos" = {
+          openssh.authorizedKeys.keyFiles = [ beaconSSHPub ];
+        };
       };
 
       nixosModules.skarabox = {
