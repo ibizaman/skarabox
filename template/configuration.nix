@@ -27,7 +27,7 @@ in
       skarabox.disks.enableDataPool = true;  # Disable if only an SSD for root is present.
       skarabox.disks.dataReservation = "10G";  # Set to 5% of size Hard Drives.
       skarabox.sshAuthorizedKeyFile = ./ssh_skarabox.pub;
-      skarabox.hostId = builtins.readFile ./hostid;
+      skarabox.hostId = lib.trim (builtins.readFile ./hostid);
       skarabox.setupLanWithDHCP = true;  # Set to false to disable the catch-all network configuration from skarabox and instead set your own
 
       # This setting is needed if the ssh server does not start on boot in stage-1,

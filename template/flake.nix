@@ -12,7 +12,9 @@
     sops-nix.url = "github:Mic92/sops-nix";
   };
 
-  outputs = inputs@{ self, flake-parts, nixpkgs, skarabox, sops-nix, deploy-rs }: flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs@{ self, flake-parts, nixpkgs, skarabox, sops-nix, deploy-rs }: flake-parts.lib.mkFlake { inherit inputs; } (let
+      readFile = path: nixpkgs.lib.trim (builtins.readFile path);
+  in {
     systems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -29,8 +31,8 @@
         # nix run .#boot-ssh echo hello
         boot-ssh = pkgs.writeShellScriptBin "ssh.sh" ''
         ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
-          "${builtins.readFile ./ip}" \
-          "${builtins.readFile ./ssh_boot_port}" \
+          "${readFile ./ip}" \
+          "${readFile ./ssh_boot_port}" \
           root \
           $@
         '';
@@ -40,8 +42,8 @@
         # nix run .#ssh echo hello
         ssh = pkgs.writeShellScriptBin "ssh.sh" ''
         ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
-          "${builtins.readFile ./ip}" \
-          "${builtins.readFile ./ssh_port}" \
+          "${readFile ./ip}" \
+          "${readFile ./ssh_port}" \
           ${self.nixosConfigurations.skarabox.config.skarabox.username} \
           $@
         '';
@@ -53,7 +55,7 @@
     };
 
     flake = let
-      system = builtins.readFile ./system;
+      system = readFile ./system;
     in {
       nixosModules.skarabox = {
         imports = [
@@ -84,9 +86,9 @@
           ];
         };
       in {
-        hostname = builtins.readFile ./ip;
+        hostname = readFile ./ip;
         sshUser = self.nixosConfigurations.skarabox.config.skarabox.username;
-        sshOpts = [ "-o" "IdentitiesOnly=yes" "-i" "ssh_skarabox" "-p" (builtins.readFile ./ssh_port) ];
+        sshOpts = [ "-o" "IdentitiesOnly=yes" "-i" "ssh_skarabox" "-p" (readFile ./ssh_port) ];
         profiles = {
           system = {
             user = "root";
@@ -97,5 +99,5 @@
       # From https://github.com/serokell/deploy-rs?tab=readme-ov-file#overall-usage
       checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
     };
-  };
+  });
 }

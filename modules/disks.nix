@@ -343,7 +343,7 @@ in
         # newline could be fixed with a removeSuffix call but treating
         # it as a file containing multiple lines makes this forward compatible.
         authorizedKeys = let
-          f = builtins.readFile config.skarabox.sshAuthorizedKeyFile;
+          f = lib.trim (builtins.readFile config.skarabox.sshAuthorizedKeyFile);
           keys = lib.remove "" (lib.splitString "\n" f);
         in
           keys;
