@@ -73,16 +73,15 @@
         # setup imitates a real server with one SSD disk for
         # the OS and two HDDs in mirror for the data.
         #
-        #   nix run .#demo-beacon [<fw-port> [<fw-boot-port>]]
+        #   nix run .#demo-beacon [<host-port> [<host-boot-port>]]
         #
-        #   fw-port:          port forwarding for the SSH server
+        #   host-port:        Host part of the port forwarding for the SSH server
         #                     when the VM is booted.
-        #                     (default: 2222-:2222)
-        #   fw-boot-port:     port forwarding for the SSH server
-        #                     used to decrypt the root partition
-        #                     upon booting or rebooting after the
-        #                     installation process is done.
-        #                     (default: 2223-:2223)
+        #                     (default: 2222)
+        #   host-boot-port:   Host port of the port forwarding for the SSH server
+        #                     used to decrypt the root partition upon booting
+        #                     or rebooting after the installation process is done.
+        #                     (default: 2223)
         #
         demo-beacon = let
           beacon-vm = nixos-generators.nixosGenerate {
@@ -93,10 +92,15 @@
               self.nixosModules.beacon
               ({ lib, modulesPath, ... }: {
                 imports = [
-                  # This profile adds virtio drivers needed in the guest to be able to share the /nix/store folder.
+                  # This profile adds virtio drivers needed in the guest
+                  # to be able to share the /nix/store folder.
                   (modulesPath + "/profiles/qemu-guest.nix")
                 ];
+
+                config.services.openssh.ports = lib.mkForce [ 2222 ];
+
                 # Share the host's nix store instead of the one created for the ISO.
+                # config.lib.isoFileSystems is defined in nixos/modules/installer/cd-dvd/iso-image.nix
                 config.lib.isoFileSystems = {
                   "/nix/.ro-store" = lib.mkForce {
                     device = "nix-store";
@@ -127,15 +131,17 @@
             [ ! -f $d ] && ${pkgs.qemu}/bin/qemu-img create -f qcow2 $d 20G
           done
 
-          port=$1
+          guestport=2222
+          hostport=''${1:-2222}
           shift
-          bootport=$1
+          guestbootport=2223
+          hostbootport=''${1:-2223}
           shift
 
           ${qemu} \
             -m 2048M \
             -device virtio-rng-pci \
-            -net nic -net user,hostfwd=tcp::''${port:-2222-:2222},hostfwd=tcp::''${bootport:-2223-:2223} \
+            -net nic -net user,hostfwd=tcp::''${hostport}-:''${guestport},hostfwd=tcp::''${hostbootport}-:''${guestbootport} \
             --virtfs local,path=/nix/store,security_model=none,mount_tag=nix-store \
             --drive if=pflash,format=raw,unit=0,readonly=on,file=${pkgs.OVMF.firmware} \
             --drive media=cdrom,format=raw,readonly=on,file=${iso} \

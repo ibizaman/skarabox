@@ -30,8 +30,8 @@
           ssh_port=${readFile ./ssh_port}
           ssh_boot_port=${readFile ./ssh_boot_port}
           ${inputs'.skarabox.packages.demo-beacon}/bin/demo-beacon.sh \
-            ''${ssh_port}-:''${ssh_port} \
-            ''${ssh_boot_port}-:''${ssh_boot_port} \
+            ''${ssh_port} \
+            ''${ssh_boot_port} \
             $@
         '';
 
