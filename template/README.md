@@ -41,7 +41,7 @@ Then start the installation process:
 
 
 ```bash
-nix run .#install-on-beacon 127.0.0.1 2222 .#skarabox
+nix run .#install-on-beacon .#skarabox
 ```
 
 When the VM rebooted, you'll need to decrypt the root partition

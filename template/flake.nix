@@ -22,7 +22,7 @@
 
     perSystem = { inputs', pkgs, ... }: {
       packages = {
-        inherit (inputs'.skarabox.packages) beacon install-on-beacon beacon-ssh;
+        inherit (inputs'.skarabox.packages) beacon beacon-ssh;
 
         inherit (inputs'.nixpkgs.legacyPackages) age usbimager util-linux ssh-to-age sops openssl;
 
@@ -32,6 +32,15 @@
           ${inputs'.skarabox.packages.demo-beacon}/bin/demo-beacon.sh \
             ''${ssh_port}-:''${ssh_port} \
             ''${ssh_boot_port}-:''${ssh_boot_port} \
+            $@
+        '';
+
+        install-on-beacon = pkgs.writeShellScriptBin "install-on-beacon.sh" ''
+          ip=${readFile ./ip}
+          ssh_port=${readFile ./ssh_port}
+          ${inputs'.skarabox.packages.install-on-beacon}/bin/install-on-beacon.sh \
+            $ip \
+            $ssh_port \
             $@
         '';
 

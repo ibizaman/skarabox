@@ -159,7 +159,7 @@
         #   nix run .#install-on-beacon <ip> <port> <flake>
         #   nix run .#install-on-beacon 192.168.1.10 22 .#skarabox
         #
-        install-on-beacon = pkgs.writeShellScriptBin "runner.sh" ''
+        install-on-beacon = pkgs.writeShellScriptBin "install-on-beacon.sh" ''
           mkdir -p .skarabox-tmp
           key=.skarabox-tmp/key
           cp ${beaconSSHPriv} "$key"

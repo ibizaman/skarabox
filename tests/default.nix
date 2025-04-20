@@ -108,7 +108,7 @@ in
 
     e "Starting beacon VM."
 
-    ${nix} run .#demo-beacon -- 2222 2223 -nographic &
+    ${nix} run .#demo-beacon -- -nographic &
 
     sleep 10
 
