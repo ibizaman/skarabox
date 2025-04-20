@@ -43,9 +43,11 @@ pkgs.writeShellScriptBin "init" (
     ${nix} shell ${../.}#util-linux --command uuidgen | head -c 8 > hostid
 
     e "Generating root pool passphrase in ./root_passphrase..."
+    chmod 600 root_passphrase
     ${nix} run ${../.}#openssl -- rand -hex 64 > root_passphrase
 
     e "Generating data pool passphrase in ./data_passphrase..."
+    chmod 600 data_passphrase
     ${nix} run ${../.}#openssl -- rand -hex 64 > data_passphrase
 
     e "Generating sops key ./sops.key..."
