@@ -11,8 +11,10 @@ pkgs.writeShellScriptBin "init" (
     }
 
     yes=0
+    mkpasswdargs=
     if [ "$1" = "-y" ]; then
       yes=1
+      mkpasswdargs=-s
     fi
 
     # From https://stackoverflow.com/a/29436423/1013628
@@ -38,6 +40,9 @@ pkgs.writeShellScriptBin "init" (
     ${nix} flake init --template ${../.}
 
     e "Now, we will generate the secrets needed."
+
+    e "Generating initial password for user in ./initialHashedPassword..."
+    ${nix} run ${../.}#mkpasswd -- $mkpasswdargs > initialHashedPassword
 
     e "Generating hostid in ./hostid..."
     ${nix} shell ${../.}#util-linux --command uuidgen | head -c 8 > hostid

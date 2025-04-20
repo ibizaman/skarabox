@@ -44,7 +44,7 @@
     ];
     perSystem = { self', inputs', pkgs, system, ... }: {
       packages = {
-        inherit (inputs'.nixpkgs.legacyPackages) age util-linux openssl openssh;
+        inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd util-linux openssl openssh;
 
         init = import ./modules/initialgen.nix { inherit pkgs; };
 

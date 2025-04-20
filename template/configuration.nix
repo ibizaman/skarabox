@@ -19,6 +19,7 @@ in
     {
       skarabox.hostname = "skarabox";
       skarabox.username = "skarabox";
+      skarabox.initialHashedPassword = lib.trim (builtins.readFile ./initialHashedPassword);
       skarabox.disks.rootDisk = "/dev/nvme0n1";  # Update with result of running `fdisk -l` on the USB stick.
       skarabox.disks.rootDisk2 = null;  # Set a value only if you have a second disk for the root partition.
       skarabox.disks.rootReservation = "500M";  # Set to 10% of size SSD.

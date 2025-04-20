@@ -24,7 +24,7 @@
       packages = {
         inherit (inputs'.skarabox.packages) beacon beacon-ssh;
 
-        inherit (inputs'.nixpkgs.legacyPackages) age usbimager util-linux ssh-to-age sops openssl;
+        inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd usbimager util-linux ssh-to-age sops openssl;
 
         demo-beacon = pkgs.writeShellScriptBin "demo-beacon.sh" ''
           ssh_port=${readFile ./ssh_port}

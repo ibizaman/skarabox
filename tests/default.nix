@@ -96,7 +96,7 @@ in
     cd $(mktemp -d)
 
     e "Initialising template"
-    ${nix} run ${../.}#init -- -y
+    echo skarabox1234 | ${nix} run ${../.}#init -- -y
     ${nix} flake update --override-input skarabox ${../.} skarabox
     echo -n 2223 > ssh_boot_port
     echo -n 2222 > ssh_port
