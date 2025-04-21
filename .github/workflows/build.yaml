@@ -22,6 +22,7 @@ jobs:
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Run demo test
         run: |
+          (while true; do free -m; sleep 10; done)&
           nix run .#checks.x86_64-linux.demo
 
   template:
@@ -41,4 +42,5 @@ jobs:
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Run template test
         run: |
+          (while true; do free -m; sleep 10; done)&
           nix run .#checks.x86_64-linux.template
