@@ -325,6 +325,13 @@
           self.nixosModules.demo-skarabox
         ];
       };
+
+      nix-ci = {
+        cachix = {
+          name = "selfhostblocks";
+          public-key = "selfhostblocks.cachix.org-1:H5h6Uj188DObUJDbEbSAwc377uvcjSFOfpxyCFP7cVs=";
+        };
+      };
     };
   });
 }
