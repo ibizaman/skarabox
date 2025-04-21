@@ -348,11 +348,9 @@ in
         # This should contain just one line and removing the trailing
         # newline could be fixed with a removeSuffix call but treating
         # it as a file containing multiple lines makes this forward compatible.
-        authorizedKeys = let
-          f = lib.trim (builtins.readFile config.skarabox.sshAuthorizedKeyFile);
-          keys = lib.remove "" (lib.splitString "\n" f);
-        in
-          keys;
+        authorizedKeyFiles = [
+          config.skarabox.sshAuthorizedKeyFile
+        ];
       };
 
       postCommands = ''
