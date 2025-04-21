@@ -1,20 +1,44 @@
-name: "Final Results"
-
+name: "build"
 on:
-  check_suite:
-    types: [completed]
+  pull_request:
+  push:
+    branches: [ "main" ]
 
 jobs:
-  results:
-    name: Final Results
+  demo:
     runs-on: ubuntu-latest
     steps:
-      - run: echo
-      - run: exit 1
-        # see https://stackoverflow.com/a/67532120/4907315
-        if: >-
-          ${{
-               contains(needs.*.result, 'failure')
-            || contains(needs.*.result, 'cancelled')
-            || contains(needs.*.result, 'skipped')
-          }}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          extra-conf: "system-features = nixos-test benchmark big-parallel kvm"
+      - name: Setup Caching
+        uses: cachix/cachix-action@v16
+        with:
+          name: selfhostblocks
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - name: Run demo test
+        run: |
+          nix run .#checks.x86_64-linux.demo
+
+  template:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          extra-conf: "system-features = nixos-test benchmark big-parallel kvm"
+      - name: Setup Caching
+        uses: cachix/cachix-action@v16
+        with:
+          name: selfhostblocks
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - name: Run template test
+        run: |
+          nix run .#checks.x86_64-linux.template
