@@ -25,7 +25,7 @@ in
 
     e "Starting ssh loop to figure out when beacon started."
     e "You might see some flickering on the command line."
-    while ! ${nix} run ${../.}#beacon-ssh 127.0.0.1 2222 nixos echo "connected" 2>/dev/null; do
+    while ! ${nix} run ${../.}#beacon-ssh 127.0.0.1 2222 nixos echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
@@ -36,7 +36,7 @@ in
 
     e "Starting ssh loop to figure out when VM is ready to receive root passphrase."
     e "You might see some flickering on the command line."
-    while ! ${nix} run ${../.}#beacon-ssh 127.0.0.1 2223 root echo "connected" 2>/dev/null; do
+    while ! ${nix} run ${../.}#beacon-ssh 127.0.0.1 2223 root echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
@@ -47,7 +47,7 @@ in
 
     e "Starting ssh loop to figure out when VM has booted."
     e "You might see some flickering on the command line."
-    while ! ${nix} run ${../.}#beacon-ssh 127.0.0.1 2222 skarabox echo "connected" 2>/dev/null; do
+    while ! ${nix} run ${../.}#beacon-ssh 127.0.0.1 2222 skarabox echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
@@ -58,7 +58,7 @@ in
 
     e "Starting ssh loop to figure out when VM is ready to receive root passphrase."
     e "You might see some flickering on the command line."
-    while ! ${nix} run ${../.}#beacon-ssh 127.0.0.1 2223 root echo "connected" 2>/dev/null; do
+    while ! ${nix} run ${../.}#beacon-ssh 127.0.0.1 2223 root echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
@@ -69,7 +69,7 @@ in
 
     e "Starting ssh loop to figure out when VM has booted."
     e "You might see some flickering on the command line."
-    while ! ${nix} run ${../.}#beacon-ssh 127.0.0.1 2222 skarabox echo "connected" 2>/dev/null; do
+    while ! ${nix} run ${../.}#beacon-ssh 127.0.0.1 2222 skarabox echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
@@ -114,7 +114,7 @@ in
 
     e "Starting ssh loop to figure out when beacon started."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#beacon-ssh 127.0.0.1 2222 nixos echo "connected" 2>/dev/null; do
+    while ! ${nix} run .#beacon-ssh 127.0.0.1 2222 nixos echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
@@ -125,40 +125,40 @@ in
 
     e "Starting ssh loop to figure out when VM is ready to receive root passphrase."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#boot-ssh echo "connected"; do
+    while ! ${nix} run .#boot-ssh -- -F none echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
 
     e "Decrypting root dataset."
-    printf "$(cat root_passphrase)" | ${nix} run .#boot-ssh
+    printf "$(cat root_passphrase)" | ${nix} run .#boot-ssh -- -F none
     e "Decryption done."
 
     e "Starting ssh loop to figure out when VM has booted."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#ssh echo "connected" 2>/dev/null; do
+    while ! ${nix} run .#ssh -- -F none echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
 
     e "Rebooting to confirm we can connect after a reboot."
-    ${nix} run .#ssh sudo reboot
+    ${nix} run .#ssh -- -F none sudo reboot
     e "Rebooting in progress."
 
     e "Starting ssh loop to figure out when VM is ready to receive root passphrase."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#boot-ssh echo "connected" 2>/dev/null; do
+    while ! ${nix} run .#boot-ssh -- -F none echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
 
     e "Decrypting root dataset."
-    printf "$(cat root_passphrase)" | ${nix} run .#boot-ssh
+    printf "$(cat root_passphrase)" | ${nix} run .#boot-ssh -- -F none
     e "Decryption done."
 
     e "Starting ssh loop to figure out when VM has booted."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#ssh echo "connected" 2>/dev/null; do
+    while ! ${nix} run .#ssh -- -F none echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
@@ -168,7 +168,7 @@ in
     e "Deploying done."
 
     e "Connecting and shutting down"
-    ${nix} run .#ssh sudo shutdown
+    ${nix} run .#ssh -- -F none sudo shutdown
     e "Shutdown complete."
   '';
 }
