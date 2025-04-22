@@ -125,7 +125,7 @@ in
 
     e "Starting ssh loop to figure out when VM is ready to receive root passphrase."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#boot-ssh echo "connected" 2>/dev/null; do
+    while ! ${nix} run .#boot-ssh echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
