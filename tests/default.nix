@@ -15,7 +15,7 @@ in
     # Kills all children bash processes,
     # like the one that will run in the background hereunder.
     # https://stackoverflow.com/a/2173421/1013628
-    # trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+    trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
     e "Starting beacon VM."
 
@@ -91,7 +91,7 @@ in
     # Kills all children bash processes,
     # like the one that will run in the background hereunder.
     # https://stackoverflow.com/a/2173421/1013628
-    # trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
+    trap "trap - SIGTERM && kill -- -$$" SIGINT SIGTERM EXIT
 
     cd $(mktemp -d)
 
