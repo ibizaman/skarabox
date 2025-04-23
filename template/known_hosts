@@ -1,0 +1,5 @@
+<generate me after generating the ssh key>
+Use this command:
+nix run .#mkKnownHostsFile <pub_key_file> <ip> <ssh_port>
+For example, assuming the ./ip, ./ssh_port and ./ssh_boot_port were filled out previously:
+nix run .#mkKnownHostsFile host_key.pub "$(cat ip)" "$(cat ssh_port)"" $(cat ssh_boot_port)" > known_hosts

@@ -31,7 +31,7 @@ To do that, first start the VM:
 ```bash
 echo 2222 > ssh_port
 echo 2223 > ssh_boot_port
-nix run .#demo-beacon
+nix run .#beacon-vm
 ```
 
 _We override the default ports. Currently, this 2222 port for

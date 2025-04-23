@@ -1,4 +1,6 @@
 { pkgs }:
+# Usage:
+#  init [-y] [flake]
 pkgs.writeShellScriptBin "init" (
   let
     nix = "${pkgs.nix}/bin/nix --extra-experimental-features nix-command -L";
@@ -6,16 +8,52 @@ pkgs.writeShellScriptBin "init" (
     set -e
     set -o pipefail
 
+    yes=0
+    mkpasswdargs=
+    path=
+    verbose=
+
+    usage () {
+      cat <<USAGE
+Usage: $0 [-h] [-y] [-p PATH]
+
+  -h:        Shows this usage
+  -y:        Answer yes to all questions
+  -v:        Shows what commands are being run.
+  -p PATH:   Replace occurences of github:ibizaman/skarabox
+             with the given path, for example ../skarabox.
+             This is useful for testing with your own fork
+             of skarabox.
+USAGE
+    }
+
+    while getopts "hyp:v" o; do
+      case "''${o}" in
+        h)
+          usage
+          exit 0
+          ;;
+        y)
+          yes=1
+          mkpasswdargs=-s
+          ;;
+        p)
+          path=''${OPTARG}
+          ;;
+        v)
+          verbose=1
+          ;;
+        *)
+          usage
+          exit 1
+          ;;
+      esac
+    done
+    shift $((OPTIND-1))
+
     e () {
       echo -e "\e[1;31mSKARABOX:\e[0m \e[1;0m$@\e[0m"
     }
-
-    yes=0
-    mkpasswdargs=
-    if [ "$1" = "-y" ]; then
-      yes=1
-      mkpasswdargs=-s
-    fi
 
     # From https://stackoverflow.com/a/29436423/1013628
     yes_or_no () {
@@ -34,12 +72,27 @@ pkgs.writeShellScriptBin "init" (
       done
     }
 
+    if [ -n "$verbose" ]; then
+      set -x
+    fi
+
     e "This script will initiate a Skarabox template in the current directory."
-    yes_or_no "Most of the steps are manual but there are some instructions you'll need to follow manually at the end, continue?"
+    yes_or_no "Most of the steps are automatic but there are some instructions you'll need to follow manually at the end, continue?"
 
     ${nix} flake init --template ${../.}
+    ${nix} flake update
+
+    if [ -n "$path" ]; then
+      ${nix} flake update --override-input skarabox "$path" skarabox
+    fi
 
     e "Now, we will generate the secrets needed."
+
+    e "Generating server host key in ./host_key and ./host_key.pub..."
+    rm host_key && ${nix} shell ${../.}#openssh --command ssh-keygen -t ed25519 -N "" -f host_key && chmod 600 host_key
+
+    e "Generating ssh key in ./ssh_skarabox and ./ssh_skarabox.pub..."
+    rm ssh_skarabox && ${nix} shell ${../.}#openssh --command ssh-keygen -t ed25519 -N "" -f ssh_skarabox && chmod 600 ssh_skarabox
 
     e "Generating initial password for user in ./initialHashedPassword..."
     ${nix} run ${../.}#mkpasswd -- $mkpasswdargs > initialHashedPassword
@@ -58,9 +111,7 @@ pkgs.writeShellScriptBin "init" (
     e "Generating sops key ./sops.key..."
     rm sops.key && ${nix} shell ${../.}#age --command age-keygen -o sops.key
 
-    e "Generating ssh key in ./ssh_skarabox and ./ssh_skarabox.pub..."
-    rm ssh_skarabox && ${nix} shell ${../.}#openssh --command ssh-keygen -t ed25519 -N "" -f ssh_skarabox && chmod 600 ssh_skarabox
-
-    e "You will need to fill out the ./ip file and ./system file"
+    e "You will need to fill out the ./ip, ./known_hosts and ./system file"
+    e "and adjust the ssh_port and ssh_boot_port if you want to."
     e "After that, the next step is to follow the ./README.md file"
   '')

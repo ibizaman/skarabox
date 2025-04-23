@@ -114,7 +114,7 @@ in
           # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
           # We're using the same host key because, well, it's the same host!
           postMountHook = ''
-            cp /etc/ssh/ssh_host_ed25519_key /mnt/boot/host_key
+            cp /tmp/host_key /mnt/boot/host_key
           '';
         };
         rootRaidContent = {
@@ -178,7 +178,7 @@ in
             # Copy the host_key needed for initrd in a location accessible on boot.
             # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
             postMountHook = ''
-              cp /etc/ssh/ssh_host_ed25519_key /mnt/boot/host_key
+              cp /tmp/host_key /mnt/boot/host_key
             '';
           };
         };
@@ -343,7 +343,7 @@ in
         # To prevent ssh clients from freaking out because a different host key is used,
         # a different port for ssh is used.
         port = lib.mkDefault cfg.bootSSHPort;
-        hostKeys = [ "/boot/host_key" ];
+        hostKeys = lib.mkForce [ "/boot/host_key" ];
         # Public ssh key used for login.
         # This should contain just one line and removing the trailing
         # newline could be fixed with a removeSuffix call but treating
