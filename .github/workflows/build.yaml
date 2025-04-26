@@ -24,3 +24,11 @@ jobs:
         run: |
           (while true; do free -m; df -h; sleep 10; done)&
           nix run .#checks.x86_64-linux.template
+
+  result:
+    runs-on: ubuntu-latest
+    needs:
+      - template
+    steps:
+      - name: success
+        run: exit 0
