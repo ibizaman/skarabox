@@ -43,10 +43,10 @@ in
 
     e "Initialising template"
     echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s -p ${../.}
-    echo -n 2223 > ssh_boot_port
-    echo -n 2222 > ssh_port
-    echo -n 127.0.0.1 > ip
-    echo -n ${system} > system
+    echo 2223 > ssh_boot_port
+    echo 2222 > ssh_port
+    echo 127.0.0.1 > ip
+    echo ${system} > system
     ${nix} run .#genKnownHostsFile
     # Using a git repo here allows to only copy in the nix store non temporary files.
     # In particular, we avoid copying the disk*.qcow2 files.
