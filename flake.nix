@@ -27,16 +27,18 @@
         system = "x86_64-linux";
       };
 
-      demoSSHPriv = ./tests/one;
-      demoSSHPub = ./tests/one.pub;
+      # mkKnownHostsFile <pub_key> <ip> <port> [<port>...]
+      mkKnownHostsFile = pkgs.writeShellScriptBin "mkKnownHostsFile.sh" ''
+        pub=$(cat $1 | ${pkgs.coreutils}/bin/cut -d' ' -f-2)
+        shift
+        ip=$1
+        shift
 
-      demoHostKeyPriv = ./tests/two;
-      demoHostKeyPub = ./tests/two.pub;
-      demoKnownKeyFile = (pkgs.runCommand "knownhosts" {} ''
-        mkdir -p $out/.ssh
-        echo -n '* ' > $out/known_hosts
-        cat ${demoHostKeyPub} | ${pkgs.coreutils}/bin/cut -d' ' -f-2 >> $out/known_hosts
-      '') + "/known_hosts";
+        for port in "$@"; do
+          echo "[$ip]:$port $pub"
+        done
+      '';
+
     in {
     systems = [
       "x86_64-linux"
@@ -44,109 +46,81 @@
     ];
     perSystem = { self', inputs', pkgs, system, ... }: {
       packages = {
-        # nix run .#beacon
-        # Intended to be run from the template.
-        beacon = nixos-generators.nixosGenerate {
-          inherit system;
-          format = "install-iso";
+        inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd util-linux openssl openssh;
 
-          modules = [
-            ./modules/beacon.nix
-            ({ modulesPath, ... }: {
-              imports = [
-                (modulesPath + "/profiles/qemu-guest.nix")
-                (modulesPath + "/profiles/minimal.nix")
-              ];
+        inherit mkKnownHostsFile;
 
-              boot.loader.systemd-boot.enable = true;
-            })
-            { # Set shared host key
-              services.openssh.hostKeys = pkgs.lib.mkForce [];
-              environment.etc."ssh/ssh_host_ed25519_key" = {
-                source = demoHostKeyPriv;
-                mode = "0600";
-              };
-            }
-            { # Set shared ssh key
-              users.users."nixos" = {
-                openssh.authorizedKeys.keyFiles = [ demoSSHPub ];
-              };
-            }
-          ];
-        };
+        init = import ./modules/initialgen.nix { inherit pkgs; };
 
-        # nix run .#demo-beacon [<port> [<boot-port>]]
-        # Intended to be run from the template.
-        demo-beacon = let
-          iso = "${self'.packages.beacon}/iso/beacon.iso";
-          nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
-          qemu = nixos-qemu.qemuBinary pkgs.qemu;
-        in (pkgs.writeShellScriptBin "runner.sh" ''
-          disk1=.skarabox-demo/disk1.qcow2
-          disk2=.skarabox-demo/disk2.qcow2
-          disk3=.skarabox-demo/disk3.qcow2
+        # Install a nixosConfigurations instance (<flake>) on a server.
+        #
+        # This command is intended to be run against a server which
+        # was booted on the beacon. Although, the server could be booted
+        # on any OS supported by nixos-anywhere. The latter was not tested.
+        #
+        # It is intended to run this command from the template.
+        install-on-beacon = pkgs.writeShellScriptBin "install-on-beacon.sh" ''
+         usage () {
+           cat <<USAGE
+Usage: $0 -i IP -p PORT -f FLAKE -k HOST_KEY -r ROOT_PASSPHRASE_FILE -d DATA_PASSPHRASE_FILE [-a EXTRA_OPTS]
 
-          mkdir -p .skarabox-demo
-          for d in $disk1 $disk2 $disk3; do
-            [ ! -f $d ] && ${pkgs.qemu}/bin/qemu-img create -f qcow2 $d 20G
+  -h:                       Shows this usage
+  -i IP:                    IP of the target host running the beacon.
+  -p PORT:                  Port of the target host running the beacon.
+  -f FLAKE:                 Flake to install on the target host.
+  -k HOST_KEY_FILE:         SSH key to use as the host identification key.
+  -r ROOT_PASSPHRASE_FILE:  File containing the root passphrase used to encrypt the root ZFS pool.
+  -d DATA_PASSPHRASE_FILE:  File containing the data passphrase used to encrypt the data ZFS pool.
+  -a EXTRA_OPTS:            Extra options to pass verbatim to nixos-anywhere.
+USAGE
+          }
+          while getopts "hi:p:f:k:r:d:a:" o; do
+            case "''${o}" in
+              h)
+                usage
+                exit 0
+                ;;
+              i)
+                ip=''${OPTARG}
+                ;;
+              p)
+                port=''${OPTARG}
+                ;;
+              f)
+                flake=''${OPTARG}
+                ;;
+              k)
+                host_key_file=''${OPTARG}
+                ;;
+              r)
+                root_passphrase_file=''${OPTARG}
+                ;;
+              d)
+                data_passphrase_file=''${OPTARG}
+                ;;
+              a)
+                extra_opts=''${OPTARG}
+                ;;
+              *)
+                usage
+                exit 1
+                ;;
+            esac
           done
-
-          port=$1
-          shift
-          bootport=$1
-          shift
-
-          ${qemu} \
-            -m 2048M \
-            -net nic -net user,hostfwd=tcp::''${port:-2222}-:22,hostfwd=tcp::''${bootport:-2223}-:2222 \
-            --virtfs local,path=/nix/store,security_model=none,mount_tag=nix-store \
-            --drive if=pflash,format=raw,unit=0,readonly=on,file=${pkgs.OVMF.firmware} \
-            --drive media=cdrom,format=raw,readonly=on,file=${iso} \
-            --drive format=qcow2,file=$disk1,if=none,id=nvm \
-            --device nvme,serial=deadbeef,drive=nvm \
-            --drive id=disk2,format=qcow2,if=none,file=$disk2 \
-            --device ide-hd,drive=disk2 \
-            --drive id=disk3,format=qcow2,if=none,file=$disk3 \
-            --device ide-hd,drive=disk3 \
-            $@
-          '');
-
-        # nix run .#install-on-beacon <flake> <ip> [<port>]
-        # nix run .#install-on-beacon skarabox 192.168.1.10
-        # nix run .#install-on-beacon skarabox 192.168.1.10 22
-        # Intended to be run from the template.
-        install-on-beacon = pkgs.writeShellScriptBin "runner.sh" ''
-          ${inputs'.nixos-anywhere.packages.nixos-anywhere}/bin/nixos-anywhere \
-            --flake .#$1 \
-            --disk-encryption-keys /tmp/root_passphrase root_passphrase \
-            --disk-encryption-keys /tmp/data_passphrase data_passphrase \
-            --ssh-port ''${3:-22} \
-            nixos@''$2
-        '';
-
-        # nix run .#demo-install-on-beacon <flake> [<ip> [<port>]]
-        # nix run .#demo-install-on-beacon
-        # nix run .#demo-install-on-beacon 127.0.0.1
-        # nix run .#demo-install-on-beacon 127.0.0.1 2222
-        # nix run .#demo-install-on-beacon 127.0.0.1 2222 ../skarabox
-        # Intended to be run from the template.
-        demo-install-on-beacon = pkgs.writeShellScriptBin "runner.sh" ''
-          mkdir -p .skarabox-demo
-          key=.skarabox-demo/key
-          cp ${demoSSHPriv} "$key"
-          chmod 600 "$key"
+          shift $((OPTIND-1))
 
           ${inputs'.nixos-anywhere.packages.nixos-anywhere}/bin/nixos-anywhere \
-            --flake ''${3:-github:ibizaman/skarabox}#demo-skarabox \
-            --disk-encryption-keys /tmp/root_passphrase <(echo rootpassphrase) \
-            --disk-encryption-keys /tmp/data_passphrase <(echo datapassphrase) \
-            -i "$key" \
-            --ssh-option "UserKnownHostsFile=${demoKnownKeyFile}" \
-            --ssh-port ''${2:-2222} \
-            nixos@''${1:-127.0.0.1}
+            --flake $flake \
+            --disk-encryption-keys /tmp/host_key $host_key_file \
+            --disk-encryption-keys /tmp/root_passphrase $root_passphrase_file \
+            --disk-encryption-keys /tmp/data_passphrase $data_passphrase_file \
+            --ssh-port $port \
+            nixos@$ip \
+            $extra_opts
         '';
 
-        # nix run .#ssh <ip> [<port> [<command> ...]]
+        # SSH into a host installed
+        # nix run .#ssh <ip> [<port> [<user> [<command> ...]]]
         # nix run .#ssh 192.168.1.10
         # nix run .#ssh 192.168.1.10 22
         # Intended to be run from the template.
@@ -155,53 +129,136 @@
           shift
           port=$1
           shift
-
-          ${pkgs.openssh}/bin/ssh \
-            -p ''${port:-22} \
-            skarabox@''$ip \
-            -o IdentitiesOnly=yes \
-            -i ssh_skarabox \
-            $@
-        '';
-
-        # nix run .#demo-ssh <ip> [<port> [<user> [<command> ...]]]
-        # nix run .#demo-ssh
-        # nix run .#demo-ssh 127.0.0.1
-        # nix run .#demo-ssh 127.0.0.1 2222
-        # nix run .#demo-ssh 127.0.0.1 2222 nixos
-        # nix run .#demo-ssh 127.0.0.1 2222 echo "hello from inside"
-        # Intended to be run from the template.
-        demo-ssh = pkgs.writeShellScriptBin "ssh.sh" ''
-          ip=$1
-          shift
-          port=$1
-          shift
           user=$1
           shift
 
-          mkdir -p .skarabox-demo
-          key=.skarabox-demo/key
-          cp ${demoSSHPriv} "$key"
-          chmod 600 "$key"
-
           ${pkgs.openssh}/bin/ssh \
-            -F none \
-            -p ''${port:-2222} \
-            ''${user:-skarabox}@''${ip:-127.0.0.1} \
+            -p ''${port:-22} \
+            ''${user:-skarabox}@''$ip \
             -o IdentitiesOnly=yes \
-            -o ConnectTimeout=10 \
-            -i "$key" \
-            -o UserKnownHostsFile=${demoKnownKeyFile} \
             $@
         '';
       };
 
       checks = import ./tests {
-        inherit pkgs inputs;
+        inherit pkgs inputs system;
       };
     };
 
     flake = {
+      lib = {
+        # Create an ISO file with the beacon.
+        #
+        # This ISO file will need to be burned on a USB stick.
+        # This can be done for example with usbimager that's
+        # included in the template.
+        #
+        #   nix build .#beacon
+        #
+        beacon = system: skarabox-options: nixos-generators.nixosGenerate {
+          inherit system;
+          format = "install-iso";
+
+          modules = [
+            self.nixosModules.beacon
+            skarabox-options
+          ];
+        };
+
+        # Create and Start a VM that boots the ISO file with the beacon.
+        #
+        # Useful for testing a full installation.
+        # This VM comes with 3 disks, one under /dev/nvme0n1
+        # and the two other under /dev/sda and /dev/sdb. This
+        # setup imitates a real server with one SSD disk for
+        # the OS and two HDDs in mirror for the data.
+        #
+        #   nix run .#beacon-vm [<host-port> [<host-boot-port>]]
+        #
+        #   host-port:        Host part of the port forwarding for the SSH server
+        #                     when the VM is booted.
+        #                     (default: 2222)
+        #   host-boot-port:   Host port of the port forwarding for the SSH server
+        #                     used to decrypt the root partition upon booting
+        #                     or rebooting after the installation process is done.
+        #                     (default: 2223)
+        #
+        beacon-vm = system: skarabox-options: let
+          iso = nixos-generators.nixosGenerate {
+            inherit system;
+            format = "install-iso";
+
+            modules = [
+              self.nixosModules.beacon
+              skarabox-options
+              ({ lib, modulesPath, ... }: {
+                imports = [
+                  # This profile adds virtio drivers needed in the guest
+                  # to be able to share the /nix/store folder.
+                  (modulesPath + "/profiles/qemu-guest.nix")
+                ];
+
+                config.services.openssh.ports = lib.mkForce [ 2222 ];
+
+                # Since this is the VM and we will mount the hosts' nix store,
+                # we do not need to create a squashfs file.
+                config.isoImage.storeContents = lib.mkForce [];
+
+                # Share the host's nix store instead of the one created for the ISO.
+                # config.lib.isoFileSystems is defined in nixos/modules/installer/cd-dvd/iso-image.nix
+                config.lib.isoFileSystems = {
+                  "/nix/.ro-store" = lib.mkForce {
+                    device = "nix-store";
+                    fsType = "9p";
+                    neededForBoot = true;
+                    options = [
+                      "trans=virtio"
+                      "version=9p2000.L"
+                      "msize=16384"
+                      "x-systemd.requires=modprobe@9pnet_virtio.service"
+                      "cache=loose"
+                    ];
+                  };
+                };
+              })
+            ];
+          };
+          nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
+          qemu = nixos-qemu.qemuBinary pkgs.qemu;
+        in (pkgs.writeShellScriptBin "beacon-vm.sh" ''
+          disk1=.skarabox-tmp/disk1.qcow2
+          disk2=.skarabox-tmp/disk2.qcow2
+          disk3=.skarabox-tmp/disk3.qcow2
+
+          mkdir -p .skarabox-tmp
+          for d in $disk1 $disk2 $disk3; do
+            [ ! -f $d ] && ${pkgs.qemu}/bin/qemu-img create -f qcow2 $d 20G
+          done
+
+          guestport=2222
+          hostport=''${1:-2222}
+          shift
+          guestbootport=2223
+          hostbootport=''${1:-2223}
+          shift
+
+          ${qemu} \
+            -m 2048M \
+            -device virtio-rng-pci \
+            -net nic -net user,hostfwd=tcp::''${hostport}-:''${guestport},hostfwd=tcp::''${hostbootport}-:''${guestbootport} \
+            --virtfs local,path=/nix/store,security_model=none,mount_tag=nix-store \
+            --drive if=pflash,format=raw,unit=0,readonly=on,file=${pkgs.OVMF.firmware} \
+            --drive media=cdrom,format=raw,readonly=on,file=${iso}/iso/beacon.iso \
+            --drive format=qcow2,file=$disk1,if=none,id=nvm \
+            --device nvme,serial=deadbeef,drive=nvm \
+            --drive id=disk2,format=qcow2,if=none,file=$disk2 \
+            --device ide-hd,drive=disk2 \
+            --drive id=disk3,format=qcow2,if=none,file=$disk3 \
+            --device ide-hd,drive=disk3 \
+            $@
+          '');
+      };
+
       templates = {
         skarabox = {
           path = ./template;
@@ -209,6 +266,40 @@
         };
 
         default = self.templates.skarabox;
+      };
+
+      nixosModules.beacon = { config, lib, modulesPath, ... }: let
+        cfg = config.skarabox;
+      in {
+        imports = [
+          ./modules/beacon.nix
+          (modulesPath + "/profiles/minimal.nix")
+        ];
+
+        options.skarabox = {
+          sshPublicKey = lib.mkOption {
+            type = lib.types.path;
+            description = "Public key to connect to the beacon.";
+          };
+        };
+
+        config = {
+          boot.loader.systemd-boot.enable = true;
+
+          # Do not let sshd generate host keys,
+          # we will provide our own.
+          # sshd will refuse to start if it finds no host key.
+          # services.openssh.hostKeys = pkgs.lib.mkForce [];
+          # environment.etc."ssh/ssh_host_ed25519_key" = {
+          #   source = beaconHostKeyPriv;
+          #   mode = "0600";
+          # };
+
+          # Set shared ssh key
+          users.users."nixos" = {
+            openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
+          };
+        };
       };
 
       nixosModules.skarabox = {
@@ -219,36 +310,11 @@
         ];
       };
 
-      # Module with some test preset that match the demo-beacon.
-      nixosModules.demo-skarabox = {
-        imports = [
-          ({ modulesPath, ... }: {
-            imports = [
-              (modulesPath + "/profiles/qemu-guest.nix")
-              (modulesPath + "/profiles/minimal.nix")
-            ];
-          })
-          self.nixosModules.skarabox
-        ];
-        skarabox.hostname = "skarabox";
-        skarabox.username = "skarabox";
-        skarabox.sshAuthorizedKeyFile = demoSSHPub;
-        skarabox.disks.rootDisk = "/dev/nvme0n1";
-        skarabox.disks.rootReservation = "500M";
-        skarabox.disks.enableDataPool = true;
-        skarabox.disks.dataDisk1 = "/dev/sda";
-        skarabox.disks.dataDisk2 = "/dev/sdb";
-        skarabox.disks.dataReservation = "10G";
-        # e1000 found by running lspci -v | grep -iA8 'network\|ethernet' in the beacon VM
-        skarabox.disks.networkCardKernelModules = [ "e1000" ];
-        skarabox.hostId = "12345678";
-      };
-
-      nixosConfigurations.demo-skarabox = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [
-          self.nixosModules.demo-skarabox
-        ];
+      nix-ci = {
+        cachix = {
+          name = "selfhostblocks";
+          public-key = "selfhostblocks.cachix.org-1:H5h6Uj188DObUJDbEbSAwc377uvcjSFOfpxyCFP7cVs=";
+        };
       };
     };
   });

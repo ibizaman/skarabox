@@ -91,6 +91,12 @@ in
       description = "Kernel modules needed to active network card.";
       default = [ "e1000" "e1000e" "igb" "rtw88_8821ce" "r8169" ];
     };
+
+    bootSSHPort = mkOption {
+      type = types.port;
+      description = "Port the SSH daemon used to decrypt the root partition listens to.";
+      default = 2222;
+    };
   };
 
   config = {
@@ -108,7 +114,7 @@ in
           # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
           # We're using the same host key because, well, it's the same host!
           postMountHook = ''
-            cp /etc/ssh/ssh_host_ed25519_key /mnt/boot/host_key
+            cp /tmp/host_key /mnt/boot/host_key
           '';
         };
         rootRaidContent = {
@@ -172,7 +178,7 @@ in
             # Copy the host_key needed for initrd in a location accessible on boot.
             # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
             postMountHook = ''
-              cp /etc/ssh/ssh_host_ed25519_key /mnt/boot/host_key
+              cp /tmp/host_key /mnt/boot/host_key
             '';
           };
         };
@@ -336,17 +342,15 @@ in
         enable = true;
         # To prevent ssh clients from freaking out because a different host key is used,
         # a different port for ssh is used.
-        port = lib.mkDefault 2222;
-        hostKeys = [ "/boot/host_key" ];
+        port = lib.mkDefault cfg.bootSSHPort;
+        hostKeys = lib.mkForce [ "/boot/host_key" ];
         # Public ssh key used for login.
         # This should contain just one line and removing the trailing
         # newline could be fixed with a removeSuffix call but treating
         # it as a file containing multiple lines makes this forward compatible.
-        authorizedKeys = let
-          f = builtins.readFile config.skarabox.sshAuthorizedKeyFile;
-          keys = lib.remove "" (lib.splitString "\n" f);
-        in
-          keys;
+        authorizedKeyFiles = [
+          config.skarabox.sshAuthorizedKeyFile
+        ];
       };
 
       postCommands = ''

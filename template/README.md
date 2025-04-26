@@ -2,58 +2,169 @@
 
 This repository originates from https://github.com/ibizaman/skarabox.
 
-## Bootstrap
+Help can be asked by [opening an issue][] in the repository
+or by [joining the Matrix channel][].
 
-Follow the steps outlined at https://github.com/ibizaman/skarabox?tab=readme-ov-file#installation once.
+[opening an issue]: https://github.com/ibizaman/skarabox/issues/new
+[joining the Matrix channel]: https://matrix.to/#/#selfhostblocks:matrix.org
+
+## Bootstrapping
+
+Create a directory and download the template.
+
+```bash
+$ mkdir myskarabox
+$ cd myskarabox
+$ nix run github:ibizaman/skarabox#init
+```
+
+This last command will also generate the needed secrets
+and ask for the password you want for the admin user.
+
+It will finally ask you to fill out two files: [./ip](./ip) and [./system](./system)
+and generate [./known_hosts](./known_hosts).
+All instructions on how to fill them out is included in each file.
+
+## Installation
+
+The installation procedure can be followed on a [VM][],
+to test the installation process, or on a [real server][].
+
+> [!CAUTION]
+> Following the installation procedure on a real server
+> WILL ERASE THE CONTENT of any disk on that server.
+> Take the time to remove any disk you care about.
+
+[VM]: #a1-test-on-a-vm
+[real server]: #a2-install-on-a-real-server
+
+### A.1. Test on a VM
+
+Assuming the [./configuration.nix](./configuration.nix) file is left untouched,
+you can now test the installation process on a VM.
+This VM has 3 hard drives, one for the OS
+and two in raid for the data.
+
+To do that, first we tweak the ports
+to more sensible defaults for a VM:
+
+```bash
+$ echo 2222 > ssh_port
+$ echo 2223 > ssh_boot_port
+```
+
+Then, start the VM:
+
+```bash
+$ nix run .#beacon-vm &
+```
+
+Now, skip to [step B](#b-run-the-installation-process).
+
+### A.2. Install on a Real Server
+
+_This guide assumes you know how to boot your server on a USB stick._
+
+1. Create the .iso file.
+
+   ```bash
+   $ nix build .#beacon
+   ```
+
+2. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
+
+   ```bash
+   $ nix run .#usbimager
+   ```
+   
+   - Select `./result/iso/beacon.iso` file in row 1 (`...`).
+   - Select USB key in row 3.
+   - Click write (arrow down) in row 2.
+
+3. Plug the USB stick in the server. Choose to boot on it.
+
+   You will be logged in automatically with user `nixos`.
+
+4. Note down the IP address and disk layout of the server.
+   For that, follow the steps that appeared when booting on the USB stick.
+   To reprint the steps, run the command `skarabox-help`.
+
+5. Open the [./configuration.nix](./configuration.nix) file and tweak values to match your hardware.
+
+### B. Run the Installation
+
+```bash
+$ nix run .#install-on-beacon .#skarabox
+```
+
+The server will reboot into NixOS on its own.
+Upon booting, the root partition will need to be decrypted
+as outlined in the next section.
 
 ## Normal Operations
 
 1. Decrypt root pool after boot
 
-```bash
-$ ssh -p 2222 root@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
-```
+   ```bash
+   $ nix run .#boot-ssh
+   ```
+   
+   You will be prompted to enter the root passphrase:
+   
+   ```
+   Enter passphrase for 'root':
+   ```
+   
+   Copy the content of the [./root_passphrase](./root_passphrase) file
+   and paste it then press Enter.
+   No `*` will appear upon pasting but just press Enter.
+   The connection will then disconnect automatically with:
+   
+   ```
+   Connection to <ip> closed.
+   ```
+   
+   This is normal behavior.
 
-2. Login
+2. SSH in
 
-```bash
-$ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
-```
+   ```bash
+   $ nix run .#ssh
+   ```
 
 3. Reboot
 
-```bash
-$ ssh -p 22 skarabox@<ip> -o IdentitiesOnly=yes -i ssh_skarabox reboot
-```
-
-You will then be required to decrypt the hard drives as explained above.
+   ```bash
+   $ nix run .#ssh sudo reboot
+   ```
+   
+   You will then be required to decrypt the hard drives upon reboot as explained above.
 
 4. Deploy an Update
 
-Modify the `./configuration.nix` file then run:
-
-```bash
-nix run .#deploy
-```
+   Modify the [./configuration.nix](./configuration.nix) file then run:
+   
+   ```bash
+   $ nix run .#deploy
+   ```
 
 5. Update dependencies
 
-```bash
-nix flake update
-nix run .#deploy
-```
+   ```bash
+   $ nix flake update
+   $ nix run .#deploy
+   ```
 
 6. Edit secrets
 
-```bash
-nix run .#sops secrets.yaml
-```
+   ```bash
+   $ nix run .#sops secrets.yaml
+   ```
 
 ## Post Installation Checklist
 
 These items act as a checklist that you should go through to make sure your installation is robust.
 How to proceed with each item is highly dependent on which hardware you have so it is hard for Skarabox to give a detailed explanation here.
-If you have any question, don't hesitate to open a [GitHub issue](https://github.com/ibizaman/skarabox/issues/new).
 
 ### Secrets with SOPS
 
@@ -109,11 +220,7 @@ Usually, connecting to it is done by entering one of the following IP addresses 
 To check if this setup works,
 you can connect to another network (like using the tethered connection from your phone or connecting to another WiFi network)
 and then ssh into your server like above,
-but instead of using the IP address, use the domain name:
-
-```bash
-$ ssh -p 22 skarabox@<domainname> -o IdentitiesOnly=yes -i ssh_skarabox
-```
+but instead of using the IP address, use the domain name in `./ip`.
 
 ### Add Services
 

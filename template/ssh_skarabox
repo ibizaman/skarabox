@@ -1,3 +1,5 @@
 <generate me>
+
 Use this command:
+
 rm ssh_skarabox && nix shell .#openssh -- command ssh-keygen -t ed25519 -N "" -f ssh_skarabox && chmod 600 ssh_skarabox

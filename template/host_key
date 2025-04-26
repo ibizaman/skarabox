@@ -1,0 +1,5 @@
+<generate me>
+
+Use this command:
+
+rm host_key && nix shell .#openssh -- command ssh-keygen -t ed25519 -N "" -f host_key && chmod 600 host_key

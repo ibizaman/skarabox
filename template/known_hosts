@@ -1,0 +1,7 @@
+<generate me>
+
+First, generate ./host_key and fill out ./ip.
+Also, tweak ./ssh_port and ./ssh_boot_port if the default values do not suit you.
+Then, use this command:
+
+nix run .#genKnownHostsFile

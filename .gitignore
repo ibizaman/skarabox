@@ -1,2 +1,4 @@
 result
 *.qcow2
+
+.skarabox-tmp

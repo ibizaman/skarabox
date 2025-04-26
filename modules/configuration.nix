@@ -31,6 +31,14 @@ in
       '';
     };
 
+    sshPorts = mkOption {
+      type = types.listOf types.port;
+      default = [ 22 ];
+      description = ''
+        List of ports the SSH daemon listens to.
+      '';
+    };
+
     sshAuthorizedKeyFile = mkOption {
       type = types.path;
       description = ''
@@ -121,6 +129,7 @@ in
       # Empty to not let sshd generate any host key
       # since we'll supply it ourselves.
       hostKeys = [];
+      ports = cfg.sshPorts;
     };
     systemd.services.sshd.preStart = ''
       cp /boot/host_key /etc/ssh/ssh_host_ed25519_key

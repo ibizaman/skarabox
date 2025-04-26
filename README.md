@@ -1,231 +1,125 @@
 # SkaraboxOS
 
-SkaraboxOS is an opinionated and simplified headless NixOS installer.
+[![build](https://github.com/ibizaman/skarabox/actions/workflows/build.yaml/badge.svg)](https://github.com/ibizaman/skarabox/actions/workflows/build.yaml)
 
-It provides a flake [template](./template) which combines:
+SkaraboxOS aims to be the fastest way to install NixOS on a server
+with all batteries included.
+
+TL; DR:
+
+```bash
+mkdir myskarabox
+cd myskarabox
+nix run github:ibizaman/skarabox#init
+
+# Tweak settings to match installing on the VM
+echo 2222 > ssh_port
+echo 2223 > ssh_boot_port
+echo 127.0.0.1 > ip
+echo x86_64-linux > system
+
+nix run .#beacon-vm &
+nix run .#install-on-beacon .#skarabox
+# VM will reboot.
+
+# Installation is done!
+
+# To decrypt root partition:
+nix run .#boot-ssh
+# Then, enter root passphrase from ./root_passphrase
+
+# SSH in:
+nix run .#ssh
+
+# Make a change to ./configuration.nix then deploy:
+nix run .#deploy
+
+# Reboot:
+nix run .#ssh sudo reboot
+```
+
+The flake [template](./template) combines:
 - Creating a bootable ISO, installable on an USB key.
-- [nixos-anywhere](https://github.com/nix-community/nixos-anywhere) to install NixOS headlessly.
-- [disko](https://github.com/nix-community/disko) to format the drives using native ZFS encryption with remote unlocking through ssh.
-- [sops-nix](https://github.com/Mic92/sops-nix) to handle secrets.
-- [deploy-rs](https://github.com/serokell/deploy-rs) to deploy updates.
-- Which supports x86_64 and aarch64 platform.
+- Alternatively, creating a VM based on the bootable ISO
+  to test the installation procedure (like shown in the snippet above).
+- Managing host keys, known hosts and ssh keys
+  to provide a secure and seamless SSH experience.
+- [nixos-anywhere][] to install NixOS headlessly.
+- [disko][] to format the drives using native ZFS encryption with remote unlocking through ssh.
+  It supports for the OS 1 or 2 disks in raid 1
+  and for the data 0 or 2 disks in raid1.
+- [sops-nix][] to handle secrets.
+- [deploy-rs][] to deploy updates.
+- backed by [tests][] and [CI][] to make sure the installation procedure does work!
+  Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.template -- -g`.
+- and supporting `x86_64-linux` and `aarch64-linux` platform.
+
+[nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
+[disko]: https://github.com/nix-community/disko
+[sops-nix]: https://github.com/Mic92/sops-nix
+[deploy-rs]: https://github.com/serokell/deploy-rs
+[tests]: ./tests/default.nix
+[CI]: ./.github/workflows/build.yaml
 
 This repository does not invent any of those wonderful tools.
-It merely provides an opinionated way to make them all fit together for a seamless experience.
-
-It has a [demo](#demo) which lets you install SkaraboxOS on a VM!
-
-[![Screencast of the steps outlined in the demo](https://img.youtube.com/vi/pXuKwhtC-0I/0.jpg)](https://www.youtube.com/watch?v=pXuKwhtC-0I)
+It merely provides an opinionated way to make them all fit together.
+By being more opinionated, it gets you set up faster.
 
 ## Why?
 
-Because the landscape of installing NixOS could be better and this repository is an attempt at that.
-By being more opinionated, it allows you to get set up faster.
+Because the landscape of installing NixOS could be better
+and this repository is an attempt at that.
 
-By the way, the name SkaraboxOS comes from the scarab (the animal), box (for the server) and OS (for Operating System).
+By the way, the name SkaraboxOS comes from the scarab (the animal),
+box (for the server) and OS (for Operating System).
 Scarab is spelled with a _k_ because it's kool.
-A scarab is a _very_ [strong](https://en.wikipedia.org/wiki/Dung_beetle#Ecology_and_behavior) animal representing well what this repository's intention.
+A scarab is a _very_ [strong][] animal representing well what this repository's intention.
+
+[strong]: https://en.wikipedia.org/wiki/Dung_beetle#Ecology_and_behavior
 
 ## Hardware Requirements
 
-SkaraboxOS expects a particular hardware layout:
+SkaraboxOS is currently tailored for NAS users, not necessarily homelab users.
+It expects a particular hardware layout:
 
 - 1 or 2 SSD or NVMe drive for the OS.
   If 2, they will be formatted in Raid 1 (mirror) so each hard drive should have the same size.
 - 0 or 2 Hard drives that will store data.
   Capacity depends on the amount of data that will be stored.
   If 2, they will too be formatted in Raid 1.
-<!--
-This is for Self Host Blocks.
 
-- 16Gb or more of RAM.
-- AMD or Intel CPU with embedded graphics.
-  (Personally using AMD Ryzen 5 5600G with great success).
-- *Work In Progress* Optional graphics card.
-  Only needed for speech to text applications like for Home Assistant.
-- Internet access is optional.
-  It is only required:
-  - for updates;
-  - for accessing services from outside the LAN;
-  - for federation (to share documents or pictures across the internet).
--->
-
-**WARNING: The disks will be formatted and completely wiped out of data.**
+> [!WARNING]
+> The disks will be formatted and completely wiped out of data.
 
 ## Installation Process Overview
 
-1. Download the flake template.
+The TL; DR: snippet in words:
+
+1. Download the flake template
+   which automatically generates secrets.
 2. Generate a ISO and format a USB key.
 3. Boot server on USB key and get its IP address.
-4. Generate secrets on laptop, update some default values.
-5. Run installer from laptop.
-6. Done!
+4. Run installer from laptop.
+   Server will reboot and ask for passphrase to decrypt root partition.
+5. SSH in to decrypt root partition.
+6. Server boots and you can SSH in.
 
-At the end of the process, the server will:
-- Have an encrypted ZFS root partition using the NVMe drive, unlockable remotely through ssh.
-- Have an encrypted ZFS data hard drives.
-- Be accessible through ssh for administration and updates.
+The [template's README](./template/README.md) contains a more detailed explanation.
 
-Services can then be installed by using NixOS options directly or through [Self Host Blocks](https://github.com/ibizaman/selfhostblocks).
+Services can then be installed by using NixOS options directly
+or through [Self Host Blocks](https://github.com/ibizaman/selfhostblocks).
 The latter, similarly to SkaraboxOS, provides an opinionated way to configure services in a seamless way.
-
-## Caution
-
-Following the steps WILL ERASE THE CONTENT of any disk on that server.
-
-## Demo
-
-This demo will install SkaraboxOS on a VM locally on your computer.
-The VM has 3 hard drives, one for the OS
-and two in raid 1 for the data.
-
-See the [introduction section](#skaraboxos)
-for a screencast of the steps outlined here.
-
-Launch the VM that listens on ports 2222 for normal ssh access
-and 2223 for ssh access during boot:
-
-```bash
-nix run github:ibizaman/skarabox#demo-beacon 2222 2223
-```
-
-_Compared to the real installation, this step replaces installing
-the beacon on an USB key and booting on it._
-
-When the installer did boot up and you see the `[nixos@nixos:~]$` prompt,
-install SkaraboxOS on the VM with:
-
-```bash
-nix run github:ibizaman/skarabox#demo-install-on-beacon 127.0.0.1 2222
-```
-
-Then when the system reboots - actually every time it will boot -
-you will be prompted with `Enter passphrase for 'root'` which
-waits for the passphrase to decrypt the root partition.
-The password is `rootpassphrase` (yes, I know, it's original :D).
-but don't enter it through the VM, we can ssh in to enter it:
-
-```bash
-printf "rootpassphrase" | nix run github:ibizaman/skarabox#demo-ssh 127.0.0.1 2223 root
-```
-
-When that's done, the boot up will continue and you will see the prompt
-`skarabox login`. Enter `skarabox` as username and `skarabox123` as password.
-
-Now you're logged into the VM on a brand new SkaraboxOS installation!
-
-You can test accessing through ssh with:
-
-```
-nix run github:ibizaman/skarabox#demo-ssh 127.0.0.1 2222
-```
-
-## Installation
-
-1. Create a directory and download the template.
-
-```bash
-$ mkdir myskarabox
-$ cd myskarabox
-$ nix flake init --template github:ibizaman/skarabox
-```
-
-2. Boot on the NixOS installer. You just need to boot, there is nothing to install just yet.
-
-   1. First, create the .iso file.
-
-   ```bash
-   $ nix build .#beacon
-   ```
-
-   2. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
-
-   ```bash
-   $ nix run .#usbimager
-   ```
-
-   - Select `./result/iso/beacon.iso` file in row 1 (`...`).
-   - Select USB key in row 3.
-   - Click write (arrow down) in row 2.
-
-   3. Plug the USB stick in the server. Choose to boot on it.
-
-   You will be logged in automatically with user `nixos`.
-
-   4. Note down the IP address and disk layout of the server.
-      For that, follow the steps that appeared when booting on the USB stick.
-      To reprint the steps, run the command `skarabox-help`.
-
-   5. Open the `configuration.nix` file and tweak values to match you hardware.
-      Also, open the other files and see how to generate them too.
-      All the instructions are included.
-
-   Note the `root_passphrase` file will contain a passphrase that will need to be provided every time the server boots up.
-
-3. Run the installation process
-
-   1. Run the following command replacing `<ip>` with the IP address you got in the previous step.
-
-   ```bash
-   $ nix run .#install-on-beacon skarabox <ip>
-   ```
-
-   You will be prompted for a password, enter "skarabox123" without the double quotes.
-
-   2. The server will reboot into NixOS on its own.
-
-   3. Decrypt the SSD and the Hard Drives.
-
-   Run the following command.
-
-   ```bash
-   $ ssh -p 2222 root@<ip> -o IdentitiesOnly=yes -i ssh_skarabox
-   ```
-
-   It will prompt you a first time to verify the key fingerprint.
-
-   ```bash
-   The authenticity of host '[<ip>]:2222 ([<ip>]:2222)' can't be established.
-   ED25519 key fingerprint is SHA256:<redacted>.
-   This key is not known by any other names.
-   Are you sure you want to continue connecting (yes/no/[fingerprint])?
-   ```
-
-   Just enter `"yes"` followed by pressing on the Enter key.
-   Next time the server will boot, you will not need to do this step.
-
-   ```bash
-   Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
-   Warning: Permanently added '[<ip>]:2222' (ED25519) to the list of known hosts.
-   ```
-
-   You will be prompted a second time, this time to enter the root passphrase.
-   Copy the content of the `root_passphrase` file and paste it and press Enter.
-   No `*` will appear upon pasting but just press Enter.
-
-   ```bash
-   Enter passphrase for 'root':
-   ```
-
-   The connection will disconnect automatically.
-   This is normal behavior.
-
-   ```bash
-   Connection to <ip> closed.
-   ```
-
-   Now, the hard drives are decrypted and the server continues to boot.
-
-   It's a good idea to make sure you can login correctly, at least the first time.
-   See next section.
-
-## Normal Operations
-
-Those can be found in the template's [readme](./template/README.md).
 
 ## Contribute
 
 Contributions are very welcomed!
+
+To push to the cache, run for example:
+
+```
+nix build --no-link --print-out-paths .#packages.x86_64-linux.beacon-vm  \
+  | nix run nixpkgs#cachix push selfhostblocks
+```
 
 ## Links
 

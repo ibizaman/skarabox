@@ -12,17 +12,95 @@
     sops-nix.url = "github:Mic92/sops-nix";
   };
 
-  outputs = inputs@{ self, flake-parts, nixpkgs, skarabox, sops-nix, deploy-rs }: flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs@{ self, flake-parts, nixpkgs, skarabox, sops-nix, deploy-rs }: flake-parts.lib.mkFlake { inherit inputs; } (let
+      readFile = path: nixpkgs.lib.trim (builtins.readFile path);
+  in {
     systems = [
       "x86_64-linux"
       "aarch64-linux"
     ];
 
-    perSystem = { inputs', ... }: {
+    perSystem = { inputs', pkgs, system, ... }: {
       packages = {
-        inherit (inputs'.skarabox.packages) beacon install-on-beacon ssh;
+        inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd usbimager util-linux ssh-to-age sops openssl;
 
-        inherit (inputs.nixpkgs.legacyPackages) age usbimager util-linux ssh-to-age sops openssl;
+        beacon = skarabox.lib.beacon system {
+          skarabox.sshPublicKey = ./ssh_skarabox.pub;
+        };
+
+        beacon-vm = pkgs.writeShellScriptBin "beacon-vm.sh" (let
+          vm = skarabox.lib.beacon-vm system {
+            skarabox.sshPublicKey = ./ssh_skarabox.pub;
+          };
+        in ''
+          ssh_port=${readFile ./ssh_port}
+          ssh_boot_port=${readFile ./ssh_boot_port}
+          ${vm}/bin/beacon-vm.sh \
+            ''${ssh_port} \
+            ''${ssh_boot_port} \
+            $@
+        '');
+
+        # nix run .#genKnownHostsFile
+        genKnownHostsFile = pkgs.writeShellScriptBin "mkKnownHosts" ''
+          ip=${readFile ./ip}
+          ssh_port=${readFile ./ssh_port}
+          ssh_boot_port=${readFile ./ssh_boot_port}
+
+          ${inputs'.skarabox.packages.mkKnownHostsFile}/bin/mkKnownHostsFile.sh \
+            host_key.pub $ip $ssh_port $ssh_boot_port \
+            > known_hosts
+        '';
+
+        # nix run .#install-on-beacon FLAKE [<command> ...]
+        # nix run .#install-on-beacon
+        # nix run .#install-on-beacon .#skarabox
+        # nix run .#install-on-beacon .#skarabox -v
+        install-on-beacon = pkgs.writeShellScriptBin "install-on-beacon.sh" ''
+          ip=${readFile ./ip}
+          ssh_port=${readFile ./ssh_port}
+          flake=$1
+          shift
+
+          ${inputs'.skarabox.packages.install-on-beacon}/bin/install-on-beacon.sh \
+            -i $ip \
+            -p $ssh_port \
+            -f $flake \
+            -k host_key \
+            -r root_passphrase \
+            -d data_passphrase \
+            -a "--ssh-option ConnectTimeout=10 -i ssh_skarabox $@"
+        '';
+
+        # nix run .#boot-ssh [<command> ...]
+        # nix run .#boot-ssh
+        # nix run .#boot-ssh echo hello
+        boot-ssh = pkgs.writeShellScriptBin "ssh.sh" ''
+          ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
+            "${readFile ./ip}" \
+            "${readFile ./ssh_boot_port}" \
+            root \
+            -o UserKnownHostsFile=${./known_hosts} \
+            -o ConnectTimeout=10 \
+            -i ssh_skarabox \
+            $@
+        '';
+
+        # nix run .#ssh [<command> ...]
+        # nix run .#ssh
+        # nix run .#ssh echo hello
+        #
+        # Note: the private SSH key is not read into the nix store on purpose.
+        ssh = pkgs.writeShellScriptBin "ssh.sh" ''
+          ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
+            "${readFile ./ip}" \
+            "${readFile ./ssh_port}" \
+            ${self.nixosConfigurations.skarabox.config.skarabox.username} \
+            -o UserKnownHostsFile=${./known_hosts} \
+            -o ConnectTimeout=10 \
+            -i ssh_skarabox \
+            $@
+        '';
       };
 
       apps = {
@@ -31,7 +109,7 @@
     };
 
     flake = let
-      system = builtins.readFile ./system;
+      system = readFile ./system;
     in {
       nixosModules.skarabox = {
         imports = [
@@ -62,9 +140,16 @@
           ];
         };
       in {
-        hostname = builtins.readFile ./ip;
+        hostname = readFile ./ip;
         sshUser = self.nixosConfigurations.skarabox.config.skarabox.username;
-        sshOpts = [ "-o" "IdentitiesOnly=yes" "-i" "ssh_skarabox" ];
+        sshOpts = [
+          "-o" "IdentitiesOnly=yes"
+          "-o" "UserKnownHostsFile=${./known_hosts}"
+          "-o" "ConnectTimeout=10"
+          "-i" "ssh_skarabox"
+          "-p" (readFile ./ssh_port)
+          ""
+        ];
         profiles = {
           system = {
             user = "root";
@@ -75,5 +160,5 @@
       # From https://github.com/serokell/deploy-rs?tab=readme-ov-file#overall-usage
       checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks self.deploy) deploy-rs.lib;
     };
-  };
+  });
 }
