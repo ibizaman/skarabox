@@ -15,10 +15,12 @@ pkgs.writeShellScriptBin "init" (
 
     usage () {
       cat <<USAGE
-Usage: $0 [-h] [-y] [-p PATH]
+Usage: $0 [-h] [-y] [-s] [-v] [-p PATH]
 
   -h:        Shows this usage
   -y:        Answer yes to all questions
+  -s:        Take user password from stdin. Only useful
+             in scripts.
   -v:        Shows what commands are being run.
   -p PATH:   Replace occurences of github:ibizaman/skarabox
              with the given path, for example ../skarabox.
@@ -27,7 +29,7 @@ Usage: $0 [-h] [-y] [-p PATH]
 USAGE
     }
 
-    while getopts "hyp:v" o; do
+    while getopts "hysp:v" o; do
       case "''${o}" in
         h)
           usage
@@ -35,6 +37,8 @@ USAGE
           ;;
         y)
           yes=1
+          ;;
+        s)
           mkpasswdargs=-s
           ;;
         p)

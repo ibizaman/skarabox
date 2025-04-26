@@ -42,7 +42,7 @@ in
     trap "rm -rf $tmpdir/* $tmpdir/.* $tmpdir; trap - SIGTERM && kill -- -$$ || :" SIGINT SIGTERM EXIT
 
     e "Initialising template"
-    echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -p ${../.}
+    echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s -p ${../.}
     echo -n 2223 > ssh_boot_port
     echo -n 2222 > ssh_port
     echo -n 127.0.0.1 > ip
