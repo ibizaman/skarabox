@@ -1,3 +1,5 @@
 <generate me>
+
 Use this command:
+
 nix shell .#util-linux -- command uuidgen | head -c 8 > hostid

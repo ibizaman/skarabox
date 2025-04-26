@@ -1,3 +1,5 @@
-<generate me, only if enableDataPool = true, otherwise delete this file>
+<generate me, only needed if enableDataPool = true, otherwise delete this file>
+
 Use this command:
+
 nix run .#openssl -- rand -hex 64 > data_passphrase
