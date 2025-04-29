@@ -126,14 +126,12 @@ in
         PermitRootLogin = "no";
         PasswordAuthentication = false;
       };
-      # Empty to not let sshd generate any host key
-      # since we'll supply it ourselves.
-      hostKeys = [];
       ports = cfg.sshPorts;
+      hostKeys = lib.mkForce [];
+      extraConfig = ''
+        HostKey /boot/host_key
+      '';
     };
-    systemd.services.sshd.preStart = ''
-      cp /boot/host_key /etc/ssh/ssh_host_ed25519_key
-    '';
 
     system.stateVersion = "23.11";
   };
