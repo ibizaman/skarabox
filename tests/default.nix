@@ -47,7 +47,7 @@ in
     echo 2222 > ssh_port
     echo 127.0.0.1 > ip
     echo ${system} > system
-    ${nix} run .#genKnownHostsFile
+    ${nix} run .#gen-knownhosts-file
     # Using a git repo here allows to only copy in the nix store non temporary files.
     # In particular, we avoid copying the disk*.qcow2 files.
     git init
@@ -55,7 +55,7 @@ in
     git add .
     git config user.name "skarabox"
     git config user.email "skarabox@skarabox.com"
-    git commit -m 'test'
+    git commit -m 'init repository'
     e "Initialisation done"
 
     nix flake show
@@ -72,6 +72,12 @@ in
       sleep 5
     done
     e "Beacon VM has started."
+
+    e "Generating hardware config."
+    ${nix} run .#gen-hardware-config
+    git add facter.json
+    git commit -m 'generate hardware config'
+    e "Generation succeeded."
 
     e "Starting installation on beacon VM."
     ${nix} run .#install-on-beacon -- .#skarabox --no-substitute-on-destination

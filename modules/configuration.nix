@@ -24,6 +24,13 @@ in
       description = "Initial password for the admin user. Can be changed later. Default is 'skarabox123'.";
     };
 
+    facter-config = lib.mkOption {
+      type = lib.types.path;
+      description = ''
+        nixos-facter config file.
+      '';
+    };
+
     hostId = mkOption {
       type = types.str;
       description = ''
@@ -65,6 +72,8 @@ in
   config = {
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
+
+    facter.reportPath = cfg.facter-config;
 
     networking.hostName = cfg.hostname;
     networking.hostId = cfg.hostId;

@@ -93,6 +93,16 @@ _This guide assumes you know how to boot your server on a USB stick._
 
 ### B. Run the Installation
 
+Create a [./facter.json](./facter.json) file containing
+the hardware specification of the host (or the VM) with:
+
+```bash
+$ nix run .#gen-hardware-config
+```
+
+Add the `./facter.json` to git (run `git add facter.json`).
+The run the installation process on the host:
+
 ```bash
 $ nix run .#install-on-beacon .#skarabox
 ```

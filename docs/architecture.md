@@ -188,25 +188,7 @@ boot.initrd.network = {
 };
 ```
 
-For the firmware, we use the shortcut option to enable all hardware:
-
-```nix
-hardware.enableAllHardware = true;
-```
-
-This works for the non-initrd ssh daemon but for the initrd one,
-we must be more explicit and specify which kernel module to enable:
-
-```nix
-boot.initrd.availableKernelModules = [ "<kernel module>" ];
-```
-
-To get which driver is needed, you can ssh on the server
-while it is running the beacon and run:
-
-```bash
-nix shell nixpkgs#pciutils --command lspci -v | grep -iA8 'network\|ethernet'
-```
+For the firmware, we use nixos-facter to figure it out.
 
 ## Erase your darlings
 

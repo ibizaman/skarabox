@@ -28,7 +28,7 @@
           skarabox.sshPublicKey = ./ssh_skarabox.pub;
         };
 
-        beacon-vm = pkgs.writeShellScriptBin "beacon-vm.sh" (let
+        beacon-vm = pkgs.writeShellScriptBin "beacon-vm" (let
           vm = skarabox.lib.beacon-vm system {
             skarabox.sshPublicKey = ./ssh_skarabox.pub;
           };
@@ -41,22 +41,31 @@
             $@
         '');
 
-        # nix run .#genKnownHostsFile
-        genKnownHostsFile = pkgs.writeShellScriptBin "mkKnownHosts" ''
+        # nix run .#gen-knownhosts-file
+        gen-knownhosts-file = pkgs.writeShellScriptBin "gen-knownhosts-file" ''
           ip=${readFile ./ip}
-          ssh_port=${readFile ./ssh_port}
+          ssh_boot_port=${readFile ./ssh_port}
           ssh_boot_port=${readFile ./ssh_boot_port}
 
-          ${inputs'.skarabox.packages.mkKnownHostsFile}/bin/mkKnownHostsFile.sh \
+          ${inputs'.skarabox.packages.gen-knownhosts-file}/bin/gen-knownhosts-file \
             host_key.pub $ip $ssh_port $ssh_boot_port \
             > known_hosts
+        '';
+
+        # nix run .#gen-hardware-config
+        gen-hardware-config = pkgs.writeShellScriptBin "gen-hardware-config" ''
+          ip=${readFile ./ip}
+          ssh_port=${readFile ./ssh_port}
+
+          ${inputs'.skarabox.packages.gen-hardware-config}/bin/gen-hardware-config \
+            $ip $ssh_port root facter.json
         '';
 
         # nix run .#install-on-beacon FLAKE [<command> ...]
         # nix run .#install-on-beacon
         # nix run .#install-on-beacon .#skarabox
         # nix run .#install-on-beacon .#skarabox -v
-        install-on-beacon = pkgs.writeShellScriptBin "install-on-beacon.sh" ''
+        install-on-beacon = pkgs.writeShellScriptBin "install-on-beacon" ''
           ip=${readFile ./ip}
           ssh_port=${readFile ./ssh_port}
           flake=$1
@@ -75,7 +84,7 @@
         # nix run .#boot-ssh [<command> ...]
         # nix run .#boot-ssh
         # nix run .#boot-ssh echo hello
-        boot-ssh = pkgs.writeShellScriptBin "ssh.sh" ''
+        boot-ssh = pkgs.writeShellScriptBin "boot-ssh" ''
           ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
             "${readFile ./ip}" \
             "${readFile ./ssh_boot_port}" \
@@ -91,7 +100,7 @@
         # nix run .#ssh echo hello
         #
         # Note: the private SSH key is not read into the nix store on purpose.
-        ssh = pkgs.writeShellScriptBin "ssh.sh" ''
+        ssh = pkgs.writeShellScriptBin "ssh" ''
           ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
             "${readFile ./ip}" \
             "${readFile ./ssh_port}" \

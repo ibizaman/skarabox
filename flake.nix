@@ -16,19 +16,31 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nixos-facter-modules = {
+      url = "github:numtide/nixos-facter-modules";
+    };
+
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
     };
   };
 
-  outputs = inputs@{ self, flake-parts, nixpkgs, nixos-generators, nixos-anywhere, ... }: flake-parts.lib.mkFlake { inherit inputs; } (
+  outputs = inputs@{
+    self,
+    flake-parts,
+    nixpkgs,
+    nixos-generators,
+    nixos-anywhere,
+    nixos-facter-modules,
+    ...
+  }: flake-parts.lib.mkFlake { inherit inputs; } (
     let
       pkgs = import nixpkgs {
         system = "x86_64-linux";
       };
 
-      # mkKnownHostsFile <pub_key> <ip> <port> [<port>...]
-      mkKnownHostsFile = pkgs.writeShellScriptBin "mkKnownHostsFile.sh" ''
+      # gen-knownhosts-file <pub_key> <ip> <port> [<port>...]
+      gen-knownhosts-file = pkgs.writeShellScriptBin "gen-knownhosts-file" ''
         pub=$(cat $1 | ${pkgs.coreutils}/bin/cut -d' ' -f-2)
         shift
         ip=$1
@@ -48,11 +60,33 @@
       packages = {
         inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd util-linux openssl openssh;
 
-        inherit mkKnownHostsFile;
+        inherit gen-knownhosts-file;
 
+        # Usage:
+        #  init [-h] [-y] [-s] [-v] [-p PATH]
+        #
+        # print help:
+        #  init -h
         init = import ./modules/initialgen.nix {
           inherit pkgs;
         };
+
+        # Generate hardware config for a host
+        # nix run .#gen-hardware-config <ip> <port> <user> <out>
+        # nix run .#ssh 192.168.1.10 22 nixos ./facter.json
+        gen-hardware-config = pkgs.writeShellScriptBin "gen-hardware-config" ''
+          ip=$1
+          shift
+          port=$1
+          shift
+          user=$1
+          shift
+          out=$1
+          shift
+
+          ${self'.packages.ssh} $ip $port $user nixos-facter > "$out"
+        '';
+
 
         # Install a nixosConfigurations instance (<flake>) on a server.
         #
@@ -61,7 +95,7 @@
         # on any OS supported by nixos-anywhere. The latter was not tested.
         #
         # It is intended to run this command from the template.
-        install-on-beacon = import ./modules/nixos-anywhere.nix {
+        install-on-beacon = import ./modules/installonbeacon.nix {
           inherit pkgs;
           inherit (inputs'.nixos-anywhere.packages) nixos-anywhere;
         };
@@ -70,6 +104,8 @@
         # nix run .#ssh <ip> [<port> [<user> [<command> ...]]]
         # nix run .#ssh 192.168.1.10
         # nix run .#ssh 192.168.1.10 22
+        # nix run .#ssh 192.168.1.10 22 nixos
+        # nix run .#ssh 192.168.1.10 22 nixos echo hello
         # Intended to be run from the template.
         ssh = pkgs.writeShellScriptBin "ssh.sh" ''
           ip=$1
@@ -215,43 +251,17 @@
         default = self.templates.skarabox;
       };
 
-      nixosModules.beacon = { config, lib, modulesPath, ... }: let
-        cfg = config.skarabox;
-      in {
+      nixosModules.beacon = { config, lib, modulesPath, ... }: {
         imports = [
           ./modules/beacon.nix
           (modulesPath + "/profiles/minimal.nix")
         ];
-
-        options.skarabox = {
-          sshPublicKey = lib.mkOption {
-            type = lib.types.path;
-            description = "Public key to connect to the beacon.";
-          };
-        };
-
-        config = {
-          boot.loader.systemd-boot.enable = true;
-
-          # Do not let sshd generate host keys,
-          # we will provide our own.
-          # sshd will refuse to start if it finds no host key.
-          # services.openssh.hostKeys = pkgs.lib.mkForce [];
-          # environment.etc."ssh/ssh_host_ed25519_key" = {
-          #   source = beaconHostKeyPriv;
-          #   mode = "0600";
-          # };
-
-          # Set shared ssh key
-          users.users."nixos" = {
-            openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
-          };
-        };
       };
 
       nixosModules.skarabox = {
         imports = [
           nixos-anywhere.inputs.disko.nixosModules.disko
+          nixos-facter-modules.nixosModules.facter
           ./modules/disks.nix
           ./modules/configuration.nix
         ];

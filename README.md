@@ -30,6 +30,7 @@ echo 2222 > ssh_port
 echo 2223 > ssh_boot_port
 
 nix run .#beacon-vm &
+nix run .#gen-hardware-config
 nix run .#install-on-beacon .#skarabox
 # VM will reboot.
 
@@ -62,6 +63,7 @@ The flake [template](./template) combines:
 - [disko][] to format the drives using native ZFS encryption with remote unlocking through ssh.
   It supports for the OS 1 or 2 disks in raid 1
   and for the data 0 or 2 disks in raid1.
+- [nixos-facter][] to handle hardware configuration.
 - [sops-nix][] to handle secrets.
 - [deploy-rs][] to deploy updates.
 - backed by [tests][] and [CI][] to make sure the installation procedure does work!
@@ -70,6 +72,7 @@ The flake [template](./template) combines:
 
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 [disko]: https://github.com/nix-community/disko
+[nixos-facter]: https://github.com/nix-community/nixos-facter
 [sops-nix]: https://github.com/Mic92/sops-nix
 [deploy-rs]: https://github.com/serokell/deploy-rs
 [tests]: ./tests/default.nix
