@@ -1,5 +1,14 @@
 # SkaraboxOS
 
+<!--toc:start-->
+- [Why?](#why)
+- [Hardware Requirements](#hardware-requirements)
+- [Installation Process Overview](#installation-process-overview)
+- [Architecture](#architecture)
+- [Contribute](#contribute)
+- [Links](#links)
+<!--toc:end-->
+
 [![build](https://github.com/ibizaman/skarabox/actions/workflows/build.yaml/badge.svg)](https://github.com/ibizaman/skarabox/actions/workflows/build.yaml)
 
 SkaraboxOS aims to be the fastest way to install NixOS on a server
@@ -23,10 +32,13 @@ nix run .#install-on-beacon .#skarabox
 # VM will reboot.
 
 # Installation is done!
+```
 
-# To decrypt root partition:
-nix run .#boot-ssh
-# Then, enter root passphrase from ./root_passphrase
+Normal operations:
+
+```
+# Decrypt root partition:
+printf "$(cat root_passphrase)" | nix run .#boot-ssh
 
 # SSH in:
 nix run .#ssh
@@ -109,6 +121,12 @@ The [template's README](./template/README.md) contains a more detailed explanati
 Services can then be installed by using NixOS options directly
 or through [Self Host Blocks](https://github.com/ibizaman/selfhostblocks).
 The latter, similarly to SkaraboxOS, provides an opinionated way to configure services in a seamless way.
+
+## Architecture
+
+See the [Architecture][] document.
+
+[Architecture]: ./docs/architecture.md
 
 ## Contribute
 
