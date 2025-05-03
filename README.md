@@ -21,11 +21,13 @@ mkdir myskarabox
 cd myskarabox
 nix run github:ibizaman/skarabox#init
 
-# Tweak settings to match installing on the VM
-echo 2222 > ssh_port
-echo 2223 > ssh_boot_port
+# Tweak settings to match installing on a target host
 echo 127.0.0.1 > ip
 echo x86_64-linux > system
+
+# More tweaks to install on a VM (for testing)
+echo 2222 > ssh_port
+echo 2223 > ssh_boot_port
 
 nix run .#beacon-vm &
 nix run .#install-on-beacon .#skarabox
