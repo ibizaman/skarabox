@@ -96,7 +96,11 @@ in
     e "Beacon VM has started."
 
     e "Rebooting to confirm we can connect after a reboot."
-    ${nix} run .#ssh -- -F none sudo reboot
+    # We sleep first and run the whole script in the background
+    # to avoid a race condition where the VM reboots too fast
+    # and kills the ssh connection, resulting in the test failing.
+    # So this is all so we can disconnect first.
+    ${nix} run .#ssh -- -F none "(sleep 2 && sudo reboot)&"
     e "Rebooting in progress."
 
     e "Starting ssh loop to figure out when VM is ready to receive root passphrase."
