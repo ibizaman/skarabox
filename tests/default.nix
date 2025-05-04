@@ -31,15 +31,15 @@ in
     if [ -z "$tmpdir" ]; then
       tmpdir="$(mktemp -d)"
       e "Created temp dir at $tmpdir, will be cleaned up on exit or abort"
+
+      # Kills all children bash processes,
+      # like the one that will run in the background hereunder.
+      # https://stackoverflow.com/a/2173421/1013628
+      trap "rm -rf $tmpdir/* $tmpdir/.* $tmpdir; trap - SIGTERM && kill -- -$$ || :" SIGINT SIGTERM EXIT
     else
-      e "Using provided temp dir $tmpdir, will be cleaned up on exit or abort"
+      e "Using provided temp dir $tmpdir, nothing will be cleaned up"
     fi
     cd $tmpdir
-
-    # Kills all children bash processes,
-    # like the one that will run in the background hereunder.
-    # https://stackoverflow.com/a/2173421/1013628
-    trap "rm -rf $tmpdir/* $tmpdir/.* $tmpdir; trap - SIGTERM && kill -- -$$ || :" SIGINT SIGTERM EXIT
 
     e "Initialising template"
     echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s -p ${../.}
