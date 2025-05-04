@@ -73,7 +73,7 @@ in
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
 
-    facter.reportPath = cfg.facter-config;
+    facter.reportPath = lib.mkIf (builtins.pathExists cfg.facter-config) cfg.facter-config;
 
     networking.hostName = cfg.hostname;
     networking.hostId = cfg.hostId;
