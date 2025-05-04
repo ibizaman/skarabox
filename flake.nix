@@ -39,18 +39,6 @@
         system = "x86_64-linux";
       };
 
-      # gen-knownhosts-file <pub_key> <ip> <port> [<port>...]
-      gen-knownhosts-file = pkgs.writeShellScriptBin "gen-knownhosts-file" ''
-        pub=$(cat $1 | ${pkgs.coreutils}/bin/cut -d' ' -f-2)
-        shift
-        ip=$1
-        shift
-
-        for port in "$@"; do
-          echo "[$ip]:$port $pub"
-        done
-      '';
-
     in {
     systems = [
       "x86_64-linux"
@@ -59,8 +47,6 @@
     perSystem = { self', inputs', pkgs, system, ... }: {
       packages = {
         inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd util-linux openssl openssh;
-
-        inherit gen-knownhosts-file;
 
         # Usage:
         #  init [-h] [-y] [-s] [-v] [-p PATH]
@@ -71,20 +57,20 @@
           inherit pkgs;
         };
 
-        # Generate hardware config for a host
-        # nix run .#gen-hardware-config <ip> <port> <user> <out>
-        # nix run .#ssh 192.168.1.10 22 nixos ./facter.json
-        gen-hardware-config = pkgs.writeShellScriptBin "gen-hardware-config" ''
+        # Generate knownhosts file.
+        #
+        # gen-knownhosts-file <pub_key> <ip> <port> [<port>...]
+        #
+        # One line will be generated per port given.
+        gen-knownhosts-file = pkgs.writeShellScriptBin "gen-knownhosts-file" ''
+          pub=$(cat $1 | ${pkgs.coreutils}/bin/cut -d' ' -f-2)
+          shift
           ip=$1
           shift
-          port=$1
-          shift
-          user=$1
-          shift
-          out=$1
-          shift
 
-          ${self'.packages.ssh} $ip $port $user nixos-facter > "$out"
+          for port in "$@"; do
+            echo "[$ip]:$port $pub"
+          done
         '';
 
 

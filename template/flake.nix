@@ -52,15 +52,6 @@
             > known_hosts
         '';
 
-        # nix run .#gen-hardware-config
-        gen-hardware-config = pkgs.writeShellScriptBin "gen-hardware-config" ''
-          ip=${readFile ./ip}
-          ssh_port=${readFile ./ssh_port}
-
-          ${inputs'.skarabox.packages.gen-hardware-config}/bin/gen-hardware-config \
-            $ip $ssh_port root facter.json
-        '';
-
         # nix run .#install-on-beacon FLAKE [<command> ...]
         # nix run .#install-on-beacon
         # nix run .#install-on-beacon .#skarabox
