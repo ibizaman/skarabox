@@ -11,7 +11,18 @@ in {
   };
 
   config = {
-    users.users.nixos.initialHashedPassword = mkForce "$y$j9T$7EZvmryvlpTHSRG7dC5IU1$lBc/nePnkvqZ//jNpx/UpFKze/p6P7AIhJubK/Ghj68";
+    # Override user set in profiles/installation-device.nix
+    users.users.skarabox = {
+      isNormalUser = true;
+      extraGroups = [ "wheel" "networkmanager" "video" ];
+      # Allow the graphical user to login without password
+      initialHashedPassword = "";
+      # Set shared ssh key
+      openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
+    };
+    # Automatically log in at the virtual consoles.
+    services.getty.autologinUser = lib.mkForce "skarabox";
+    nix.settings.trusted-users = [ "skarabox" ];
 
     image.fileName = mkForce "beacon.iso";
     image.baseName = mkForce "beacon";
@@ -19,11 +30,6 @@ in {
     networking.firewall.allowedTCPPorts = [ 22 ];
 
     boot.loader.systemd-boot.enable = true;
-
-    # Set shared ssh key
-    users.users."nixos" = {
-      openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
-    };
 
     services.hostapd = {
       enable = true;

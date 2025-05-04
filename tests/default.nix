@@ -68,7 +68,7 @@ in
 
     e "Starting ssh loop to figure out when beacon started."
     e "You might see some flickering on the command line."
-    while ! ${nix} run ${../.}#ssh -- 127.0.0.1 2222 nixos -F none -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -o ConnectTimeout=10 -i ssh_skarabox echo "connected"; do
+    while ! ${nix} run .#ssh -- -F none -o CheckHostIP=no -o StrictHostKeyChecking=no echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."

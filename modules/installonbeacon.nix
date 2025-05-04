@@ -55,6 +55,6 @@ USAGE
     --disk-encryption-keys /tmp/root_passphrase $root_passphrase_file \
     --disk-encryption-keys /tmp/data_passphrase $data_passphrase_file \
     --ssh-port $port \
-    nixos@$ip \
+    skarabox@$ip \
     $extra_opts
 ''
