@@ -377,7 +377,7 @@ and a maintainable code base.
   to generate a file:
   
   ```nix
-  mkFile = pkgs.writeShellScriptBin "mkFile.sh" ''
+  mkFile = pkgs.writeShellScriptBin "mkFile" ''
     mkdir -p $1
     touch $1/$2
   '';
@@ -388,8 +388,8 @@ and a maintainable code base.
 
   
   ```nix
-  mkFile = pkgs.writeShellScriptBin "mkFile.sh" ''
-    ${inputs'.skarabox.packages.mkFile}/bin/mkFile.sh \
+  mkFile = pkgs.writeShellScriptBin "mkFile" ''
+    ${inputs'.skarabox.packages.mkFile}/bin/mkFile \
       ${builtins.readFile ./dir} \
       ${builtins.readFile ./file} \
   '';

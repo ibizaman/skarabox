@@ -35,7 +35,7 @@
         in ''
           ssh_port=${readFile ./ssh_port}
           ssh_boot_port=${readFile ./ssh_boot_port}
-          ${vm}/bin/beacon-vm.sh \
+          ${vm}/bin/beacon-vm \
             ''${ssh_port} \
             ''${ssh_boot_port} \
             $@
@@ -71,7 +71,7 @@
           flake=$1
           shift
 
-          ${inputs'.skarabox.packages.install-on-beacon}/bin/install-on-beacon.sh \
+          ${inputs'.skarabox.packages.install-on-beacon}/bin/install-on-beacon \
             -i $ip \
             -p $ssh_port \
             -f $flake \
@@ -85,7 +85,7 @@
         # nix run .#boot-ssh
         # nix run .#boot-ssh echo hello
         boot-ssh = pkgs.writeShellScriptBin "boot-ssh" ''
-          ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
+          ${inputs'.skarabox.packages.ssh}/bin/ssh \
             "${readFile ./ip}" \
             "${readFile ./ssh_boot_port}" \
             root \
@@ -101,7 +101,7 @@
         #
         # Note: the private SSH key is not read into the nix store on purpose.
         ssh = pkgs.writeShellScriptBin "ssh" ''
-          ${inputs'.skarabox.packages.ssh}/bin/ssh.sh \
+          ${inputs'.skarabox.packages.ssh}/bin/ssh \
             "${readFile ./ip}" \
             "${readFile ./ssh_port}" \
             ${self.nixosConfigurations.skarabox.config.skarabox.username} \

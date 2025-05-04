@@ -107,7 +107,7 @@
         # nix run .#ssh 192.168.1.10 22 nixos
         # nix run .#ssh 192.168.1.10 22 nixos echo hello
         # Intended to be run from the template.
-        ssh = pkgs.writeShellScriptBin "ssh.sh" ''
+        ssh = pkgs.writeShellScriptBin "ssh" ''
           ip=$1
           shift
           port=$1
@@ -208,7 +208,7 @@
           };
           nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
           qemu = nixos-qemu.qemuBinary pkgs.qemu;
-        in (pkgs.writeShellScriptBin "beacon-vm.sh" ''
+        in (pkgs.writeShellScriptBin "beacon-vm" ''
           disk1=.skarabox-tmp/disk1.qcow2
           disk2=.skarabox-tmp/disk2.qcow2
           disk3=.skarabox-tmp/disk3.qcow2
