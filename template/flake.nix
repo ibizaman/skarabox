@@ -44,7 +44,7 @@
         # nix run .#gen-knownhosts-file
         gen-knownhosts-file = pkgs.writeShellScriptBin "gen-knownhosts-file" ''
           ip=${readFile ./ip}
-          ssh_boot_port=${readFile ./ssh_port}
+          ssh_port=${readFile ./ssh_port}
           ssh_boot_port=${readFile ./ssh_boot_port}
 
           ${inputs'.skarabox.packages.gen-knownhosts-file}/bin/gen-knownhosts-file \
