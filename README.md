@@ -30,7 +30,7 @@ echo 2222 > ssh_port
 echo 2223 > ssh_boot_port
 
 nix run .#beacon-vm &
-nix run .#ssh nixos-facter > facter.json
+nix run .#ssh -- -o StrictHostKeyChecking=no sudo nixos-facter > facter.json
 nix run .#install-on-beacon .#skarabox
 # VM will reboot.
 

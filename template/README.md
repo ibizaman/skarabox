@@ -97,7 +97,7 @@ Create a [./facter.json](./facter.json) file containing
 the hardware specification of the host (or the VM) with:
 
 ```bash
-$ nix run .#ssh nixos-facter > facter.json
+$ nix run .#ssh -- -o StrictHostKeyChecking=no sudo nixos-facter > facter.json
 ```
 
 Add the `./facter.json` to git (run `git add facter.json`).

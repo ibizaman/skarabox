@@ -74,7 +74,7 @@ in
     e "Beacon VM has started."
 
     e "Generating hardware config."
-    ${nix} run .#ssh nixos-facter > facter.json
+    ${nix} run .#ssh -- -o StrictHostKeyChecking=no sudo nixos-facter > facter.json
     git add facter.json
     git commit -m 'generate hardware config'
     e "Generation succeeded."
