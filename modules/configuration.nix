@@ -127,6 +127,7 @@ in
     environment.systemPackages = [
       pkgs.vim
       pkgs.curl
+      pkgs.nixos-facter
     ];
 
     services.openssh = {
