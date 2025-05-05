@@ -1,5 +1,10 @@
 # SkaraboxOS
 
+[![build](https://github.com/ibizaman/skarabox/actions/workflows/build.yaml/badge.svg)](https://github.com/ibizaman/skarabox/actions/workflows/build.yaml)
+
+SkaraboxOS aims to be the fastest way to install NixOS on a server
+with all batteries included.
+
 <!--toc:start-->
 - [Why?](#why)
 - [Hardware Requirements](#hardware-requirements)
@@ -8,11 +13,6 @@
 - [Contribute](#contribute)
 - [Links](#links)
 <!--toc:end-->
-
-[![build](https://github.com/ibizaman/skarabox/actions/workflows/build.yaml/badge.svg)](https://github.com/ibizaman/skarabox/actions/workflows/build.yaml)
-
-SkaraboxOS aims to be the fastest way to install NixOS on a server
-with all batteries included.
 
 TL; DR:
 
