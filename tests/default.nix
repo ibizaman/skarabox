@@ -31,15 +31,15 @@ in
     if [ -z "$tmpdir" ]; then
       tmpdir="$(mktemp -d)"
       e "Created temp dir at $tmpdir, will be cleaned up on exit or abort"
+
+      # Kills all children bash processes,
+      # like the one that will run in the background hereunder.
+      # https://stackoverflow.com/a/2173421/1013628
+      trap "rm -rf $tmpdir/* $tmpdir/.* $tmpdir; trap - SIGTERM && kill -- -$$ || :" SIGINT SIGTERM EXIT
     else
-      e "Using provided temp dir $tmpdir, will be cleaned up on exit or abort"
+      e "Using provided temp dir $tmpdir, nothing will be cleaned up"
     fi
     cd $tmpdir
-
-    # Kills all children bash processes,
-    # like the one that will run in the background hereunder.
-    # https://stackoverflow.com/a/2173421/1013628
-    trap "rm -rf $tmpdir/* $tmpdir/.* $tmpdir; trap - SIGTERM && kill -- -$$ || :" SIGINT SIGTERM EXIT
 
     e "Initialising template"
     echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s -p ${../.}
@@ -47,7 +47,7 @@ in
     echo 2222 > ssh_port
     echo 127.0.0.1 > ip
     echo ${system} > system
-    ${nix} run .#genKnownHostsFile
+    ${nix} run .#gen-knownhosts-file
     # Using a git repo here allows to only copy in the nix store non temporary files.
     # In particular, we avoid copying the disk*.qcow2 files.
     git init
@@ -55,7 +55,7 @@ in
     git add .
     git config user.name "skarabox"
     git config user.email "skarabox@skarabox.com"
-    git commit -m 'test'
+    git commit -m 'init repository'
     e "Initialisation done"
 
     nix flake show
@@ -68,10 +68,16 @@ in
 
     e "Starting ssh loop to figure out when beacon started."
     e "You might see some flickering on the command line."
-    while ! ${nix} run ${../.}#ssh -- 127.0.0.1 2222 nixos -F none -o CheckHostIP=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=known_hosts -o ConnectTimeout=10 -i ssh_skarabox echo "connected"; do
+    while ! ${nix} run .#ssh -- -F none -o CheckHostIP=no -o StrictHostKeyChecking=no echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
+
+    e "Generating hardware config."
+    ${nix} run .#ssh -- -o StrictHostKeyChecking=no sudo nixos-facter > facter.json
+    git add facter.json
+    git commit -m 'generate hardware config'
+    e "Generation succeeded."
 
     e "Starting installation on beacon VM."
     ${nix} run .#install-on-beacon -- .#skarabox --no-substitute-on-destination

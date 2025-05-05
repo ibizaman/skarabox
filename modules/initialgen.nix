@@ -1,6 +1,4 @@
 { pkgs }:
-# Usage:
-#  init [-y] [flake]
 pkgs.writeShellScriptBin "init" (
   let
     nix = "${pkgs.nix}/bin/nix --extra-experimental-features nix-command -L";

@@ -86,12 +86,6 @@ in
       default = true;
     };
 
-    networkCardKernelModules = mkOption {
-      type = types.listOf types.str;
-      description = "Kernel modules needed to active network card.";
-      default = [ "e1000" "e1000e" "igb" "rtw88_8821ce" "r8169" ];
-    };
-
     bootSSHPort = mkOption {
       type = types.port;
       description = "Port the SSH daemon used to decrypt the root partition listens to.";
@@ -326,11 +320,8 @@ in
       zfs rollback -r ${cfg.rootPool}/local/root@blank
     '';
 
-    hardware.firmware = [ pkgs.linux-firmware ];
-
     # Enables DHCP in stage-1 even if networking.useDHCP is false.
     boot.initrd.network.udhcpc.enable = lib.mkDefault true;
-    boot.initrd.availableKernelModules = cfg.networkCardKernelModules;
     # From https://wiki.nixos.org/wiki/ZFS#Remote_unlock
     boot.initrd.network = {
       # This will use udhcp to get an ip address. Make sure you have added the kernel module for your

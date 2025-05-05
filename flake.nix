@@ -16,28 +16,28 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nixos-facter-modules = {
+      url = "github:numtide/nixos-facter-modules";
+    };
+
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
     };
   };
 
-  outputs = inputs@{ self, flake-parts, nixpkgs, nixos-generators, nixos-anywhere, ... }: flake-parts.lib.mkFlake { inherit inputs; } (
+  outputs = inputs@{
+    self,
+    flake-parts,
+    nixpkgs,
+    nixos-generators,
+    nixos-anywhere,
+    nixos-facter-modules,
+    ...
+  }: flake-parts.lib.mkFlake { inherit inputs; } (
     let
       pkgs = import nixpkgs {
         system = "x86_64-linux";
       };
-
-      # mkKnownHostsFile <pub_key> <ip> <port> [<port>...]
-      mkKnownHostsFile = pkgs.writeShellScriptBin "mkKnownHostsFile.sh" ''
-        pub=$(cat $1 | ${pkgs.coreutils}/bin/cut -d' ' -f-2)
-        shift
-        ip=$1
-        shift
-
-        for port in "$@"; do
-          echo "[$ip]:$port $pub"
-        done
-      '';
 
     in {
     systems = [
@@ -48,9 +48,31 @@
       packages = {
         inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd util-linux openssl openssh;
 
-        inherit mkKnownHostsFile;
+        # Usage:
+        #  init [-h] [-y] [-s] [-v] [-p PATH]
+        #
+        # print help:
+        #  init -h
+        init = import ./modules/initialgen.nix {
+          inherit pkgs;
+        };
 
-        init = import ./modules/initialgen.nix { inherit pkgs; };
+        # Generate knownhosts file.
+        #
+        # gen-knownhosts-file <pub_key> <ip> <port> [<port>...]
+        #
+        # One line will be generated per port given.
+        gen-knownhosts-file = pkgs.writeShellScriptBin "gen-knownhosts-file" ''
+          pub=$(cat $1 | ${pkgs.coreutils}/bin/cut -d' ' -f-2)
+          shift
+          ip=$1
+          shift
+
+          for port in "$@"; do
+            echo "[$ip]:$port $pub"
+          done
+        '';
+
 
         # Install a nixosConfigurations instance (<flake>) on a server.
         #
@@ -59,72 +81,19 @@
         # on any OS supported by nixos-anywhere. The latter was not tested.
         #
         # It is intended to run this command from the template.
-        install-on-beacon = pkgs.writeShellScriptBin "install-on-beacon.sh" ''
-         usage () {
-           cat <<USAGE
-Usage: $0 -i IP -p PORT -f FLAKE -k HOST_KEY -r ROOT_PASSPHRASE_FILE -d DATA_PASSPHRASE_FILE [-a EXTRA_OPTS]
-
-  -h:                       Shows this usage
-  -i IP:                    IP of the target host running the beacon.
-  -p PORT:                  Port of the target host running the beacon.
-  -f FLAKE:                 Flake to install on the target host.
-  -k HOST_KEY_FILE:         SSH key to use as the host identification key.
-  -r ROOT_PASSPHRASE_FILE:  File containing the root passphrase used to encrypt the root ZFS pool.
-  -d DATA_PASSPHRASE_FILE:  File containing the data passphrase used to encrypt the data ZFS pool.
-  -a EXTRA_OPTS:            Extra options to pass verbatim to nixos-anywhere.
-USAGE
-          }
-          while getopts "hi:p:f:k:r:d:a:" o; do
-            case "''${o}" in
-              h)
-                usage
-                exit 0
-                ;;
-              i)
-                ip=''${OPTARG}
-                ;;
-              p)
-                port=''${OPTARG}
-                ;;
-              f)
-                flake=''${OPTARG}
-                ;;
-              k)
-                host_key_file=''${OPTARG}
-                ;;
-              r)
-                root_passphrase_file=''${OPTARG}
-                ;;
-              d)
-                data_passphrase_file=''${OPTARG}
-                ;;
-              a)
-                extra_opts=''${OPTARG}
-                ;;
-              *)
-                usage
-                exit 1
-                ;;
-            esac
-          done
-          shift $((OPTIND-1))
-
-          ${inputs'.nixos-anywhere.packages.nixos-anywhere}/bin/nixos-anywhere \
-            --flake $flake \
-            --disk-encryption-keys /tmp/host_key $host_key_file \
-            --disk-encryption-keys /tmp/root_passphrase $root_passphrase_file \
-            --disk-encryption-keys /tmp/data_passphrase $data_passphrase_file \
-            --ssh-port $port \
-            nixos@$ip \
-            $extra_opts
-        '';
+        install-on-beacon = import ./modules/installonbeacon.nix {
+          inherit pkgs;
+          inherit (inputs'.nixos-anywhere.packages) nixos-anywhere;
+        };
 
         # SSH into a host installed
         # nix run .#ssh <ip> [<port> [<user> [<command> ...]]]
         # nix run .#ssh 192.168.1.10
         # nix run .#ssh 192.168.1.10 22
+        # nix run .#ssh 192.168.1.10 22 nixos
+        # nix run .#ssh 192.168.1.10 22 nixos echo hello
         # Intended to be run from the template.
-        ssh = pkgs.writeShellScriptBin "ssh.sh" ''
+        ssh = pkgs.writeShellScriptBin "ssh" ''
           ip=$1
           shift
           port=$1
@@ -225,7 +194,7 @@ USAGE
           };
           nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
           qemu = nixos-qemu.qemuBinary pkgs.qemu;
-        in (pkgs.writeShellScriptBin "beacon-vm.sh" ''
+        in (pkgs.writeShellScriptBin "beacon-vm" ''
           disk1=.skarabox-tmp/disk1.qcow2
           disk2=.skarabox-tmp/disk2.qcow2
           disk3=.skarabox-tmp/disk3.qcow2
@@ -268,43 +237,17 @@ USAGE
         default = self.templates.skarabox;
       };
 
-      nixosModules.beacon = { config, lib, modulesPath, ... }: let
-        cfg = config.skarabox;
-      in {
+      nixosModules.beacon = { config, lib, modulesPath, ... }: {
         imports = [
           ./modules/beacon.nix
           (modulesPath + "/profiles/minimal.nix")
         ];
-
-        options.skarabox = {
-          sshPublicKey = lib.mkOption {
-            type = lib.types.path;
-            description = "Public key to connect to the beacon.";
-          };
-        };
-
-        config = {
-          boot.loader.systemd-boot.enable = true;
-
-          # Do not let sshd generate host keys,
-          # we will provide our own.
-          # sshd will refuse to start if it finds no host key.
-          # services.openssh.hostKeys = pkgs.lib.mkForce [];
-          # environment.etc."ssh/ssh_host_ed25519_key" = {
-          #   source = beaconHostKeyPriv;
-          #   mode = "0600";
-          # };
-
-          # Set shared ssh key
-          users.users."nixos" = {
-            openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
-          };
-        };
       };
 
       nixosModules.skarabox = {
         imports = [
           nixos-anywhere.inputs.disko.nixosModules.disko
+          nixos-facter-modules.nixosModules.facter
           ./modules/disks.nix
           ./modules/configuration.nix
         ];
