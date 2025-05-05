@@ -1,6 +1,10 @@
 # Architecture
 
+So you want to know more about how all pieces fit together in Skarabox?
+That's great. You're at the right place.
+
 <!--toc:start-->
+- [Hardware](#hardware)
 - [ZFS root pool encryption](#zfs-root-pool-encryption)
 - [ZFS data pool encryption](#zfs-data-pool-encryption)
 - [Decrypt root pool on boot](#decrypt-root-pool-on-boot)
@@ -12,8 +16,30 @@
 - [Principles](#principles)
 <!--toc:end-->
 
-So you want to know more about how all pieces fit together in Skarabox?
-That's great. You're at the right place.
+## Hardware
+
+We let [nixos-facter][] figure out what's needed.
+
+Would it fail to detect the hardware,
+we include escape hatch by adding the two following options
+to the template's `configuration.nix` file,
+although we give them their default values:
+
+```nix
+boot.initrd.availableKernelModules = [];
+hardware.enableAllHardware = false;
+```
+
+For ZFS, we set the following option which sets up
+all the machinery for ZFS to work in initrd and afterwards.
+This all happens in [tasks/filesystems/zfs.nix][zfs.nix].
+
+```nix
+boot.supportedFilesystems = [ "zfs" ];
+```
+
+[nixos-facter]: https://github.com/nix-community/nixos-facter
+[zfs.nix]: https://github.com/NixOS/nixpkgs/blob/nixos-24.11/nixos/modules/tasks/filesystems/zfs.nix
 
 ## ZFS root pool encryption
 
@@ -124,8 +150,6 @@ process by adding the following argument to the
 The relevant config is in [./modules/disks.nix](../modules/disks.nix):
 
 ```nix
-boot.initrd.availableKernelModules = cfg.networkCardKernelModules;
-
 boot.initrd.network = {
   enable = true;
 
@@ -158,11 +182,11 @@ root zpool's passphrase as soon as we're logged in.
 The `udhcpc.enable` option enables DHCP.
 Allowing a static IP here is planned.
 
-Finally, the `availableKernelModules` is very important to provide
-the correct driver to the kernel. If it is not setup correctly,
-the kernel fails "gracefully" by still booting up but no
-sshd daemon is started and no error message is shown.
-It's quite annoying but easy to fix when you know what's happening.
+If by any change the kernel does not try to connect to the network
+and fails to ask for an IP and no error message is shown,
+this probably means that the driver for the hardware has failed
+loading or that nixos-facter has failed to detect the hardware.
+See [Hardware](#hardware) for how to fix this.
 
 ## SSH Access
 

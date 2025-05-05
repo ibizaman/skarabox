@@ -324,9 +324,9 @@ in
     boot.initrd.network.udhcpc.enable = lib.mkDefault true;
     # From https://wiki.nixos.org/wiki/ZFS#Remote_unlock
     boot.initrd.network = {
-      # This will use udhcp to get an ip address. Make sure you have added the kernel module for your
-      # network driver to `boot.initrd.availableKernelModules`, so your initrd can load it! Static ip
-      # addresses might be configured using the ip argument in kernel command line:
+      # This will use udhcp to get an ip address. Nixos-facter should have found the correct drivers
+      # to load but in case not, they need to be added to `boot.initrd.availableKernelModules`.
+      # Static ip addresses might be configured using the ip argument in kernel command line:
       # https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
       enable = true;
       ssh = {
