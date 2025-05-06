@@ -3,7 +3,7 @@
 # More info at:
 # - https://wiki.nixos.org/wiki/NixOS_modules
 # - https://nixos.org/manual/nixos/stable/#sec-writing-modules
-{ lib, ... }:
+{ lib, config, ... }:
 let
   inherit (lib) mkMerge;
 in
@@ -19,7 +19,7 @@ in
     {
       skarabox.hostname = "skarabox";
       skarabox.username = "skarabox";
-      skarabox.initialHashedPassword = lib.trim (builtins.readFile ./initialHashedPassword);
+      skarabox.hashedPasswordFile = config.sops.secrets."skarabox/user/hashedPassword".path;
       skarabox.facter-config = ./facter.json;
       skarabox.disks.rootDisk = "/dev/nvme0n1";  # Update with result of running `fdisk -l` on the USB stick.
       skarabox.disks.rootDisk2 = null;  # Set a value only if you have a second disk for the root partition.
@@ -50,8 +50,16 @@ in
 
       sops.defaultSopsFile = ./secrets.yaml;
       sops.age = {
-        sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+        sshKeyPaths = [ "/boot/host_key" ];
       };
+
+      sops.secrets."skarabox/user/hashedPassword" = {
+        # Keep this option true or the user will not be able to log in.
+        # https://github.com/Mic92/sops-nix?tab=readme-ov-file#setting-a-users-password
+        neededForUsers = true;
+      };
+      sops.secrets."skarabox/disks/rootPassphrase" = {};
+      sops.secrets."skarabox/disks/dataPassphrase" = {};
     }
     # Your config
     {

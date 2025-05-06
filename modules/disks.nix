@@ -314,6 +314,11 @@ in
     # To import the zpool automatically
     boot.zfs.extraPools = optionals cfg.enableDataPool [ cfg.dataPool ];
 
+    # This is needed to make the /boot/host_key available early
+    # enough to be able to decrypt the sops file on boot,
+    # when the /etc/shadow file is first generated.
+    fileSystems."/boot".neededForBoot = true;
+
     # Follows https://grahamc.com/blog/erase-your-darlings/
     # https://github.com/NixOS/nixpkgs/pull/346247/files
     boot.initrd.postResumeCommands = lib.mkAfter ''

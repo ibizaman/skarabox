@@ -20,9 +20,9 @@
       "aarch64-linux"
     ];
 
-    perSystem = { inputs', pkgs, system, ... }: {
+    perSystem = { self', inputs', pkgs, system, ... }: {
       packages = {
-        inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd usbimager util-linux ssh-to-age sops openssl;
+        inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd usbimager util-linux ssh-to-age openssl yq;
 
         beacon = skarabox.lib.beacon system {
           skarabox.sshPublicKey = ./ssh_skarabox.pub;
@@ -56,20 +56,32 @@
         # nix run .#install-on-beacon
         # nix run .#install-on-beacon .#skarabox
         # nix run .#install-on-beacon .#skarabox -v
-        install-on-beacon = pkgs.writeShellScriptBin "install-on-beacon" ''
-          ip=${readFile ./ip}
-          ssh_port=${readFile ./ssh_port}
-          flake=$1
-          shift
+        install-on-beacon = pkgs.writeShellApplication {
+          name = "install-on-beacon";
+          runtimeInputs = [
+            inputs'.skarabox.packages.install-on-beacon
+          ];
+          text = ''
+            ip=${readFile ./ip}
+            ssh_port=${readFile ./ssh_port}
+            flake=$1
+            shift
 
-          ${inputs'.skarabox.packages.install-on-beacon}/bin/install-on-beacon \
-            -i $ip \
-            -p $ssh_port \
-            -f $flake \
-            -k host_key \
-            -r root_passphrase \
-            -d data_passphrase \
-            -a "--ssh-option ConnectTimeout=10 -i ssh_skarabox $@"
+            install-on-beacon \
+              -i $ip \
+              -p $ssh_port \
+              -f "$flake" \
+              -k host_key \
+              -s sops.key \
+              -r .skarabox.disks.rootPassphrase \
+              -d .skarabox.disks.dataPassphrase \
+              -a "--ssh-option ConnectTimeout=10 -i ssh_skarabox $*"
+          '';
+        };
+
+        unlock = pkgs.writeShellScriptBin "unlock" ''
+          root_passphrase="$(SOPS_AGE_KEY_FILE=sops.key ${inputs'.nixpkgs.legacyPackages.sops}/bin/sops exec-file secrets.yaml "cat {} | ${pkgs.yq}/bin/yq -r .skarabox.disks.rootPassphrase")"
+          printf "$root_passphrase" | ${self'.packages.boot-ssh}/bin/boot-ssh $@
         '';
 
         # nix run .#boot-ssh [<command> ...]
@@ -100,6 +112,10 @@
             -o ConnectTimeout=10 \
             -i ssh_skarabox \
             $@
+        '';
+
+        sops = pkgs.writeShellScriptBin "sops" ''
+          SOPS_AGE_KEY_FILE=sops.key ${inputs'.nixpkgs.legacyPackages.sops}/bin/sops "$@"
         '';
       };
 

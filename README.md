@@ -24,6 +24,7 @@ nix run github:ibizaman/skarabox#init
 # Tweak settings to match installing on a target host
 echo 127.0.0.1 > ip
 echo x86_64-linux > system
+nix run .#gen-knownhosts-file
 
 # More tweaks to install on a VM (for testing)
 echo 2222 > ssh_port
@@ -41,7 +42,7 @@ Normal operations:
 
 ```
 # Decrypt root partition:
-printf "$(cat root_passphrase)" | nix run .#boot-ssh
+nix run .#unlock
 
 # SSH in:
 nix run .#ssh
@@ -64,11 +65,14 @@ The flake [template](./template) combines:
   It supports for the OS 1 or 2 disks in raid 1
   and for the data 0 or 2 disks in raid1.
 - [nixos-facter][] to handle hardware configuration.
-- [sops-nix][] to handle secrets.
+- [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
 - [deploy-rs][] to deploy updates.
 - backed by [tests][] and [CI][] to make sure the installation procedure does work!
   Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.template -- -g`.
 - and supporting `x86_64-linux` and `aarch64-linux` platform.
+
+I used this successfully on my own on-premise x86 server
+and on Hetzner dedicated ARM and x86 hosts.
 
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 [disko]: https://github.com/nix-community/disko
@@ -129,7 +133,7 @@ The latter, similarly to SkaraboxOS, provides an opinionated way to configure se
 
 ## Architecture
 
-See the [Architecture][] document.
+The [Architecture][] document covers how all pieces fit together.
 
 [Architecture]: ./docs/architecture.md
 
