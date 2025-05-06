@@ -90,7 +90,7 @@ in
     while ! ${nix} run .#boot-ssh -- -F none echo "connected"; do
       sleep 5
     done
-    e "Beacon VM has started."
+    e "Beacon VM is ready to accept root passphrase."
 
     e "Decrypting root dataset."
     ${nix} run .#unlock -- -F none
@@ -121,7 +121,7 @@ in
     while ! ${nix} run .#boot-ssh -- -F none echo "connected"; do
       sleep 5
     done
-    e "Beacon VM has started."
+    e "Beacon VM is ready to accept root passphrase."
 
     e "Decrypting root dataset."
     ${nix} run .#unlock -- -F none
@@ -134,9 +134,19 @@ in
     done
     e "Beacon VM has started."
 
+    e "Checking password for skarabox user has been set."
+    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run .#yq -- -r .skarabox.user.hashedPassword)"
+    ${nix} run .#ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
+    e "Password has been set."
+
     e "Deploying."
     ${nix} run .#deploy
     e "Deploying done."
+
+    e "Checking password for skarabox user has been set."
+    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run .#yq -- -r .skarabox.user.hashedPassword)"
+    ${nix} run .#ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
+    e "Password has been set."
 
     e "Connecting and shutting down"
     ${nix} run .#ssh -- -F none sudo shutdown
