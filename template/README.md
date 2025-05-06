@@ -22,8 +22,11 @@ This last command will also generate the needed secrets
 and ask for the password you want for the admin user.
 
 It will finally ask you to fill out two files: [./ip](./ip) and [./system](./system)
-and generate [./known_hosts](./known_hosts).
-All instructions on how to fill them out is included in each file.
+and afterwards generate [./known_hosts](./known_hosts) with:
+
+```bash
+nix run .#gen-knownhosts-file
+```
 
 ## Installation
 
@@ -116,18 +119,9 @@ as outlined in the next section.
 1. Decrypt root pool after boot
 
    ```bash
-   $ nix run .#boot-ssh
+   $ nix run .#unlock
    ```
-   
-   You will be prompted to enter the root passphrase:
-   
-   ```
-   Enter passphrase for 'root':
-   ```
-   
-   Copy the content of the [./root_passphrase](./root_passphrase) file
-   and paste it then press Enter.
-   No `*` will appear upon pasting but just press Enter.
+
    The connection will then disconnect automatically with:
    
    ```

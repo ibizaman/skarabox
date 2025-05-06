@@ -330,6 +330,8 @@ services.openssh = {
 };
 ```
 
+## SOPS
+
 ## hostid
 
 The `hostid` must be unique and not change during the lifetime of the server.

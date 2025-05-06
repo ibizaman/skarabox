@@ -68,6 +68,8 @@ in
 
     e "Starting ssh loop to figure out when beacon started."
     e "You might see some flickering on the command line."
+    # We can't yet be strict on the host key check since the beacon
+    # initially has a random one.
     while ! ${nix} run .#ssh -- -F none -o CheckHostIP=no -o StrictHostKeyChecking=no echo "connected"; do
       sleep 5
     done
@@ -91,7 +93,7 @@ in
     e "Beacon VM has started."
 
     e "Decrypting root dataset."
-    printf "$(cat root_passphrase)" | ${nix} run .#boot-ssh -- -F none
+    ${nix} run .#unlock -- -F none
     e "Decryption done."
 
     e "Starting ssh loop to figure out when VM has booted."
@@ -117,7 +119,7 @@ in
     e "Beacon VM has started."
 
     e "Decrypting root dataset."
-    printf "$(cat root_passphrase)" | ${nix} run .#boot-ssh -- -F none
+    ${nix} run .#unlock -- -F none
     e "Decryption done."
 
     e "Starting ssh loop to figure out when VM has booted."
