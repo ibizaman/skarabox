@@ -18,10 +18,9 @@ in
       description = "Name given to the admin user on the server.";
     };
 
-    initialHashedPassword = mkOption {
+    hashedPasswordFile = mkOption {
       type = types.str;
-      default = "$y$j9T$7EZvmryvlpTHSRG7dC5IU1$lBc/nePnkvqZ//jNpx/UpFKze/p6P7AIhJubK/Ghj68";
-      description = "Initial password for the admin user. Can be changed later. Default is 'skarabox123'.";
+      description = "Contains password for the admin user.";
     };
 
     facter-config = lib.mkOption {
@@ -107,10 +106,11 @@ in
     MaxFileSec=day
     '';
 
+    users.mutableUsers = false; # Only allow declarative credentials; Required for password to be set via sops during system activation!
     users.users.${cfg.username} = {
       isNormalUser = true;
       extraGroups = [ "wheel" ];
-      inherit (cfg) initialHashedPassword;
+      inherit (cfg) hashedPasswordFile;
       openssh.authorizedKeys.keyFiles = [ cfg.sshAuthorizedKeyFile ];
     };
 

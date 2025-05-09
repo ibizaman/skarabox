@@ -24,6 +24,7 @@ nix run github:ibizaman/skarabox#init
 # Tweak settings to match installing on a target host
 echo 127.0.0.1 > ip
 echo x86_64-linux > system
+nix run .#gen-knownhosts-file
 
 # More tweaks to install on a VM (for testing)
 echo 2222 > ssh_port
@@ -41,7 +42,7 @@ Normal operations:
 
 ```
 # Decrypt root partition:
-printf "$(cat root_passphrase)" | nix run .#boot-ssh
+nix run .#unlock
 
 # SSH in:
 nix run .#ssh
