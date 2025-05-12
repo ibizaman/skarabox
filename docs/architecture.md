@@ -7,10 +7,11 @@ That's great. You're at the right place.
 - [Hardware](#hardware)
 - [ZFS root pool encryption](#zfs-root-pool-encryption)
 - [ZFS data pool encryption](#zfs-data-pool-encryption)
-- [Decrypt root pool on boot](#decrypt-root-pool-on-boot)
+- [Remote decryption of root pool on boot](#remote-decryption-of-root-pool-on-boot)
 - [SSH Access](#ssh-access)
 - [Erase your darlings](#erase-your-darlings)
 - [Host Key](#host-key)
+- [SOPS](#sops)
 - [hostid](#hostid)
 - [ZFS settings](#zfs-settings)
 - [Principles](#principles)
@@ -18,10 +19,10 @@ That's great. You're at the right place.
 
 ## Hardware
 
-We let [nixos-facter][] figure out what's needed.
+In essence, we let [nixos-facter][] figure out what's needed.
 
 Would it fail to detect the hardware,
-we include escape hatch by adding the two following options
+we include an escape hatch by adding the two following options
 to the template's `configuration.nix` file,
 although we give them their default values:
 
@@ -43,7 +44,14 @@ boot.supportedFilesystems = [ "zfs" ];
 
 ## ZFS root pool encryption
 
-This happens in [./modules/disks.nix](../modules/disks.nix), under `disko.devices.zpool`.
+We want to encrypt the root pool with a passphrase
+that is _not_ stored on the host.
+We will need to enter it on every boot.
+
+The configuration lives in [./modules/disks.nix](../modules/disks.nix),
+under `disko.devices.zpool` and uses [disko][].
+
+[disko]: https://github.com/nix-community/disko
 
 For the root pool, the relevant encryption settings are:
 
@@ -92,9 +100,18 @@ argument to the `nixos-anywhere` command :
 --disk-encryption-keys /tmp/root_passphrase <location of passphrase file>
 ```
 
+Now, on every boot, a prompt will appear asking us for the passphrase.
+We will see in a [later section](#remote-decryption-of-root-pool-on-boot)
+how to decrypt the root pool remotely.
+
 ## ZFS data pool encryption
 
-For the data pool, the relevant encryption settings are:
+For the data pool, the idea is the same as for the [root pool](#zfs-root-pool-encryption).
+The difference is that we will store the passphrase
+inside the root pool partition, allowing us to unlock
+the data pool automatically after decrypting the root pool.
+
+The relevant encryption settings are:
 
 ```nix
 disko.devices.zpool.${cfg.dataPool} = {
@@ -145,7 +162,17 @@ process by adding the following argument to the
 --disk-encryption-keys /tmp/data_passphrase <location of passphrase file>
 ```
 
-## Decrypt root pool on boot
+## Remote decryption of root pool on boot
+
+With the [config above](#zfs-root-pool-encryption),
+a prompt will appear during initrd
+which will prompt us to enter the root passphrase.
+This is all good if you have a keyboard and screen
+attached to the host but won't work if not.
+
+So here, we want to run an ssh server in initrd
+which allows us to unlock the root pool
+and continue the boot process.
 
 The relevant config is in [./modules/disks.nix](../modules/disks.nix):
 
@@ -173,6 +200,11 @@ We enable `boot.initrd.network` and the `.ssh` options.
 We set the port to 2222 by default.
 We add an ssh public key so we can connect as the root user.
 
+This ssh public key is generated as part of the [initialization](../modules/initialgen.nix)
+process in `./ssh_skarabox.pub` and the private key in `./skarabox`.
+We also add that file to `.gitignore` to ensure
+we don't store the private file in the repo.
+
 The commands in `postCommands` are executed when the sshd
 daemon has started. The command added in `/root/.profile` will
 be executed when we log in through SSH.
@@ -189,6 +221,18 @@ loading or that nixos-facter has failed to detect the hardware.
 See [Hardware](#hardware) for how to fix this.
 
 ## SSH Access
+
+Here, we enable SSH access to the host after it has booted.
+We want a password-less connection
+and also to pre-validate the host key of the host.
+This means we won't let the host generate its own host key,
+we will generate it ourselves and add it to a known hosts
+file upon installation.
+
+This last step is often neglected for convenience reasons
+but it is important to make sure we connect to the correct
+host from the start. [This section](#host-key) goes into
+details on how it's done.
 
 For non-initrd ssh access, we add the ssh public key
 to the `authorizedKeys` file of the user:
@@ -231,7 +275,11 @@ disko.devices.zpool.${cfg.rootPool}.datasets."local/root" = {
   type = "zfs_fs";
   mountpoint = "/";
   options.mountpoint = "legacy";
-  postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^${cfg.rootPool}/local/root@blank$' || zfs snapshot ${cfg.rootPool}/local/root@blank";
+  postCreateHook = ''
+    zfs list -t snapshot -H -o name \
+      | grep -E '^${cfg.rootPool}/local/root@blank$' \
+      || zfs snapshot ${cfg.rootPool}/local/root@blank
+  '';
 };
 ```
 
@@ -248,7 +296,7 @@ boot.initrd.postResumeCommands = lib.mkAfter ''
 '';
 ```
 
-To save a directory, we just need to create a dataset and mount it:
+To save a directory, we must create a dataset and mount it:
 
 ```nix
 disko.devices.zpool.${cfg.rootPool}.datasets."local/nix" = {
@@ -269,7 +317,7 @@ the ssh client will prompt about verifying the host
 key of the server.
 
 Providing the host key ourselves allows us to skip
-this test since we can know the host key
+this test since we know the host key in advance
 and can generate the relevant `known_hosts` file.
 
 The config for this is simply to copy the `host_key`
@@ -314,7 +362,9 @@ Then, we use that key from this new location in the initrd ssh daemon:
 boot.initrd.network.ssh.hostKeys = lib.mkForce [ "/boot/host_key" ];
 ```
 
-We override the whole list with `mkForce` to avoid any automatic generation.
+We override the whole list with `mkForce` to avoid the default
+behavior of a list option which is to merge.
+Here, we don't want any of the default automatic generation.
 
 For the non-initrd ssh daemon,
 we force an empty list so the nix module does not generate any ssh key
@@ -330,10 +380,104 @@ services.openssh = {
 };
 ```
 
+## SOPS
+
+To store the secrets, we use [sops-nix][] which stores the secrets
+encrypted in the repository, here in a `./secrets.yaml` file.
+It's creation and update is governed by the `./.sops.yaml` file.
+
+The process to create this SOPS file is quite involved
+but is fully automatic, so that's nice.
+
+[sops-nix]: https://github.com/Mic92/sops-nix
+
+We must allow us, the user, to decrypt this `./secrets.yaml` file
+as well as allow the target host to decrypt it.
+This means we need to encrypt the file with two keys.
+
+The user's SOPS private key is generated in [initialgen.nix][] with:
+```bash
+age-keygen -o sops.key
+```
+
+[initialgen.nix]: ../modules/initialgen.nix
+
+and get the associated SOPS public key with:
+
+```bash
+age-keygen -y sops.key
+```
+
+By the way, we add that file to `.gitignore` to ensure
+we don't store the private file in the repo.
+
+The hosts' SOPS public key is derived from the host' public ssh key
+we generated [earlier](#host-key) in `./host_key.pub` with:
+
+```bash
+cat host_key.pub | ssh-to-age
+```
+
+We then use those two SOPS public keys to create the configuration
+file `.sops.yaml`:
+
+```yaml
+
+keys:
+  - &me age1sz...
+  - &server age1ys...
+creation_rules:
+  - path_regex: secrets\.yaml$
+    key_groups:
+    - age:
+      - *me
+      - *server
+```
+
+And finally we encrypt the `secrets.yaml` file with:
+
+```bash
+SOPS_AGE_KEY_FILE=sops.key sops encrypt -i secrets.yaml
+```
+
+Note the `./secrets.yaml` cannot be empty to be encrypted,
+that's a limitation of SOPS itself.
+
+We only add secrets to the `./secrets.yaml` file
+after it has been encrypted, as an added precaution.
+This is done by doing the following, all in-memory:
+
+1. Decrypting the file.
+2. Editing the file using `yq`.
+3. Encrypting the file.
+
+The script looks like so:
+
+```bash
+export SOPS_AGE_KEY_FILE="sops.key"
+sops encrypt --filename-override "secrets.yaml" --output "secrets.yaml.dup" <( \
+  sops decrypt "secrets.yaml" \
+    | yq "$transformation"
+&& mv "secrets.yaml.dup" "secrets.yaml"
+```
+
+The `$transformation` is some `yq` expression
+to modify the file. For example:
+
+```bash
+.skarabox.disks.rootPassphrase = "$(openssl rand -hex 64)"
+```
+
+You'll notice we output to another file
+and then move the new file back
+to overwrite the original one.
+This is necessary to avoid overwriting
+the file as we read it, resulting in a blank file.
+
 ## hostid
 
 The `hostid` must be unique and not change during the lifetime of the server.
-It is only used by ZFS which refuses to import the zpools if the `hostid` changes.
+It is only used by ZFS which refuses to import the pools if the `hostid` changes.
 
 The configuration for it is pretty simple:
 

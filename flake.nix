@@ -46,7 +46,7 @@
     ];
     perSystem = { self', inputs', pkgs, system, ... }: {
       packages = {
-        inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd util-linux openssl openssh;
+        inherit (inputs'.nixpkgs.legacyPackages) age mkpasswd util-linux openssl openssh yq;
 
         # Usage:
         #  init [-h] [-y] [-s] [-v] [-p PATH]
@@ -73,6 +73,108 @@
           done
         '';
 
+        gen-sopsconfig-file = pkgs.writeShellScriptBin "gen-sopsconfig-file" ''
+          while getopts "hp:s:" o; do
+            case "''${o}" in
+              h)
+                usage
+                exit 0
+                ;;
+              p)
+                pubhostkey=''${OPTARG}
+                ;;
+              s)
+                sopskey=''${OPTARG}
+                ;;
+              *)
+                usage
+                exit 1
+                ;;
+            esac
+          done
+          shift $((OPTIND-1))
+
+          if [ -z "$sopskey" ]; then
+            echo "Please pass sops key with -k argument."
+            exit 1
+          fi
+
+          if [ -z "$pubhostkey" ]; then
+            echo "Please pass sops key with -o argument."
+            exit 1
+          fi
+
+          me_age_key="$(${pkgs.age}/bin/age-keygen -y $sopskey)"
+          host_age_key="$(cat $pubhostkey | ${pkgs.ssh-to-age}/bin/ssh-to-age)"
+
+          cat <<SOPS > .sops.yaml
+          keys:
+            # To obtain the age key for &me, run:
+            #   nix shell .#age --command age-keygen -y $sopskey
+            - &me $me_age_key
+            # To obtain the age key for &server, run:
+            #   nix shell .#age --command age-keygen -y $pubhostkey
+            - &server $host_age_key
+          creation_rules:
+            - path_regex: secrets\.yaml$
+              key_groups:
+              - age:
+                - *me
+                - *server
+          SOPS
+        '';
+
+        sops = pkgs.writeShellScriptBin "edit-secrets" ''
+          while getopts ":hs:" o; do
+            case "''${o}" in
+              h)
+                usage
+                exit 0
+                ;;
+              s)
+                sopskey=''${OPTARG}
+                ;;
+              *)
+                ;;
+            esac
+          done
+          shift $((OPTIND-1))
+
+          export SOPS_AGE_KEY_FILE=$sopskey
+          ${pkgs.sops}/bin/sops $*
+        '';
+
+        sops-yq-edit = pkgs.writeShellScriptBin "edit-secrets" ''
+          while getopts ":hf:s:t:" o; do
+            case "''${o}" in
+              h)
+                usage
+                exit 0
+                ;;
+              f)
+                file=''${OPTARG}
+                ;;
+              s)
+                sopskey=''${OPTARG}
+                ;;
+              t)
+                transformation=''${OPTARG}
+                ;;
+              *)
+                ;;
+            esac
+          done
+          shift $((OPTIND-1))
+
+          set -euo pipefail
+
+          export SOPS_AGE_KEY_FILE="$sopskey"
+          ${pkgs.sops}/bin/sops encrypt --filename-override "$file" --output "$file.dup" <( \
+            ${pkgs.sops}/bin/sops decrypt "$file" \
+              | ${pkgs.yq-go}/bin/yq "$transformation"
+          ) \
+          && mv "$file.dup" "$file"
+        '';
 
         # Install a nixosConfigurations instance (<flake>) on a server.
         #

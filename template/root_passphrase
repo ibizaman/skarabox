@@ -1,5 +1,0 @@
-<generate me>
-
-Use this command:
-
-nix run .#openssl -- rand -hex 64 > root_passphrase

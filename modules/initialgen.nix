@@ -93,25 +93,32 @@ USAGE
     e "Generating server host key in ./host_key and ./host_key.pub..."
     rm host_key && ${nix} shell ${../.}#openssh --command ssh-keygen -t ed25519 -N "" -f host_key && chmod 600 host_key
 
+    e "Generating sops key ./sops.key..."
+    rm sops.key && ${nix} shell ${../.}#age --command age-keygen -o sops.key
+    e "Generating sops config ./.sops.yaml..."
+    ${nix} run ${../.}#gen-sopsconfig-file -- -s sops.key -p host_key.pub
+
+    e "Generating sops secrets file ./secrets.yaml..."
+    touch secrets.yaml
+    ${nix} run ${../.}#sops -- -s sops.key encrypt -i secrets.yaml
+
     e "Generating ssh key in ./ssh_skarabox and ./ssh_skarabox.pub..."
     rm ssh_skarabox && ${nix} shell ${../.}#openssh --command ssh-keygen -t ed25519 -N "" -f ssh_skarabox && chmod 600 ssh_skarabox
 
-    e "Generating initial password for user in ./initialHashedPassword..."
-    ${nix} run ${../.}#mkpasswd -- $mkpasswdargs > initialHashedPassword
+    e "Generating initial password for user in secrets.yaml under skarabox/user/hashedPassword"
+    ${nix} run ${../.}#sops-yq-edit -- -s sops.key -f secrets.yaml \
+      -t ".skarabox.user.hashedPassword = \"$(${nix} run ${../.}#mkpasswd -- $mkpasswdargs)\""
 
     e "Generating hostid in ./hostid..."
     ${nix} shell ${../.}#util-linux --command uuidgen | head -c 8 > hostid
 
-    e "Generating root pool passphrase in ./root_passphrase..."
-    chmod 600 root_passphrase
-    ${nix} run ${../.}#openssl -- rand -hex 64 > root_passphrase
+    e "Generating root pool passphrase in secrets.yaml under skarabox/disks/rootPassphrase"
+    ${nix} run ${../.}#sops-yq-edit -- -s sops.key -f secrets.yaml \
+      -t ".skarabox.disks.rootPassphrase = \"$(${nix} run ${../.}#openssl -- rand -hex 64)\""
 
-    e "Generating data pool passphrase in ./data_passphrase..."
-    chmod 600 data_passphrase
-    ${nix} run ${../.}#openssl -- rand -hex 64 > data_passphrase
-
-    e "Generating sops key ./sops.key..."
-    rm sops.key && ${nix} shell ${../.}#age --command age-keygen -o sops.key
+    e "Generating data pool passphrase in secrets.yaml under skarabox/disks/dataPassphrase"
+    ${nix} run ${../.}#sops-yq-edit -- -s sops.key -f secrets.yaml \
+      -t ".skarabox.disks.dataPassphrase = \"$(${nix} run ${../.}#openssl -- rand -hex 64)\""
 
     e "You will need to fill out the ./ip, ./known_hosts and ./system file"
     e "and adjust the ssh_port and ssh_boot_port if you want to."

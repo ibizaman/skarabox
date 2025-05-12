@@ -68,6 +68,8 @@ in
 
     e "Starting ssh loop to figure out when beacon started."
     e "You might see some flickering on the command line."
+    # We can't yet be strict on the host key check since the beacon
+    # initially has a random one.
     while ! ${nix} run .#ssh -- -F none -o CheckHostIP=no -o StrictHostKeyChecking=no echo "connected"; do
       sleep 5
     done
@@ -91,7 +93,7 @@ in
     e "Beacon VM has started."
 
     e "Decrypting root dataset."
-    printf "$(cat root_passphrase)" | ${nix} run .#boot-ssh -- -F none
+    ${nix} run .#unlock -- -F none
     e "Decryption done."
 
     e "Starting ssh loop to figure out when VM has booted."
@@ -100,6 +102,11 @@ in
       sleep 5
     done
     e "Beacon VM has started."
+
+    e "Checking password for skarabox user has been set."
+    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run .#yq -- -r .skarabox.user.hashedPassword)"
+    ${nix} run .#ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
+    e "Password has been set."
 
     e "Rebooting to confirm we can connect after a reboot."
     # We sleep first and run the whole script in the background
@@ -117,7 +124,7 @@ in
     e "Beacon VM has started."
 
     e "Decrypting root dataset."
-    printf "$(cat root_passphrase)" | ${nix} run .#boot-ssh -- -F none
+    ${nix} run .#unlock -- -F none
     e "Decryption done."
 
     e "Starting ssh loop to figure out when VM has booted."
