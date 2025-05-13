@@ -1,7 +1,25 @@
-{ pkgs }:
-pkgs.writeShellScriptBin "init" (
-  let
-    nix = "${pkgs.nix}/bin/nix --extra-experimental-features nix-command -L";
+{
+  pkgs,
+  gen-sopsconfig-file,
+  sops-yq-edit,
+}:
+pkgs.writeShellApplication {
+  name = "init";
+
+  runtimeInputs  = [
+    gen-sopsconfig-file
+    sops-yq-edit
+    pkgs.age
+    pkgs.mkpasswd
+    pkgs.nix
+    pkgs.openssh
+    pkgs.openssl
+    pkgs.sops
+    pkgs.util-linux
+  ];
+
+  text = let
+    nix = "nix --extra-experimental-features nix-command -L";
   in ''
     set -e
     set -o pipefail
@@ -54,7 +72,7 @@ USAGE
     shift $((OPTIND-1))
 
     e () {
-      echo -e "\e[1;31mSKARABOX:\e[0m \e[1;0m$@\e[0m"
+      echo -e "\e[1;31mSKARABOX:\e[0m \e[1;0m$*\e[0m"
     }
 
     # From https://stackoverflow.com/a/29436423/1013628
@@ -65,7 +83,7 @@ USAGE
           echo "$* Forced yes"
           return 0
         else
-          read -p "$* [y/n]: " yn
+          read -rp "$* [y/n]: " yn
           case $yn in
             [Yy]*) return 0 ;;
             [Nn]*) echo "Aborting" ; exit 2 ;;
@@ -91,36 +109,38 @@ USAGE
     e "Now, we will generate the secrets needed."
 
     e "Generating server host key in ./host_key and ./host_key.pub..."
-    rm host_key && ${nix} shell ${../.}#openssh --command ssh-keygen -t ed25519 -N "" -f host_key && chmod 600 host_key
+    rm host_key && ssh-keygen -t ed25519 -N "" -f host_key && chmod 600 host_key
 
     e "Generating sops key ./sops.key..."
-    rm sops.key && ${nix} shell ${../.}#age --command age-keygen -o sops.key
+    rm sops.key && age-keygen -o sops.key
     e "Generating sops config ./.sops.yaml..."
-    ${nix} run ${../.}#gen-sopsconfig-file -- -s sops.key -p host_key.pub
+    gen-sopsconfig-file -s sops.key -p host_key.pub
 
     e "Generating sops secrets file ./secrets.yaml..."
     touch secrets.yaml
-    ${nix} run ${../.}#sops -- -s sops.key encrypt -i secrets.yaml
+    SOPS_AGE_KEY_FILE=sops.key sops encrypt -i secrets.yaml
 
     e "Generating ssh key in ./ssh_skarabox and ./ssh_skarabox.pub..."
-    rm ssh_skarabox && ${nix} shell ${../.}#openssh --command ssh-keygen -t ed25519 -N "" -f ssh_skarabox && chmod 600 ssh_skarabox
+    rm ssh_skarabox && ssh-keygen -t ed25519 -N "" -f ssh_skarabox && chmod 600 ssh_skarabox
 
     e "Generating initial password for user in secrets.yaml under skarabox/user/hashedPassword"
-    ${nix} run ${../.}#sops-yq-edit -- -s sops.key -f secrets.yaml \
-      -t ".skarabox.user.hashedPassword = \"$(${nix} run ${../.}#mkpasswd -- $mkpasswdargs)\""
+    sops-yq-edit -s sops.key -f secrets.yaml \
+      -t ".skarabox.user.hashedPassword = \"$(mkpasswd $mkpasswdargs)\""
 
     e "Generating hostid in ./hostid..."
-    ${nix} shell ${../.}#util-linux --command uuidgen | head -c 8 > hostid
+    uuidgen | head -c 8 > hostid
 
     e "Generating root pool passphrase in secrets.yaml under skarabox/disks/rootPassphrase"
-    ${nix} run ${../.}#sops-yq-edit -- -s sops.key -f secrets.yaml \
-      -t ".skarabox.disks.rootPassphrase = \"$(${nix} run ${../.}#openssl -- rand -hex 64)\""
+    sops-yq-edit -s sops.key -f secrets.yaml \
+      -t ".skarabox.disks.rootPassphrase = \"$(openssl rand -hex 64)\""
 
     e "Generating data pool passphrase in secrets.yaml under skarabox/disks/dataPassphrase"
-    ${nix} run ${../.}#sops-yq-edit -- -s sops.key -f secrets.yaml \
-      -t ".skarabox.disks.dataPassphrase = \"$(${nix} run ${../.}#openssl -- rand -hex 64)\""
+    sops-yq-edit -s sops.key -f secrets.yaml \
+      -t ".skarabox.disks.dataPassphrase = \"$(openssl rand -hex 64)\""
 
     e "You will need to fill out the ./ip, ./known_hosts and ./system file"
     e "and adjust the ssh_port and ssh_boot_port if you want to."
     e "After that, the next step is to follow the ./README.md file"
-  '')
+  '';
+
+}
