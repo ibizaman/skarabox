@@ -53,7 +53,7 @@
         #
         # print help:
         #  init -h
-        init = import ./modules/initialgen.nix {
+        init = import ./lib/initialgen.nix {
           inherit pkgs;
         };
 
@@ -183,7 +183,7 @@
         # on any OS supported by nixos-anywhere. The latter was not tested.
         #
         # It is intended to run this command from the template.
-        install-on-beacon = import ./modules/installonbeacon.nix {
+        install-on-beacon = import ./lib/installonbeacon.nix {
           inherit pkgs;
           inherit (inputs'.nixos-anywhere.packages) nixos-anywhere;
         };
