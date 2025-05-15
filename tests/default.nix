@@ -1,4 +1,4 @@
-{ inputs, pkgs, system }:
+{ pkgs, system }:
 let
   nix = "${pkgs.nix}/bin/nix --extra-experimental-features nix-command -L";
 in
@@ -43,11 +43,11 @@ in
 
     e "Initialising template"
     echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s -p ${../.}
-    echo 2223 > ssh_boot_port
-    echo 2222 > ssh_port
-    echo 127.0.0.1 > ip
-    echo ${system} > system
-    ${nix} run .#gen-knownhosts-file
+    echo 2223 > ./myskarabox/ssh_boot_port
+    echo 2222 > ./myskarabox/ssh_port
+    echo 127.0.0.1 > ./myskarabox/ip
+    echo ${system} > ./myskarabox/system
+    ${nix} run .#myskarabox-gen-knownhosts-file
     # Using a git repo here allows to only copy in the nix store non temporary files.
     # In particular, we avoid copying the disk*.qcow2 files.
     git init
@@ -62,7 +62,7 @@ in
 
     e "Starting beacon VM."
 
-    ${nix} run .#beacon-vm -- $graphic &
+    ${nix} run .#myskarabox-beacon-vm -- $graphic &
 
     sleep 10
 
@@ -70,42 +70,42 @@ in
     e "You might see some flickering on the command line."
     # We can't yet be strict on the host key check since the beacon
     # initially has a random one.
-    while ! ${nix} run .#ssh -- -F none -o CheckHostIP=no -o StrictHostKeyChecking=no echo "connected"; do
+    while ! ${nix} run .#myskarabox-ssh -- -F none -o CheckHostIP=no -o StrictHostKeyChecking=no echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
 
     e "Generating hardware config."
-    ${nix} run .#ssh -- -o StrictHostKeyChecking=no sudo nixos-facter > facter.json
-    git add facter.json
+    ${nix} run .#myskarabox-get-facter > ./myskarabox/facter.json
+    git add ./myskarabox/facter.json
     git commit -m 'generate hardware config'
     e "Generation succeeded."
 
     e "Starting installation on beacon VM."
-    ${nix} run .#install-on-beacon -- .#skarabox --no-substitute-on-destination
+    ${nix} run .#myskarabox-install-on-beacon -- .#myskarabox --no-substitute-on-destination
     e "Installation succeeded."
 
     e "Starting ssh loop to figure out when VM is ready to receive root passphrase."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#boot-ssh -- -F none echo "connected"; do
+    while ! ${nix} run .#myskarabox-boot-ssh -- -F none echo "connected"; do
       sleep 5
     done
     e "Beacon VM is ready to accept root passphrase."
 
     e "Decrypting root dataset."
-    ${nix} run .#unlock -- -F none
+    ${nix} run .#myskarabox-unlock -- -F none
     e "Decryption done."
 
     e "Starting ssh loop to figure out when VM has booted."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#ssh -- -F none echo "connected"; do
+    while ! ${nix} run .#myskarabox-ssh -- -F none echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
 
     e "Checking password for skarabox user has been set."
-    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run ${../.}#yq -- -r .skarabox.user.hashedPassword)"
-    ${nix} run .#ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
+    hashedpwd="$(${nix} run .#sops -- decrypt --extract '["skarabox"]["user"]["hashedPassword"]' secrets.yaml)"
+    ${nix} run .#myskarabox-ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
     e "Password has been set."
 
     e "Rebooting to confirm we can connect after a reboot."
@@ -113,43 +113,41 @@ in
     # to avoid a race condition where the VM reboots too fast
     # and kills the ssh connection, resulting in the test failing.
     # So this is all so we can disconnect first.
-    ${nix} run .#ssh -- -F none "(sleep 2 && sudo reboot)&"
+    ${nix} run .#myskarabox-ssh -- -F none "(sleep 2 && sudo reboot)&"
     e "Rebooting in progress."
 
     e "Starting ssh loop to figure out when VM is ready to receive root passphrase."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#boot-ssh -- -F none echo "connected"; do
+    while ! ${nix} run .#myskarabox-boot-ssh -- -F none echo "connected"; do
       sleep 5
     done
     e "Beacon VM is ready to accept root passphrase."
 
     e "Decrypting root dataset."
-    ${nix} run .#unlock -- -F none
+    ${nix} run .#myskarabox-unlock -- -F none
     e "Decryption done."
 
     e "Starting ssh loop to figure out when VM has booted."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#ssh -- -F none echo "connected"; do
+    while ! ${nix} run .#myskarabox-ssh -- -F none echo "connected"; do
       sleep 5
     done
     e "Beacon VM has started."
 
     e "Checking password for skarabox user is still set."
-    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run ${../.}#yq -- -r .skarabox.user.hashedPassword)"
-    ${nix} run .#ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
+    ${nix} run .#myskarabox-ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
     e "Password has been set."
 
     e "Deploying."
-    ${nix} run .#activate
+    ${nix} run .#deploy-rs
     e "Deploying done."
 
     e "Checking password for skarabox user is still set."
-    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run ${../.}#yq -- -r .skarabox.user.hashedPassword)"
-    ${nix} run .#ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
+    ${nix} run .#myskarabox-ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
     e "Password has been set."
 
     e "Connecting and shutting down"
-    ${nix} run .#ssh -- -F none sudo shutdown
+    ${nix} run .#myskarabox-ssh -- -F none sudo shutdown
     e "Shutdown complete."
   '';
 }

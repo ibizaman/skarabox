@@ -19,13 +19,18 @@ $ nix run github:ibizaman/skarabox#init
 ```
 
 This last command will also generate the needed secrets
-and ask for the password you want for the admin user.
+and ask for the password you want for the admin user
+for a host named `myskarabox` whose files are located
+under the [myskarabox](./myskarabox) folder.
+
+All the files at the root of this new repository
+are common to all hosts.
 
 It will finally ask you to fill out two files: [./ip](./ip) and [./system](./system)
 and afterwards generate [./known_hosts](./known_hosts) with:
 
 ```bash
-nix run .#gen-knownhosts-file
+nix run .#myskarabox-gen-knownhosts-file
 ```
 
 ## Installation
@@ -43,7 +48,7 @@ to test the installation process, or on a [real server][].
 
 ### A.1. Test on a VM
 
-Assuming the [./configuration.nix](./configuration.nix) file is left untouched,
+Assuming the [./configuration.nix](./myskarabox/configuration.nix) file is left untouched,
 you can now test the installation process on a VM.
 This VM has 3 hard drives, one for the OS
 and two in raid for the data.
@@ -52,14 +57,14 @@ To do that, first we tweak the ports
 to more sensible defaults for a VM:
 
 ```bash
-$ echo 2222 > ssh_port
-$ echo 2223 > ssh_boot_port
+$ echo 2222 > ./myskarabox/ssh_port
+$ echo 2223 > ./myskarabox/ssh_boot_port
 ```
 
 Then, start the VM:
 
 ```bash
-$ nix run .#beacon-vm &
+$ nix run .#myskarabox-beacon-vm &
 ```
 
 Now, skip to [step B](#b-run-the-installation-process).
@@ -71,13 +76,13 @@ _This guide assumes you know how to boot your server on a USB stick._
 1. Create the .iso file.
 
    ```bash
-   $ nix build .#beacon
+   $ nix build .#myskarabox-beacon
    ```
 
 2. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
 
    ```bash
-   $ nix run .#usbimager
+   $ nix run .#beacon-usbimager
    ```
    
    - Select `./result/iso/beacon.iso` file in row 1 (`...`).
@@ -92,19 +97,28 @@ _This guide assumes you know how to boot your server on a USB stick._
    For that, follow the steps that appeared when booting on the USB stick.
    To reprint the steps, run the command `skarabox-help`.
 
-5. Open the [./configuration.nix](./configuration.nix) file and tweak values to match your hardware.
+5. Open the [./myskarabox/configuration.nix](./configuration.nix) file and tweak values to match your hardware.
 
 ### B. Run the Installation
 
-Create a [./facter.json](./facter.json) file containing
+Create a `./myskarabox/facter.json` file containing
 the hardware specification of the host (or the VM) with:
 
 ```bash
-$ nix run .#ssh -- -o StrictHostKeyChecking=no sudo nixos-facter > facter.json
+$ nix run .#myskarabox-get-facter > ./myskarabox/facter.json
 ```
 
-Add the `./facter.json` to git (run `git add facter.json`).
-The run the installation process on the host:
+Add the `./myskarabox/facter.json` to git (run `git add ./myskarabox/facter.json`).
+
+Optionally, if you want to see exactly what `nixos-facter` did find
+and will configure, run one or both of:
+
+```bash
+$ nix run .#myskarabox-debug-facter-nix-diff
+$ nix run .#myskarabox-debug-facter-nvd
+```
+
+Now, run the installation process on the host:
 
 ```bash
 $ nix run .#install-on-beacon .#skarabox
@@ -116,10 +130,12 @@ as outlined in the next section.
 
 ## Normal Operations
 
+All commands are prefixed by the hostname, allowing to handle multiple hosts.
+
 1. Decrypt root pool after boot
 
    ```bash
-   $ nix run .#unlock
+   $ nix run .#myskarabox-unlock
    ```
 
    The connection will then disconnect automatically with:
@@ -133,13 +149,13 @@ as outlined in the next section.
 2. SSH in
 
    ```bash
-   $ nix run .#ssh
+   $ nix run .#myskarabox-ssh
    ```
 
 3. Reboot
 
    ```bash
-   $ nix run .#ssh sudo reboot
+   $ nix run .#myskarabox-ssh sudo reboot
    ```
    
    You will then be required to decrypt the hard drives upon reboot as explained above.
@@ -149,14 +165,14 @@ as outlined in the next section.
    Modify the [./configuration.nix](./configuration.nix) file then run:
    
    ```bash
-   $ nix run .#activate
+   $ nix run .#deploy-rs
    ```
 
 5. Update dependencies
 
    ```bash
    $ nix flake update
-   $ nix run .#activate
+   $ nix run .#deploy-rs
    ```
 
 6. Edit secrets

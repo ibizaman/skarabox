@@ -1,81 +1,78 @@
 {
-  description = "Flake for skarabox.";
+  description = "Flake For Skarabox.";
 
   inputs = {
     skarabox.url = "github:ibizaman/skarabox";
+
+    nixpkgs = {
+      url = "github:nixos/nixpkgs/nixos-unstable";
+    };
+
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixos-anywhere = {
+      url = "github:nix-community/nixos-anywhere";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixos-facter-modules = {
+      url = "github:numtide/nixos-facter-modules";
+    };
+
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+    };
+
+    deploy-rs = {
+      url = "github:serokell/deploy-rs";
+    };
+
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+    };
   };
 
-  outputs = inputs@{ self, skarabox }: skarabox.inputs.flake-parts.lib.mkFlake { inherit inputs; } (
-    let
-      mySkarabox = skarabox.lib {
-        hostKeyPub = ./host_key.pub;
-        ip = ./ip;
-        # Using string here so the sops key does not end up in the nix store.
-        sopsKeyName = "sops.key";
-        sshPrivateKeyName = "ssh_skarabox";
-        sshPublicKey = ./ssh_skarabox.pub;
-        knownHostsName = "known_hosts";
-        knownHosts = ./known_hosts;
-        sshPort = ./ssh_port;
-        sshBootPort = ./ssh_boot_port;
+  outputs = inputs@{ self, skarabox, sops-nix, nixpkgs, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } (let
+    inherit (skarabox.lib) readAndTrim;
+    inherit (nixpkgs.lib) toInt;
+  in {
+    systems = [
+      "x86_64-linux"
+      "aarch64-linux"
+    ];
 
-        nixosConfiguration = self.nixosConfigurations.skarabox;
+    imports = [
+      skarabox.flakeModules.default
+    ];
 
-        patches = { fetchPatch, ... }: [
-          # Leaving commented out for an example.
-          # (fetchpatch {
-          #   url = "https://github.com/NixOS/nixpkgs/pull/317107.patch";
-          #   hash = "sha256-hoLrqV7XtR1hP/m0rV9hjYUBtrSjay0qcPUYlKKuVWk=";
-          # })
-        ];
-        overlays = [
+    skarabox.hosts = {
+      myskarabox = {
+        system = readAndTrim ./myskarabox/system;
+        hostKeyPub = ./myskarabox/host_key.pub;
+        ip = readAndTrim ./myskarabox/ip;
+        sshPublicKey = ./myskarabox/ssh_skarabox.pub;
+        knownHosts = ./myskarabox/known_hosts;
+        sshPort = toInt (readAndTrim ./myskarabox/ssh_port);
+        sshBootPort = toInt (readAndTrim ./myskarabox/ssh_boot_port);
+
+        modules = [
+          sops-nix.nixosModules.default
+          self.nixosModules.myskarabox
         ];
       };
-    in {
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-      ];
+    };
 
-      perSystem = { self', inputs', pkgs, system, ... }: let
-        skaraboxPkgs = mySkarabox.withSystem {
-          inherit system;
-        };
-      in {
-        packages =
-          skaraboxPkgs.packages
-          // skaraboxPkgs.deploy-rs.packages
-          // {
-            # Add your own packages here
-          };
-      };
-
-      flake = let
-        system = mySkarabox.readFile ./system;
-
-        skaraboxPackages = mySkarabox.withSystem {
-          inherit system;
-        };
-      in {
-        nixosModules.skarabox = {
+    flake = {
+      nixosModules = {
+        myskarabox = {
           imports = [
-            skarabox.nixosModules.skarabox
-            ./configuration.nix
+            ./myskarabox/configuration.nix
           ];
         };
-
-        # Used with nixos-anywere for installation.
-        nixosConfigurations.skarabox = skarabox.inputs.nixpkgs.lib.nixosSystem {
-          inherit system;
-          modules = [
-            self.nixosModules.skarabox
-          ];
-        };
-
-        # Used with deploy-rs for deploys after installation.
-        deploy.nodes.skarabox = skaraboxPackages.deploy-rs.node;
-
-        checks = mySkarabox.deploy-rs.checks self.deploy;
       };
-    });
+    };
+  });
 }

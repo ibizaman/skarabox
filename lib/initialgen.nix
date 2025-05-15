@@ -1,14 +1,12 @@
 {
   pkgs,
   gen-sopsconfig-file,
-  sops-yq-edit,
 }:
 pkgs.writeShellApplication {
   name = "init";
 
   runtimeInputs  = [
     gen-sopsconfig-file
-    sops-yq-edit
     pkgs.age
     pkgs.mkpasswd
     pkgs.nix
@@ -45,7 +43,7 @@ Usage: $0 [-h] [-y] [-s] [-v] [-p PATH]
 USAGE
     }
 
-    while getopts "hysp:v" o; do
+    while getopts "hynsp:v" o; do
       case "''${o}" in
         h)
           usage
@@ -108,38 +106,48 @@ USAGE
 
     e "Now, we will generate the secrets needed."
 
-    e "Generating server host key in ./host_key and ./host_key.pub..."
-    rm host_key && ssh-keygen -t ed25519 -N "" -f host_key && chmod 600 host_key
+    host_key="./myskarabox/host_key"
+    e "Generating server host key in $host_key and $host_key.pub..."
+    rm $host_key && ssh-keygen -t ed25519 -N "" -f $host_key && chmod 600 $host_key
 
-    e "Generating sops key ./sops.key..."
-    rm sops.key && age-keygen -o sops.key
-    e "Generating sops config ./.sops.yaml..."
-    gen-sopsconfig-file -s sops.key -p host_key.pub
+    sops_key="./sops.key"
+    sops_cfg="./.sops.yaml"
+    e "Generating sops key $sops_key..."
+    rm $sops_key && age-keygen -o $sops_key
+    e "Generating sops config $sops_cfg..."
+    rm $sops_cfg && gen-sopsconfig-file -s $sops_key -p $host_key.pub -o $sops_cfg
 
-    e "Generating sops secrets file ./secrets.yaml..."
-    touch secrets.yaml
-    SOPS_AGE_KEY_FILE=sops.key sops encrypt -i secrets.yaml
+    secrets="./secrets.yaml"
+    e "Generating sops secrets file $secrets..."
+    touch $secrets
+    export SOPS_AGE_KEY_FILE=$sops_key
+    sops encrypt -i $secrets
 
-    e "Generating ssh key in ./ssh_skarabox and ./ssh_skarabox.pub..."
-    rm ssh_skarabox && ssh-keygen -t ed25519 -N "" -f ssh_skarabox && chmod 600 ssh_skarabox
+    ssh_key="./myskarabox/ssh_skarabox"
+    e "Generating ssh key in $ssh_key and $ssh_key.pub..."
+    ssh-keygen -t ed25519 -N "" -f $ssh_key && chmod 600 $ssh_key
 
-    e "Generating initial password for user in secrets.yaml under skarabox/user/hashedPassword"
-    sops-yq-edit -s sops.key -f secrets.yaml \
-      -t ".skarabox.user.hashedPassword = \"$(mkpasswd $mkpasswdargs)\""
+    e "Generating initial password for user in $secrets under skarabox/user/hashedPassword"
+    sops set $secrets \
+      '["skarabox"]["user"]["hashedPassword"]' \
+      "\"$(mkpasswd $mkpasswdargs)\""
 
-    e "Generating hostid in ./hostid..."
-    uuidgen | head -c 8 > hostid
+    hostid="./myskarabox/hostid"
+    e "Generating hostid in $hostid..."
+    uuidgen | head -c 8 > $hostid
 
-    e "Generating root pool passphrase in secrets.yaml under skarabox/disks/rootPassphrase"
-    sops-yq-edit -s sops.key -f secrets.yaml \
-      -t ".skarabox.disks.rootPassphrase = \"$(openssl rand -hex 64)\""
+    e "Generating root pool passphrase in $secrets under skarabox/disks/rootPassphrase"
+    sops set $secrets \
+      '["skarabox"]["disks"]["rootPassphrase"]' \
+      "\"$(openssl rand -hex 64)\""
 
-    e "Generating data pool passphrase in secrets.yaml under skarabox/disks/dataPassphrase"
-    sops-yq-edit -s sops.key -f secrets.yaml \
-      -t ".skarabox.disks.dataPassphrase = \"$(openssl rand -hex 64)\""
+    e "Generating data pool passphrase in $secrets under skarabox/disks/dataPassphrase"
+    sops set $secrets \
+      '["skarabox"]["disks"]["dataPassphrase"]' \
+      "\"$(openssl rand -hex 64)\""
 
-    e "You will need to fill out the ./ip, ./known_hosts and ./system file"
-    e "and adjust the ssh_port and ssh_boot_port if you want to."
+    e "You will need to fill out the ./myskarabox/ip, ./myskarabox/known_hosts and ./myskarabox/system file"
+    e "and adjust the ./myskarabox/ssh_port and ./myskarabox/ssh_boot_port if you want to."
     e "After that, the next step is to follow the ./README.md file"
   '';
 

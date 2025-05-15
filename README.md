@@ -10,6 +10,7 @@ with all batteries included.
 - [Hardware Requirements](#hardware-requirements)
 - [Installation Process Overview](#installation-process-overview)
 - [Architecture](#architecture)
+- [Roadmap](#roadmap)
 - [Contribute](#contribute)
 - [Links](#links)
 <!--toc:end-->
@@ -22,17 +23,17 @@ cd myskarabox
 nix run github:ibizaman/skarabox#init
 
 # Tweak settings to match installing on a target host
-echo 127.0.0.1 > ip
-echo x86_64-linux > system
-nix run .#gen-knownhosts-file
+echo 127.0.0.1 > myskarabox/ip
+echo x86_64-linux > myskarabox/system
+nix run .#myskarabox-gen-knownhosts-file
 
 # More tweaks to install on a VM (for testing)
-echo 2222 > ssh_port
-echo 2223 > ssh_boot_port
+echo 2222 > myskarabox/ssh_port
+echo 2223 > myskarabox/ssh_boot_port
 
-nix run .#beacon-vm &
-nix run .#ssh -- -o StrictHostKeyChecking=no sudo nixos-facter > facter.json
-nix run .#install-on-beacon .#skarabox
+nix run .#myskarabox-beacon-vm &
+nix run .#myskarabox-ssh -- -o StrictHostKeyChecking=no sudo nixos-facter > myskarabox/facter.json
+nix run .#myskarabox-install-on-beacon .#skarabox
 # VM will reboot.
 
 # Installation is done!
@@ -42,16 +43,16 @@ Normal operations:
 
 ```
 # Decrypt root partition:
-nix run .#unlock
+nix run .#myskarabox-unlock
 
 # SSH in:
-nix run .#ssh
+nix run .#myskarabox-ssh
 
 # Make a change to ./configuration.nix then deploy:
-nix run .#activate
+nix run .#deloy-rs
 
 # Reboot:
-nix run .#ssh sudo reboot
+nix run .#myskarabox-ssh sudo reboot
 ```
 
 The flake [template](./template) combines:
@@ -65,6 +66,8 @@ The flake [template](./template) combines:
   It supports for the OS 1 or 2 disks in raid 1
   and for the data 0 or 2 disks in raid1.
 - [nixos-facter][] to handle hardware configuration.
+- [flake-parts][] to make the resulting `flake.nix` small.
+  Also to handle having multiple hosts managed by one flake.
 - [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
 - [deploy-rs][] to deploy updates.
 - backed by [tests][] and [CI][] to make sure the installation procedure does work!
@@ -77,6 +80,7 @@ and on Hetzner dedicated ARM and x86 hosts.
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 [disko]: https://github.com/nix-community/disko
 [nixos-facter]: https://github.com/nix-community/nixos-facter
+[flake-parts]: https://flake.parts/
 [sops-nix]: https://github.com/Mic92/sops-nix
 [deploy-rs]: https://github.com/serokell/deploy-rs
 [tests]: ./tests/default.nix
@@ -136,6 +140,8 @@ The latter, similarly to SkaraboxOS, provides an opinionated way to configure se
 The [Architecture][] document covers how all pieces fit together.
 
 [Architecture]: ./docs/architecture.md
+
+## Roadmap
 
 ## Contribute
 
