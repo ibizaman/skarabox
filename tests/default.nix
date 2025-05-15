@@ -104,7 +104,7 @@ in
     e "Beacon VM has started."
 
     e "Checking password for skarabox user has been set."
-    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run .#yq -- -r .skarabox.user.hashedPassword)"
+    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run ${../.}#yq -- -r .skarabox.user.hashedPassword)"
     ${nix} run .#ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
     e "Password has been set."
 
@@ -134,17 +134,17 @@ in
     done
     e "Beacon VM has started."
 
-    e "Checking password for skarabox user has been set."
-    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run .#yq -- -r .skarabox.user.hashedPassword)"
+    e "Checking password for skarabox user is still set."
+    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run ${../.}#yq -- -r .skarabox.user.hashedPassword)"
     ${nix} run .#ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
     e "Password has been set."
 
     e "Deploying."
-    ${nix} run .#deploy
+    ${nix} run .#activate
     e "Deploying done."
 
-    e "Checking password for skarabox user has been set."
-    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run .#yq -- -r .skarabox.user.hashedPassword)"
+    e "Checking password for skarabox user is still set."
+    hashedpwd="$(${nix} run .#sops decrypt secrets.yaml | ${nix} run ${../.}#yq -- -r .skarabox.user.hashedPassword)"
     ${nix} run .#ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
     e "Password has been set."
 

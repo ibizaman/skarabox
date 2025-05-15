@@ -149,14 +149,14 @@ as outlined in the next section.
    Modify the [./configuration.nix](./configuration.nix) file then run:
    
    ```bash
-   $ nix run .#deploy
+   $ nix run .#activate
    ```
 
 5. Update dependencies
 
    ```bash
    $ nix flake update
-   $ nix run .#deploy
+   $ nix run .#activate
    ```
 
 6. Edit secrets

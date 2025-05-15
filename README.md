@@ -48,7 +48,7 @@ nix run .#unlock
 nix run .#ssh
 
 # Make a change to ./configuration.nix then deploy:
-nix run .#deploy
+nix run .#activate
 
 # Reboot:
 nix run .#ssh sudo reboot
