@@ -27,21 +27,15 @@
     deploy-rs = {
       url = "github:serokell/deploy-rs";
     };
-
-    sops-nix = {
-      url = "github:Mic92/sops-nix";
-    };
   };
 
   outputs = inputs@{
     self,
     flake-parts,
     nixpkgs,
-    nixos-generators,
     nixos-anywhere,
     nixos-facter-modules,
     deploy-rs,
-    sops-nix,
     ...
   }: flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [
@@ -57,36 +51,27 @@
         # print help:
         #  init -h
         init = import ./lib/initialgen.nix {
-          inherit pkgs gen-sopsconfig-file sops-yq-edit;
+          inherit pkgs gen-sopsconfig-file;
         };
 
         gen-sopsconfig-file = import ./lib/gensopsconfigfile.nix {
           inherit pkgs;
         };
-
-        sops-yq-edit = import ./lib/sopsyqedit.nix {
-          inherit pkgs;
-        };
-
-        inherit (pkgs) yq;
       };
 
       checks = import ./tests {
-        inherit pkgs inputs system;
+        inherit pkgs system;
       };
     };
 
     flake = {
-      lib = import ./lib {
-        inherit
-          deploy-rs
-          nixpkgs
-          nixos-anywhere
-          nixos-generators
-          sops-nix
-          self
-        ;
+      skaraboxInputs = inputs;
+
+      lib = {
+        readAndTrim = f: nixpkgs.lib.strings.trim (builtins.readFile f);
       };
+
+      flakeModules.default = ./flakeModule.nix;
 
       templates = {
         skarabox = {
@@ -97,18 +82,10 @@
         default = self.templates.skarabox;
       };
 
-      nixosModules.beacon = { config, lib, modulesPath, ... }: {
-        imports = [
-          ./modules/beacon.nix
-          (modulesPath + "/profiles/minimal.nix")
-        ];
-      };
-
       nixosModules.skarabox = {
         imports = [
           nixos-anywhere.inputs.disko.nixosModules.disko
           nixos-facter-modules.nixosModules.facter
-          sops-nix.nixosModules.default
           ./modules/disks.nix
           ./modules/configuration.nix
         ];

@@ -445,34 +445,12 @@ that's a limitation of SOPS itself.
 
 We only add secrets to the `./secrets.yaml` file
 after it has been encrypted, as an added precaution.
-This is done by doing the following, all in-memory:
+This is done by using the `set` [subcommand][set] of the `sops` command.
 
-1. Decrypting the file.
-2. Editing the file using `yq`.
-3. Encrypting the file.
+Similarly, we can decrypt one value with the `decrypt --extract` [option][extract].
 
-The script looks like so:
-
-```bash
-export SOPS_AGE_KEY_FILE="sops.key"
-sops encrypt --filename-override "secrets.yaml" --output "secrets.yaml.dup" <( \
-  sops decrypt "secrets.yaml" \
-    | yq "$transformation"
-&& mv "secrets.yaml.dup" "secrets.yaml"
-```
-
-The `$transformation` is some `yq` expression
-to modify the file. For example:
-
-```bash
-.skarabox.disks.rootPassphrase = "$(openssl rand -hex 64)"
-```
-
-You'll notice we output to another file
-and then move the new file back
-to overwrite the original one.
-This is necessary to avoid overwriting
-the file as we read it, resulting in a blank file.
+[set]: https://github.com/getsops/sops?tab=readme-ov-file#set-a-sub-part-in-a-document-tree
+[extract]: https://github.com/getsops/sops?tab=readme-ov-file#45extract-a-sub-part-of-a-document-tree
 
 ## hostid
 

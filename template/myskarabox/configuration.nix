@@ -48,7 +48,7 @@ in
       # if some drivers are missing.
       hardware.enableAllHardware = false;
 
-      sops.defaultSopsFile = ./secrets.yaml;
+      sops.defaultSopsFile = ../secrets.yaml;
       sops.age = {
         sshKeyPaths = [ "/boot/host_key" ];
       };

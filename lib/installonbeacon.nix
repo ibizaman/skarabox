@@ -1,45 +1,4 @@
 { pkgs, nixos-anywhere }:
-let
-  # We use a separate script here because sops run script
-  # with /bin/sh and this way we can override the shell easily.
-  #
-  # Other methods of doing that exist but this way also helps with
-  # making escaping variables easier. And it runs shellcheck.
-  innerScript = pkgs.writeShellApplication {
-    name = "inner-install-on-beacon";
-
-    runtimeInputs = [
-      pkgs.yq
-    ];
-
-    text = ''
-      fd="$1"; shift
-      ip="$1"; shift
-      port="$1"; shift
-      flake="$1"; shift
-      host_key_file="$1"; shift
-      root_passphrase_path="$1"; shift
-      data_passphrase_path="$1"; shift
-
-      IFS=' ' read -ra extra_opts <<<"$1"; shift
-
-      # We read the fd once and store it because
-      # we can't read it twice.
-      secrets="$(cat "$fd")"
-      root_passphrase=$(echo "$secrets" | yq -r "$root_passphrase_path")
-      data_passphrase=$(echo "$secrets" | yq -r "$data_passphrase_path")
-
-      nixos-anywhere \
-        --flake "$flake" \
-        --disk-encryption-keys /tmp/host_key "$host_key_file" \
-        --disk-encryption-keys /tmp/root_passphrase <(echo "$root_passphrase") \
-        --disk-encryption-keys /tmp/data_passphrase <(echo "$data_passphrase") \
-        --ssh-port "$port" \
-        "''${extra_opts[@]}" \
-        skarabox@"$ip"
-    '';
-  };
-in
 pkgs.writeShellApplication {
   name = "install-on-beacon";
 
@@ -47,7 +6,6 @@ pkgs.writeShellApplication {
     nixos-anywhere
     pkgs.bash
     pkgs.sops
-    pkgs.yq
   ];
 
   text = ''
@@ -101,7 +59,7 @@ pkgs.writeShellApplication {
           sopskey=''${OPTARG}
           ;;
         a)
-          extra_opts=''${OPTARG}
+          read -ra extra_opts <<< "''${OPTARG}"
           ;;
         *)
           usage
@@ -119,16 +77,17 @@ pkgs.writeShellApplication {
     check_empty "$data_passphrase_path" -d data_passphrase_path
     check_empty "$sopskey" -s sopskey
 
-    SOPS_AGE_KEY_FILE=$sopskey sops exec-file secrets.yaml "
-      bash \
-      ${innerScript}/bin/inner-install-on-beacon {} \
-      $ip \
-      $port \
-      $flake \
-      $host_key_file \
-      $root_passphrase_path \
-      $data_passphrase_path \
-      \"$extra_opts\"
-    "
+    export SOPS_AGE_KEY_FILE=$sopskey
+    root_passphrase=$(sops decrypt --extract "$root_passphrase_path" secrets.yaml)
+    data_passphrase=$(sops decrypt --extract "$data_passphrase_path" secrets.yaml)
+
+    nixos-anywhere \
+      --flake "$flake" \
+      --disk-encryption-keys /tmp/host_key "$host_key_file" \
+      --disk-encryption-keys /tmp/root_passphrase <(echo "$root_passphrase") \
+      --disk-encryption-keys /tmp/data_passphrase <(echo "$data_passphrase") \
+      --ssh-port "$port" \
+      "''${extra_opts[@]}" \
+      skarabox@"$ip"
   '';
 }

@@ -66,9 +66,15 @@ in
       '';
       default = true;
     };
+
+    system = mkOption {
+      type = types.str;
+    };
   };
 
   config = {
+    nixpkgs.hostPlatform = cfg.system;
+
     boot.loader.systemd-boot.enable = true;
     boot.loader.efi.canTouchEfiVariables = true;
 
