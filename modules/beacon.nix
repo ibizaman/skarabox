@@ -11,6 +11,10 @@ in {
   };
 
   config = {
+    # Also allow root to connect for nixos-anywhere.
+    users.users.root = {
+      openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
+    };
     # Override user set in profiles/installation-device.nix
     users.users.skarabox = {
       isNormalUser = true;
