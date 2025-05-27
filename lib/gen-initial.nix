@@ -3,7 +3,7 @@
   gen-sopsconfig-file,
 }:
 pkgs.writeShellApplication {
-  name = "init";
+  name = "gen-initial";
 
   runtimeInputs  = [
     gen-sopsconfig-file

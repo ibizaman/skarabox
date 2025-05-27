@@ -50,11 +50,11 @@
         #
         # print help:
         #  init -h
-        init = import ./lib/initialgen.nix {
+        init = import ./lib/gen-initial.nix {
           inherit pkgs gen-sopsconfig-file;
         };
 
-        gen-sopsconfig-file = import ./lib/gensopsconfigfile.nix {
+        gen-sopsconfig-file = import ./lib/gen-sopsconfig-file.nix {
           inherit pkgs;
         };
       };

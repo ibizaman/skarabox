@@ -248,7 +248,7 @@ in
             name = "gen-knownhosts-file";
 
             runtimeInputs = [
-              (import ./lib/genknownhostsfile.nix {
+              (import ./lib/gen-knownhosts-file.nix {
                 inherit pkgs;
               })
             ];
@@ -277,7 +277,7 @@ in
           install-on-beacon = pkgs.writeShellApplication {
             name = "install-on-beacon";
             runtimeInputs = [
-              (import ./lib/installonbeacon.nix {
+              (import ./lib/install-on-beacon.nix {
                 inherit pkgs;
                 inherit (inputs.nixos-anywhere.packages.${system}) nixos-anywhere;
               })
@@ -367,7 +367,7 @@ in
         beacon-usbimager = pkgs.usbimager;
 
         # nix run .#gen-sopsconfig-file -s sops.key -p host_key.pub
-        gen-sopsconfig-file = import ./lib/gensopsconfigfile.nix {
+        gen-sopsconfig-file = import ./lib/gen-sopsconfig-file.nix {
           inherit pkgs;
         };
       in {
