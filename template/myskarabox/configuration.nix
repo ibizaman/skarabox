@@ -31,7 +31,7 @@ in
       # For security by obscurity, we choose another ssh port here than the default 22.
       skarabox.disks.bootSSHPort = lib.toInt (builtins.readFile ./ssh_boot_port);
       skarabox.sshPorts = [ (lib.toInt (builtins.readFile ./ssh_port)) ];
-      skarabox.sshAuthorizedKeyFile = ./ssh_skarabox.pub;
+      skarabox.sshAuthorizedKeyFile = ./ssh.pub;
       skarabox.hostId = lib.trim (builtins.readFile ./hostid);
       skarabox.setupLanWithDHCP = true;  # Set to false to disable the catch-all network configuration from skarabox and instead set your own
 

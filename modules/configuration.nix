@@ -50,7 +50,7 @@ in
       description = ''
         Public SSH key used to connect on boot to decrypt the root pool.
       '';
-      example = "./ssh_skarabox.pub";
+      example = "./ssh.pub";
     };
 
     setupLanWithDHCP = mkOption {

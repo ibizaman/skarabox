@@ -123,7 +123,7 @@ USAGE
     export SOPS_AGE_KEY_FILE=$sops_key
     sops encrypt -i $secrets
 
-    ssh_key="./myskarabox/ssh_skarabox"
+    ssh_key="./myskarabox/ssh"
     e "Generating ssh key in $ssh_key and $ssh_key.pub..."
     ssh-keygen -t ed25519 -N "" -f $ssh_key && chmod 600 $ssh_key
 

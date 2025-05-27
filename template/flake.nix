@@ -53,7 +53,7 @@
         system = readAndTrim ./myskarabox/system;
         hostKeyPub = ./myskarabox/host_key.pub;
         ip = readAndTrim ./myskarabox/ip;
-        sshPublicKey = ./myskarabox/ssh_skarabox.pub;
+        sshPublicKey = ./myskarabox/ssh.pub;
         knownHosts = ./myskarabox/known_hosts;
         sshPort = toInt (readAndTrim ./myskarabox/ssh_port);
         sshBootPort = toInt (readAndTrim ./myskarabox/ssh_boot_port);

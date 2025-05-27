@@ -186,7 +186,7 @@ boot.initrd.network = {
     enable = true;
     port = lib.mkDefault cfg.bootSSHPort;
     authorizedKeyFiles = [
-      ./ssh_skarabox.pub
+      ./ssh.pub
     ];
   };
 
@@ -201,7 +201,7 @@ We set the port to 2222 by default.
 We add an ssh public key so we can connect as the root user.
 
 This ssh public key is generated as part of the [initialization](../lib/gen-initial.nix)
-process in `./ssh_skarabox.pub` and the private key in `./skarabox`.
+process in `./ssh.pub` and the private key in `./skarabox`.
 We also add that file to `.gitignore` to ensure
 we don't store the private file in the repo.
 

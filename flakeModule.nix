@@ -43,7 +43,7 @@ in
           sshPrivateKeyName = mkOption {
             # Using string here so the sops key does not end up in the nix store.
             type = types.str;
-            default = "ssh_skarabox";
+            default = "ssh";
           };
           secretsFileName = mkOption {
             type = types.str;
