@@ -15,31 +15,105 @@ with all batteries included.
 - [Links](#links)
 <!--toc:end-->
 
-TL; DR:
+## Usage
+
+<table>
+<tr>
+<th colspan="3">1.a. If from scratch</th>
+<th colspan="3">1.b. In existing repo</th>
+</tr>
+<tr>
+<td colspan="3">
 
 ```bash
 mkdir myskarabox
 cd myskarabox
 nix run github:ibizaman/skarabox#init
+```
+</td>
+<td colspan="3">
 
-# Tweak settings to match installing on a target host
+Add inputs:
+
+```bash
+```
+</td>
+</tr>
+
+<tr>
+<th colspan="2">2.a. Test on VM</th>
+<th colspan="2">2.b. Install on Host</th>
+<th colspan="2">2.c. Install on Cloud Instance</t0>
+</tr>
+<tr>
+<td colspan="2">
+
+```bash
+nix run .#myskarabox-beacon-vm &
+```
+</td>
+<td colspan="2">
+
+Use usbimager to install on a USB key and boot on it.
+
+```bash
+nix build .#myskarabox-beacon
+nix run .#beacon-usbimager
+```
+
+Burn ./result/iso/beacon.iso on an USB key
+then boot on USB key.
+
+</td>
+<td colspan="2">
+For Hetzner, start in recovery mode.
+</td>
+</tr>
+</table>
+
+
+```bash
+nix run .#myskarabox-beacon-vm &
+
+# Tweak settings to match installing on the VM
 echo 127.0.0.1 > myskarabox/ip
 echo x86_64-linux > myskarabox/system
-nix run .#myskarabox-gen-knownhosts-file
-
-# More tweaks to install on a VM (for testing)
 echo 2222 > myskarabox/ssh_port
 echo 2223 > myskarabox/ssh_boot_port
+nix run .#myskarabox-gen-knownhosts-file
 
-nix run .#myskarabox-beacon-vm &
-nix run .#myskarabox-ssh -- -o StrictHostKeyChecking=no sudo nixos-facter > myskarabox/facter.json
+nix run .#myskarabox-get-facter > ./myskarabox/facter.json
 nix run .#myskarabox-install-on-beacon .#skarabox
 # VM will reboot.
 
 # Installation is done!
 ```
 
-Normal operations:
+## Install on Host
+
+
+```bash
+mkdir myskarabox
+cd myskarabox
+nix run github:ibizaman/skarabox#init
+
+nix build .#myskarabox-beacon
+nix run .#beacon-usbimager
+# Use usbimager to install on a USB key and boot on it.
+
+# Tweak settings to match installing on the target host
+echo 192.168.1.XX > myskarabox/ip
+echo x86_64-linux > myskarabox/system
+nix run .#myskarabox-gen-knownhosts-file
+
+nix run .#myskarabox-get-facter > ./myskarabox/facter.json
+nix run .#myskarabox-install-on-beacon .#skarabox
+# VM will reboot.
+
+# Installation is done!
+```
+
+## Provided operations:
 
 ```
 # Decrypt root partition:
@@ -54,6 +128,8 @@ nix run .#deloy-rs
 # Reboot:
 nix run .#myskarabox-ssh sudo reboot
 ```
+
+More info in [template/README.md](./template/README.md).
 
 The flake [template](./template) combines:
 - Creating a bootable ISO, installable on an USB key.
@@ -116,7 +192,7 @@ It expects a particular hardware layout:
 > [!WARNING]
 > The disks will be formatted and completely wiped out of data.
 
-## Installation Process Overview
+## Manual Installation Process Overview
 
 The TL; DR: snippet in words:
 
@@ -142,6 +218,12 @@ The [Architecture][] document covers how all pieces fit together.
 [Architecture]: ./docs/architecture.md
 
 ## Roadmap
+
+All ideas are noted in [issues][]
+and prioritized issues can be found in the [milestones][].
+
+[issues]: https://github.com/ibizaman/skarabox/issues
+[milestones]: https://github.com/ibizaman/skarabox/milestones
 
 ## Contribute
 

@@ -33,6 +33,131 @@ and afterwards generate [./known_hosts](./known_hosts) with:
 nix run .#myskarabox-gen-knownhosts-file
 ```
 
+## Add in Existing Repo
+
+Add inputs:
+
+```nix
+inputs = {
+  nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  skarabox.url = "github:ibizaman/skarabox";
+
+  nixos-generators.url = "github:nix-community/nixos-generators";
+  nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
+
+  nixos-anywhere.url = "github:nix-community/nixos-anywhere";
+  nixos-anywhere.inputs.nixpkgs.follows = "nixpkgs";
+
+  nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
+  flake-parts.url = "github:hercules-ci/flake-parts";
+  deploy-rs.url = "github:serokell/deploy-rs";
+  sops-nix.url = "github:Mic92/sops-nix";
+};
+```
+
+Transform the outputs in a flake-parts module like outlined [in the tutorial][tutorial].
+
+[tutorial]: https://flake.parts/getting-started.html#existing-flake
+
+In short:
+1. Add `mkFlake` around the outputs attrset:
+
+```nix
+outputs = inputs@{ self, skarabox, sops-nix, nixpkgs, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } (let
+in {
+});
+```
+
+2. Add the `systems` you want to handle:
+
+```nix
+systems = [
+  "x86_64-linux"
+  "aarch64-linux"
+];
+```
+
+3. Import Skarabox' flake module:
+
+```nix
+imports = [
+  skarabox.flakeModules.default
+];
+```
+
+4. Add NixOS module importing your module. 
+
+```nix
+flake = {
+  nixosModules = {
+    myskarabox = {
+      imports = [
+        ./myskarabox/configuration.nix
+      ];
+    };
+  };
+};
+```
+
+5. Add a Skarabox managed host, here called `myskarabox`
+   that uses the above NixOS module:
+
+```nix
+skarabox.hosts = {
+  myskarabox = {
+    system = "x86_64-linux";
+    hostKeyPub = ./myskarabox/host_key.pub;
+    ip = "192.168.1.XX";
+    sshPublicKey = ./myskarabox/ssh.pub;
+    knownHosts = ./myskarabox/known_hosts;
+    sshPort = 22;
+    sshBootPort = 2222;
+
+    modules = [
+      sops-nix.nixosModules.default
+      self.nixosModules.myskarabox
+    ];
+  };
+};
+```
+
+7. Add necessary config in `configuration.nix`,
+   changing values to match your host hardware layout:
+
+```nix
+skarabox.hostname = "myskarabox";
+skarabox.username = "skarabox";
+skarabox.hashedPasswordFile = config.sops.secrets."skarabox/user/hashedPassword".path;
+skarabox.facter-config = ./facter.json;
+skarabox.disks.rootDisk = "/dev/nvme0n1";
+skarabox.disks.rootDisk2 = null;
+skarabox.disks.rootReservation = "500M";
+skarabox.disks.dataDisk1 = "/dev/sda";
+skarabox.disks.dataDisk2 = "/dev/sdb";
+skarabox.disks.enableDataPool = true;
+skarabox.disks.dataReservation = "10G";
+skarabox.disks.bootSSHPort = lib.toInt (builtins.readFile ./ssh_boot_port);
+skarabox.sshPorts = [ (lib.toInt (builtins.readFile ./ssh_port)) ];
+skarabox.sshAuthorizedKeyFile = ./ssh.pub;
+skarabox.hostId = lib.trim (builtins.readFile ./hostid);
+skarabox.setupLanWithDHCP = true;
+
+sops.defaultSopsFile = ./secrets.yaml;
+sops.age = {
+  sshKeyPaths = [ "/boot/host_key" ];
+};
+
+sops.secrets."skarabox/user/hashedPassword" = {
+  neededForUsers = true;
+};
+```
+
+8. Generate needed files:
+
+```nix
+age-keygen -o $sops_key
+```
+
 ## Installation
 
 The installation procedure can be followed on a [VM][],

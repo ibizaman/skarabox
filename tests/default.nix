@@ -1,8 +1,13 @@
-{ pkgs, system }:
+{ pkgs, system, nix-flake-tests }:
 let
   nix = "${pkgs.nix}/bin/nix --extra-experimental-features nix-command -L";
 in
 {
+  lib = nix-flake-tests.lib.check {
+    inherit pkgs;
+    tests = pkgs.callPackage ./lib.nix {};
+  };
+
   template = pkgs.writeShellScriptBin "template-test" ''
     set -e
 

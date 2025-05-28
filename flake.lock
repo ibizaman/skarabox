@@ -97,6 +97,21 @@
         "type": "github"
       }
     },
+    "nix-flake-tests": {
+      "locked": {
+        "lastModified": 1677844186,
+        "narHash": "sha256-ErJZ/Gs1rxh561CJeWP5bohA2IcTq1rDneu1WT6CVII=",
+        "owner": "antifuchs",
+        "repo": "nix-flake-tests",
+        "rev": "bbd9216bd0f6495bb961a8eb8392b7ef55c67afb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "antifuchs",
+        "repo": "nix-flake-tests",
+        "type": "github"
+      }
+    },
     "nixlib": {
       "locked": {
         "lastModified": 1736643958,
@@ -265,6 +280,7 @@
       "inputs": {
         "deploy-rs": "deploy-rs",
         "flake-parts": "flake-parts",
+        "nix-flake-tests": "nix-flake-tests",
         "nixos-anywhere": "nixos-anywhere",
         "nixos-facter-modules": "nixos-facter-modules",
         "nixos-generators": "nixos-generators",
