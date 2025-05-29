@@ -55,7 +55,7 @@ inputs = {
 };
 ```
 
-Transform the outputs in a flake-parts module like outlined [in the tutorial][tutorial].
+Transform the outputs in a flake-parts module like outlined [in the official tutorial][tutorial].
 
 [tutorial]: https://flake.parts/getting-started.html#existing-flake
 
@@ -121,42 +121,19 @@ skarabox.hosts = {
 };
 ```
 
-7. Add necessary config in `configuration.nix`,
-   changing values to match your host hardware layout:
+6. Create Sops main key `sops.key` if needed:
 
-```nix
-skarabox.hostname = "myskarabox";
-skarabox.username = "skarabox";
-skarabox.hashedPasswordFile = config.sops.secrets."skarabox/user/hashedPassword".path;
-skarabox.facter-config = ./facter.json;
-skarabox.disks.rootDisk = "/dev/nvme0n1";
-skarabox.disks.rootDisk2 = null;
-skarabox.disks.rootReservation = "500M";
-skarabox.disks.dataDisk1 = "/dev/sda";
-skarabox.disks.dataDisk2 = "/dev/sdb";
-skarabox.disks.enableDataPool = true;
-skarabox.disks.dataReservation = "10G";
-skarabox.disks.bootSSHPort = lib.toInt (builtins.readFile ./ssh_boot_port);
-skarabox.sshPorts = [ (lib.toInt (builtins.readFile ./ssh_port)) ];
-skarabox.sshAuthorizedKeyFile = ./ssh.pub;
-skarabox.hostId = lib.trim (builtins.readFile ./hostid);
-skarabox.setupLanWithDHCP = true;
+   `nix run .#sops-create-main-key`.
 
-sops.defaultSopsFile = ./secrets.yaml;
-sops.age = {
-  sshKeyPaths = [ "/boot/host_key" ];
-};
+7. Add Sops main key to Sops config `.sops.yaml`:
 
-sops.secrets."skarabox/user/hashedPassword" = {
-  neededForUsers = true;
-};
-```
+   `nix run .#sops-add-main-key`.
 
-8. Generate needed files:
+8. Create config for host `myskarabox` in folder `./myskarabox`:
 
-```nix
-age-keygen -o $sops_key
-```
+   `nix run .#gen-new-host myskarabox`.
+
+   Tweak `./myskarabox/configuration.nix`.
 
 ## Installation
 
@@ -303,8 +280,16 @@ All commands are prefixed by the hostname, allowing to handle multiple hosts.
 6. Edit secrets
 
    ```bash
-   $ nix run .#sops secrets.yaml
+   $ nix run .#sops ./myskarabox/secrets.yaml
    ```
+
+7. Add other hosts
+
+   ```bash
+   $ nix run .#gen-new-host otherhost.
+   ```
+
+   and copy needed config in `./flake.nix`.
 
 ## Post Installation Checklist
 

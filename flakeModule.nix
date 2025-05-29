@@ -370,8 +370,22 @@ in
         add-sops-cfg = import ./lib/add-sops-cfg.nix {
           inherit pkgs;
         };
+
+        sops-create-main-key = import ./lib/sops-create-main-key.nix {
+          inherit pkgs;
+        };
+
+        sops-add-main-key = import ./lib/sops-add-main-key.nix {
+          inherit pkgs add-sops-cfg;
+        };
+
+        gen-new-host = import ./lib/gen-new-host.nix {
+          inherit add-sops-cfg pkgs;
+        };
       in {
-        inherit beacon-usbimager add-sops-cfg sops;
+        inherit beacon-usbimager gen-new-host;
+        inherit add-sops-cfg sops sops-add-main-key sops-create-main-key;
+        inherit (pkgs) age;
       } // (concatMapAttrs mkHostPackages cfg.hosts);
 
       apps = {

@@ -6,9 +6,10 @@ SkaraboxOS aims to be the fastest way to install NixOS on a server
 with all batteries included.
 
 <!--toc:start-->
+- [Usage](#usage)
+- [Provided operations:](#provided-operations)
 - [Why?](#why)
 - [Hardware Requirements](#hardware-requirements)
-- [Installation Process Overview](#installation-process-overview)
 - [Architecture](#architecture)
 - [Roadmap](#roadmap)
 - [Contribute](#contribute)
@@ -19,7 +20,10 @@ with all batteries included.
 
 <table>
 <tr>
-<th colspan="3">1.a. If from scratch</th>
+<th colspan="6">1. Initialize repo</th>
+</tr>
+<tr>
+<th colspan="3">1.a. From scratch</th>
 <th colspan="3">1.b. In existing repo</th>
 </tr>
 <tr>
@@ -33,13 +37,23 @@ nix run github:ibizaman/skarabox#init
 </td>
 <td colspan="3">
 
-Add inputs:
+1. Merge [./template/flake.nix](./template/flake.nix) with yours.
+2. Create Sops main key `sops.key` if needed:
 
-```bash
-```
+   `nix run .#sops-create-main-key`.
+3. Add Sops main key to Sops config `.sops.yaml`:
+
+   `nix run .#sops-add-main-key`.
+4. Create config for host `myskarabox` in folder `./myskarabox`:
+
+   `nix run .#gen-new-host myskarabox`.
+
 </td>
 </tr>
 
+<tr>
+<th colspan="6">2. Start beacon</th>
+</tr>
 <tr>
 <th colspan="2">2.a. Test on VM</th>
 <th colspan="2">2.b. Install on Host</th>
@@ -50,68 +64,63 @@ Add inputs:
 
 ```bash
 nix run .#myskarabox-beacon-vm &
-```
-</td>
-<td colspan="2">
 
-Use usbimager to install on a USB key and boot on it.
-
-```bash
-nix build .#myskarabox-beacon
-nix run .#beacon-usbimager
-```
-
-Burn ./result/iso/beacon.iso on an USB key
-then boot on USB key.
-
-</td>
-<td colspan="2">
-For Hetzner, start in recovery mode.
-</td>
-</tr>
-</table>
-
-
-```bash
-nix run .#myskarabox-beacon-vm &
-
-# Tweak settings to match installing on the VM
 echo 127.0.0.1 > myskarabox/ip
 echo x86_64-linux > myskarabox/system
 echo 2222 > myskarabox/ssh_port
 echo 2223 > myskarabox/ssh_boot_port
 nix run .#myskarabox-gen-knownhosts-file
-
-nix run .#myskarabox-get-facter > ./myskarabox/facter.json
-nix run .#myskarabox-install-on-beacon .#skarabox
-# VM will reboot.
-
-# Installation is done!
 ```
+</td>
+<td colspan="2">
 
-## Install on Host
-
+Use usbimager to install
+`./result/iso/beacon.iso` on a USB key
+and boot on the USB key.
 
 ```bash
-mkdir myskarabox
-cd myskarabox
-nix run github:ibizaman/skarabox#init
-
 nix build .#myskarabox-beacon
 nix run .#beacon-usbimager
-# Use usbimager to install on a USB key and boot on it.
+```
 
-# Tweak settings to match installing on the target host
+Then burn on an USB key
+then boot on USB key.
+
+```bash
 echo 192.168.1.XX > myskarabox/ip
 echo x86_64-linux > myskarabox/system
 nix run .#myskarabox-gen-knownhosts-file
-
-nix run .#myskarabox-get-facter > ./myskarabox/facter.json
-nix run .#myskarabox-install-on-beacon .#skarabox
-# VM will reboot.
-
-# Installation is done!
 ```
+
+</td>
+<td colspan="2">
+For Hetzner, start in recovery mode.
+
+```nix
+echo 192.168.1.XX > myskarabox/ip
+echo x86_64-linux > myskarabox/system
+nix run .#myskarabox-gen-knownhosts-file
+```
+</td>
+</tr>
+<tr>
+<td colspan="6">3. Install on target host</td>
+</tr>
+
+<tr>
+<td colspan="6">
+
+```bash
+nix run .#myskarabox-get-facter > ./myskarabox/facter.json
+nix run .#myskarabox-install-on-beacon .#myskarabox
+```
+
+VM or target host will reboot and ask the passphrase to decrypt
+the root partition. 
+
+</td>
+</tr>
+</table>
 
 ## Provided operations:
 
@@ -122,14 +131,15 @@ nix run .#myskarabox-unlock
 # SSH in:
 nix run .#myskarabox-ssh
 
-# Make a change to ./configuration.nix then deploy:
+# Deploy changes if any:
 nix run .#deloy-rs
+
+# Edit Sops file:
+nix run .#sops ./myskarabox/secrets.yaml
 
 # Reboot:
 nix run .#myskarabox-ssh sudo reboot
 ```
-
-More info in [template/README.md](./template/README.md).
 
 The flake [template](./template) combines:
 - Creating a bootable ISO, installable on an USB key.
@@ -145,10 +155,12 @@ The flake [template](./template) combines:
 - [flake-parts][] to make the resulting `flake.nix` small.
   Also to handle having multiple hosts managed by one flake.
 - [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
+- Programmatically populate Sops secrets file.
+- Fully pinned inputs.
 - [deploy-rs][] to deploy updates.
-- backed by [tests][] and [CI][] to make sure the installation procedure does work!
+- Backed by [tests][] and [CI][] to make sure the installation procedure does work!
   Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.template -- -g`.
-- and supporting `x86_64-linux` and `aarch64-linux` platform.
+- Supporting `x86_64-linux` and `aarch64-linux` platform.
 
 I used this successfully on my own on-premise x86 server
 and on Hetzner dedicated ARM and x86 hosts.
@@ -165,6 +177,10 @@ and on Hetzner dedicated ARM and x86 hosts.
 This repository does not invent any of those wonderful tools.
 It merely provides an opinionated way to make them all fit together.
 By being more opinionated, it gets you set up faster.
+
+Services can then be installed by using NixOS options directly
+or through [Self Host Blocks](https://github.com/ibizaman/selfhostblocks).
+The latter, similarly to SkaraboxOS, provides an opinionated way to configure services in a seamless way.
 
 ## Why?
 
@@ -191,25 +207,6 @@ It expects a particular hardware layout:
 
 > [!WARNING]
 > The disks will be formatted and completely wiped out of data.
-
-## Manual Installation Process Overview
-
-The TL; DR: snippet in words:
-
-1. Download the flake template
-   which automatically generates secrets.
-2. Generate a ISO and format a USB key.
-3. Boot server on USB key and get its IP address.
-4. Run installer from laptop.
-   Server will reboot and ask for passphrase to decrypt root partition.
-5. SSH in to decrypt root partition.
-6. Server boots and you can SSH in.
-
-The [template's README](./template/README.md) contains a more detailed explanation.
-
-Services can then be installed by using NixOS options directly
-or through [Self Host Blocks](https://github.com/ibizaman/selfhostblocks).
-The latter, similarly to SkaraboxOS, provides an opinionated way to configure services in a seamless way.
 
 ## Architecture
 

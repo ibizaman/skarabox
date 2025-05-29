@@ -1,13 +1,15 @@
 {
   pkgs,
-  add-sops-cfg,
+  sops-create-main-key,
+  sops-add-main-key,
   gen-new-host,
 }:
 pkgs.writeShellApplication {
   name = "gen-initial";
 
   runtimeInputs  = [
-    add-sops-cfg
+    sops-create-main-key
+    sops-add-main-key
     gen-new-host
     pkgs.age
     pkgs.mkpasswd
@@ -116,13 +118,11 @@ USAGE
 
     sops_key="./sops.key"
     e "Generating main sops key in $sops_key..."
-    rm $sops_key && age-keygen -o $sops_key
-    main_age_key="$(age-keygen -y "$sops_key")"
+    rm $sops_key && sops-create-main-key $sops_key
 
     sops_cfg="./.sops.yaml"
-    rm $sops_cfg
     e "Creating initial SOPS config in $sops_cfg..."
-    add-sops-cfg -o $sops_cfg alias main "$main_age_key"
+    rm $sops_cfg && sops-add-main-key $sops_key $sops_cfg
 
     e "Now, we will generate the secrets for myskarabox."
 
