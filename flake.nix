@@ -76,8 +76,8 @@
         };
       };
 
-      checks = pkgs.callPackage ./tests {
-        inherit system nix-flake-tests;
+      checks = import ./tests {
+        inherit pkgs system nix-flake-tests;
       };
 
       # Used to experiment with ruamel library.
