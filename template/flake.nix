@@ -17,10 +17,7 @@
     sops-nix.url = "github:Mic92/sops-nix";
   };
 
-  outputs = inputs@{ self, skarabox, sops-nix, nixpkgs, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } (let
-    inherit (skarabox.lib) readAndTrim;
-    inherit (nixpkgs.lib) toInt;
-  in {
+  outputs = inputs@{ self, skarabox, sops-nix, nixpkgs, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -32,13 +29,13 @@
 
     skarabox.hosts = {
       myskarabox = {
-        system = readAndTrim ./myskarabox/system;
+        system = ./myskarabox/system;
         hostKeyPub = ./myskarabox/host_key.pub;
-        ip = readAndTrim ./myskarabox/ip;
+        ip = ./myskarabox/ip;
         sshPublicKey = ./myskarabox/ssh.pub;
         knownHosts = ./myskarabox/known_hosts;
-        sshPort = toInt (readAndTrim ./myskarabox/ssh_port);
-        sshBootPort = toInt (readAndTrim ./myskarabox/ssh_boot_port);
+        sshPort = ./myskarabox/ssh_port;
+        sshBootPort = ./myskarabox/ssh_boot_port;
 
         modules = [
           sops-nix.nixosModules.default
@@ -56,5 +53,5 @@
         };
       };
     };
-  });
+  };
 }
