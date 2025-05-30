@@ -2,7 +2,15 @@
 let
   cfg = config.skarabox;
 
-  inherit (lib) mkOption types;
+  inherit (lib) mkOption toInt types;
+
+  readAndTrim = f: lib.strings.trim (builtins.readFile f);
+  readAsStr = v: if lib.isPath v then readAndTrim v else v;
+  readAsInt = v: let
+    vStr = readAsStr v;
+  in
+    if lib.isString vStr then toInt vStr else vStr;
+
 in
 {
   options.skarabox = {
@@ -31,18 +39,20 @@ in
     };
 
     hostId = mkOption {
-      type = types.str;
+      type = with types; oneOf [ str path ];
       description = ''
         8 characters unique identifier for this server. Generate with `uuidgen | head -c 8`.
       '';
+      apply = readAsStr;
     };
 
-    sshPorts = mkOption {
-      type = types.listOf types.port;
+    sshPort = mkOption {
+      type = with types; oneOf [ int str path ];
       default = [ 22 ];
       description = ''
-        List of ports the SSH daemon listens to.
+        Port the SSH daemon listens to.
       '';
+      apply = readAsInt;
     };
 
     sshAuthorizedKeyFile = mkOption {
@@ -142,7 +152,7 @@ in
         PermitRootLogin = "no";
         PasswordAuthentication = false;
       };
-      ports = cfg.sshPorts;
+      ports = [ cfg.sshPort ];
       hostKeys = lib.mkForce [];
       extraConfig = ''
         HostKey /boot/host_key

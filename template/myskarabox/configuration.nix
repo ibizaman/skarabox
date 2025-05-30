@@ -33,10 +33,10 @@ in
         reservation = "10G";  # Set to 5% of size Hard Drives.
       };
       # For security by obscurity, we choose another ssh port here than the default 22.
-      skarabox.disks.bootSSHPort = lib.toInt (builtins.readFile ./ssh_boot_port);
-      skarabox.sshPorts = [ (lib.toInt (builtins.readFile ./ssh_port)) ];
+      skarabox.disks.bootSSHPort = ./ssh_boot_port;
+      skarabox.sshPort = ./ssh_port;
       skarabox.sshAuthorizedKeyFile = ./ssh.pub;
-      skarabox.hostId = lib.trim (builtins.readFile ./hostid);
+      skarabox.hostId = ./hostid;
       skarabox.setupLanWithDHCP = true;  # Set to false to disable the catch-all network configuration from skarabox and instead set your own
 
       # Hardware drivers are figured out using nixos-facter.

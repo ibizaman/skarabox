@@ -1,9 +1,16 @@
-{ config, options, lib, pkgs, ... }:
+{ config, options, lib, ... }:
 let
   cfg = config.skarabox.disks;
   opt = options.skarabox.disks;
 
-  inherit (lib) mkIf mkOption optionals optionalString types;
+  inherit (lib) mkIf mkOption optionals optionalString toInt types;
+
+  readAndTrim = f: lib.strings.trim (builtins.readFile f);
+  readAsStr = v: if lib.isPath v then readAndTrim v else v;
+  readAsInt = v: let
+    vStr = readAsStr v;
+  in
+    if lib.isString vStr then toInt vStr else vStr;
 in
 {
   options.skarabox.disks = {
@@ -99,9 +106,10 @@ in
     };
 
     bootSSHPort = mkOption {
-      type = types.port;
+      type = with types; oneOf [ int str path ];
       description = "Port the SSH daemon used to decrypt the root partition listens to.";
       default = 2222;
+      apply = readAsInt;
     };
   };
 
