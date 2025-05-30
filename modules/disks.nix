@@ -200,8 +200,7 @@ in
       zpool = {
         ${cfg.rootPool.name} = {
           type = "zpool";
-          # Only one disk
-          mode = "";
+          mode = if cfg.rootPool.disk2 != null then "mirror" else "";
           options = {
             ashift = "12";
             autotrim = "on";

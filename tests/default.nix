@@ -1,14 +1,14 @@
 { pkgs, system, nix-flake-tests }:
 let
   nix = "${pkgs.nix}/bin/nix --extra-experimental-features nix-command -L";
-in
-{
-  lib = nix-flake-tests.lib.check {
-    inherit pkgs;
-    tests = pkgs.callPackage ./lib.nix {};
-  };
 
-  template = pkgs.writeShellScriptBin "template-test" ''
+  toBashBool = v: if v then "true" else "false";
+
+  templateTest = {
+    name,
+    rootDisk2,
+    dataPool,
+  }: pkgs.writeShellScriptBin name ''
     set -e
 
     e () {
@@ -17,6 +17,8 @@ in
 
     graphic=-nographic
     tmpdir=
+    rootDisk2=${toBashBool rootDisk2}
+    dataPool=${toBashBool dataPool}
 
     while getopts "gp:" o; do
       case "''${o}" in
@@ -62,6 +64,13 @@ in
     git config user.email "skarabox@skarabox.com"
     git commit -m 'init repository'
     e "Initialisation done"
+
+    if [ "$dataPool" = false ]; then
+      sed -i 's-enable = true-enable = false-' ./myskarabox/configuration.nix
+    fi
+    if [ "$rootDisk2" = true ]; then
+      sed -i 's-disk2 = null-disk2 = "/dev/nvme1n1"-' ./myskarabox/configuration.nix
+    fi
 
     nix flake show
 
@@ -155,4 +164,34 @@ in
     ${nix} run .#myskarabox-ssh -- -F none sudo shutdown
     e "Shutdown complete."
   '';
+in
+{
+  lib = nix-flake-tests.lib.check {
+    inherit pkgs;
+    tests = pkgs.callPackage ./lib.nix {};
+  };
+
+  oneOSnoData = templateTest {
+    name = "oneOSnoData";
+    rootDisk2 = false;
+    dataPool = false;
+  };
+
+  oneOStwoData = templateTest {
+    name = "oneOStwoData";
+    rootDisk2 = false;
+    dataPool = true;
+  };
+
+  twoOSnoData = templateTest {
+    name = "twoOSnoData";
+    rootDisk2 = true;
+    dataPool = false;
+  };
+
+  twoOStwoData = templateTest {
+    name = "twoOStwoData";
+    rootDisk2 = true;
+    dataPool = true;
+  };
 }
