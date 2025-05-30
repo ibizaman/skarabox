@@ -18,109 +18,87 @@ with all batteries included.
 
 ## Usage
 
-<table>
-<tr>
-<th colspan="6">1. Initialize repo</th>
-</tr>
-<tr>
-<th colspan="3">1.a. From scratch</th>
-<th colspan="3">1.b. In existing repo</th>
-</tr>
-<tr>
-<td colspan="3">
+1. Initialize repo
 
-```bash
-mkdir myskarabox
-cd myskarabox
-nix run github:ibizaman/skarabox#init
-```
-</td>
-<td colspan="3">
+    a. Either from scratch
 
-1. Merge [./template/flake.nix](./template/flake.nix) with yours.
-2. Create Sops main key `sops.key` if needed:
+        ```bash
+        mkdir myskarabox
+        cd myskarabox
+        nix run github:ibizaman/skarabox#init
+        ```
 
-   `nix run .#sops-create-main-key`.
-3. Add Sops main key to Sops config `.sops.yaml`:
+    b. Or in existing repo
 
-   `nix run .#sops-add-main-key`.
-4. Create config for host `myskarabox` in folder `./myskarabox`:
+        Merge [./template/flake.nix](./template/flake.nix) with yours, then:
 
-   `nix run .#gen-new-host myskarabox`.
+        ```bash
+        # Create Sops main key `sops.key` if needed
+        nix run .#sops-create-main-key
 
-</td>
-</tr>
+        # Add Sops main key to Sops config `.sops.yaml`
+        nix run .#sops-add-main-key
 
-<tr>
-<th colspan="6">2. Start beacon</th>
-</tr>
-<tr>
-<th colspan="2">2.a. Test on VM</th>
-<th colspan="2">2.b. Install on Host</th>
-<th colspan="2">2.c. Install on Cloud Instance</t0>
-</tr>
-<tr>
-<td colspan="2">
+        # Create config for host `myskarabox` in folder `./myskarabox`
+        nix run .#gen-new-host myskarabox
+        ```
 
-```bash
-nix run .#myskarabox-beacon-vm &
+2. Start beacon
 
-echo 127.0.0.1 > myskarabox/ip
-echo x86_64-linux > myskarabox/system
-echo 2222 > myskarabox/ssh_port
-echo 2223 > myskarabox/ssh_boot_port
-nix run .#myskarabox-gen-knownhosts-file
-```
-</td>
-<td colspan="2">
+    a. Either test on VM
 
-Use usbimager to install
-`./result/iso/beacon.iso` on a USB key
-and boot on the USB key.
+        ```bash
+        nix run .#myskarabox-beacon-vm &
+        
+        echo 127.0.0.1 > myskarabox/ip
+        echo x86_64-linux > myskarabox/system
+        echo 2222 > myskarabox/ssh_port
+        echo 2223 > myskarabox/ssh_boot_port
+        nix run .#myskarabox-gen-knownhosts-file
+        ```
 
-```bash
-nix build .#myskarabox-beacon
-nix run .#beacon-usbimager
-```
+        This VM has 4 hard drives:
+           - `/dev/nvme0`
+           - `/dev/nvme1`
+           - `/dev/sda`
+           - `/dev/sdb`
 
-Then burn on an USB key
-then boot on USB key.
+    b. Or install on an on-premise host
+     
+        ```bash
+        nix build .#myskarabox-beacon
+        nix run .#beacon-usbimager
+        ```
 
-```bash
-echo 192.168.1.XX > myskarabox/ip
-echo x86_64-linux > myskarabox/system
-nix run .#myskarabox-gen-knownhosts-file
-```
+        Use usbimager to burn `./result/iso/beacon.iso` 
+        on a USB key, then boot on that USB key.
+        Get IP from host and use it in next snippet:
+        
+        ```bash
+        echo 192.168.1.XX > myskarabox/ip
+        echo x86_64-linux > myskarabox/system
+        nix run .#myskarabox-gen-knownhosts-file
+        ```
 
-</td>
-<td colspan="2">
-For Hetzner, start in recovery mode.
+    c. Or install on Cloud Instance
 
-```nix
-echo 192.168.1.XX > myskarabox/ip
-echo x86_64-linux > myskarabox/system
-nix run .#myskarabox-gen-knownhosts-file
-```
-</td>
-</tr>
-<tr>
-<td colspan="6">3. Install on target host</td>
-</tr>
+        For Hetzner, start in recovery mode and retrieve the IP.
+        
+        ```bash
+        echo <ip> > myskarabox/ip
+        echo x86_64-linux > myskarabox/system
+        nix run .#myskarabox-gen-knownhosts-file
+        ```
 
-<tr>
-<td colspan="6">
+3. Install on target host
 
-```bash
-nix run .#myskarabox-get-facter > ./myskarabox/facter.json
-nix run .#myskarabox-install-on-beacon .#myskarabox
-```
-
-VM or target host will reboot and ask the passphrase to decrypt
-the root partition. 
-
-</td>
-</tr>
-</table>
+    ```bash
+    nix run .#myskarabox-get-facter > ./myskarabox/facter.json
+    nix run .#myskarabox-install-on-beacon .#myskarabox
+    ```
+    
+    Target host will reboot and ask the passphrase to decrypt
+    the root partition. See next section for how to give it.
 
 ## Provided operations:
 
@@ -141,25 +119,29 @@ nix run .#sops ./myskarabox/secrets.yaml
 nix run .#myskarabox-ssh sudo reboot
 ```
 
-The flake [template](./template) combines:
+The flake [template](./template) combines turn-key style:
+
 - Creating a bootable ISO, installable on an USB key.
 - Alternatively, creating a VM based on the bootable ISO
   to test the installation procedure (like shown in the snippet above).
 - Managing host keys, known hosts and ssh keys
   to provide a secure and seamless SSH experience.
 - [nixos-anywhere][] to install NixOS headlessly.
-- [disko][] to format the drives using native ZFS encryption with remote unlocking through ssh.
-  It supports for the OS 1 or 2 disks in raid 1
-  and for the data 0 or 2 disks in raid1.
+- [disko][] to format the drives using native ZFS encryption
+- Remote root pool decryption through ssh.
+- 1 or 2 disks in raid1 using mdadm for the OS
+  and 0 or 2 disks in raid1 using ZFS mirroring for the data disks.
 - [nixos-facter][] to handle hardware configuration.
 - [flake-parts][] to make the resulting `flake.nix` small.
-  Also to handle having multiple hosts managed by one flake.
+- Handle having multiple hosts managed by one flake
+  and programmatically add more with generated secrets with one command.
 - [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
 - Programmatically populate Sops secrets file.
 - Fully pinned inputs.
 - [deploy-rs][] to deploy updates.
-- Backed by [tests][] and [CI][] to make sure the installation procedure does work!
-  Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.template -- -g`.
+- Backed by [tests][] for all disk variants
+  and [CI][] to make sure the installation procedure does work!
+  Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
 - Supporting `x86_64-linux` and `aarch64-linux` platform.
 
 I used this successfully on my own on-premise x86 server
