@@ -21,13 +21,17 @@ in
       skarabox.username = "skarabox";
       skarabox.hashedPasswordFile = config.sops.secrets."myskarabox/user/hashedPassword".path;
       skarabox.facter-config = ./facter.json;
-      skarabox.disks.rootDisk = "/dev/nvme0n1";  # Update with result of running `fdisk -l` on the USB stick.
-      skarabox.disks.rootDisk2 = null;  # Set a value only if you have a second disk for the root partition.
-      skarabox.disks.rootReservation = "500M";  # Set to 10% of size SSD.
-      skarabox.disks.dataDisk1 = "/dev/sda";  # Update with result of running `fdisk -l` on the USB stick.
-      skarabox.disks.dataDisk2 = "/dev/sdb";  # Update with result of running `fdisk -l` on the USB stick.
-      skarabox.disks.enableDataPool = true;  # Disable if only an SSD for root is present.
-      skarabox.disks.dataReservation = "10G";  # Set to 5% of size Hard Drives.
+      skarabox.disks.rootPool = {
+        disk1 = "/dev/nvme0n1";  # Update with result of running `fdisk -l` on the USB stick.
+        disk2 = null;  # Set a value only if you have a second disk for the root partition.
+        reservation = "500M";  # Set to 10% of size SSD.
+      };
+      skarabox.disks.dataPool = {
+        enable = true;  # Disable if only an SSD for root is present.
+        disk1 = "/dev/sda";  # Update with result of running `fdisk -l` on the USB stick.
+        disk2 = "/dev/sdb";  # Update with result of running `fdisk -l` on the USB stick.
+        reservation = "10G";  # Set to 5% of size Hard Drives.
+      };
       # For security by obscurity, we choose another ssh port here than the default 22.
       skarabox.disks.bootSSHPort = lib.toInt (builtins.readFile ./ssh_boot_port);
       skarabox.sshPorts = [ (lib.toInt (builtins.readFile ./ssh_port)) ];
