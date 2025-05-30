@@ -8,7 +8,14 @@ let
   topLevelConfig = config;
   cfg = config.skarabox;
 
-  inherit (lib) concatMapAttrs mkOption types;
+  inherit (lib) concatMapAttrs mkOption types toInt;
+
+  readAndTrim = f: lib.strings.trim (builtins.readFile f);
+  readAsStr = v: if lib.isPath v then readAndTrim v else v;
+  readAsInt = v: let
+    vStr = readAsStr v;
+  in
+    if lib.isString vStr then toInt vStr else vStr;
 
   beacon-module = { config, lib, modulesPath, ... }: {
     imports = [
@@ -37,8 +44,9 @@ in
           };
 
           ip = mkOption {
-            type = types.str;
+            type = with types; oneOf [ str path ];
             default = "127.0.0.1";
+            apply = readAsStr;
           };
           sshPrivateKeyName = mkOption {
             # Using string here so the sops key does not end up in the nix store.
@@ -68,15 +76,18 @@ in
             type = types.path;
           };
           sshPort = mkOption {
-            type = types.port;
+            type = with types; oneOf [ int str path ];
             default = 22;
+            apply = readAsInt;
           };
           sshBootPort = mkOption {
-            type = types.port;
+            type = with types; oneOf [ int str path ];
             default = 2222;
+            apply = readAsInt;
           };
           system = mkOption {
-            type = types.str;
+            type = with types; oneOf [ str path ];
+            apply = readAsStr;
           };
 
           modules = mkOption {

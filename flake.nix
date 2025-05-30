@@ -93,10 +93,6 @@
     flake = {
       skaraboxInputs = inputs;
 
-      lib = {
-        readAndTrim = f: nixpkgs.lib.strings.trim (builtins.readFile f);
-      };
-
       flakeModules.default = ./flakeModule.nix;
 
       templates = {
