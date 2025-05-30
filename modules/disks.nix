@@ -8,76 +8,88 @@ in
 {
   options.skarabox.disks = {
     rootPool = mkOption {
-      type = types.str;
-      description = "Name of the root pool";
-      default = "root";
-    };
+      type = with types; submodule {
+        options = {
+          name = mkOption {
+            type = types.str;
+            description = "Name of the root pool";
+            default = "root";
+          };
 
-    rootDisk = mkOption {
-      type = types.str;
-      description = "SSD disk on which to install.";
-      example = "/dev/nvme0n1";
-    };
+          disk1 = mkOption {
+            type = types.str;
+            description = "SSD disk on which to install. Required";
+            example = "/dev/nvme0n1";
+          };
 
-    rootDisk2 = mkOption {
-      type = types.nullOr types.str;
-      description = "Second SSD disk on which to install.";
-      example = "/dev/nvme0n2";
-      default = null;
-    };
+          disk2 = mkOption {
+            type = types.nullOr types.str;
+            description = "Second SSD disk on which to install. Optional.";
+            example = "/dev/nvme0n2";
+            default = null;
+          };
 
-    rootReservation = mkOption {
-      type = types.str;
-      description = ''
-        Disk size to reserve for ZFS internals. Should be between 10% and 15% of available size as recorded by zpool.
+          reservation = mkOption {
+            type = types.str;
+            description = ''
+              Disk size to reserve for ZFS internals. Should be between 10% and 15% of available size as recorded by zpool.
 
-        To get available size on zpool:
+              To get available size on zpool:
 
-           zfs get -Hpo value available ${opt.rootPool}
+                 zfs get -Hpo value available ${opt.rootPool.name}
 
-        Then to set manually, if needed:
+              Then to set manually, if needed:
 
-           sudo zfs set reservation=100G ${opt.rootPool}
-      '';
-      example = "100G";
-    };
-
-    enableDataPool = lib.mkEnableOption "data pool on separate hard drives." // {
-      default = true;
+                 sudo zfs set reservation=100G ${opt.rootPool.name}
+            '';
+            example = "100G";
+          };
+        };
+      };
     };
 
     dataPool = mkOption {
-      type = types.str;
-      description = "Name of the data pool";
-      default = "zdata";
-    };
+      type = with types; submodule {
+        options = {
+          enable = lib.mkEnableOption "the data pool on other hard drives." // {
+            default = true;
+          };
 
-    dataDisk1 = mkOption {
-      type = types.str;
-      description = "First disk on which to install the data pool.";
-      example = "/dev/sda";
-    };
+          name = mkOption {
+            type = types.str;
+            description = "Name of the data pool";
+            default = "zdata";
+          };
 
-    dataDisk2 = mkOption {
-      type = types.str;
-      description = "Second disk on which to install the data pool.";
-      example = "/dev/sdb";
-    };
+          disk1 = mkOption {
+            type = types.str;
+            description = "First disk on which to install the data pool.";
+            example = "/dev/sda";
+          };
 
-    dataReservation = mkOption {
-      type = types.str;
-      description = ''
-        Disk size to reserve for ZFS internals. Should be between 5% and 10% of available size as recorded by zpool.
+          disk2 = mkOption {
+            type = types.str;
+            description = "Second disk on which to install the data pool.";
+            example = "/dev/sdb";
+          };
 
-        To get available size on zpool:
+          reservation = mkOption {
+            type = types.str;
+            description = ''
+              Disk size to reserve for ZFS internals. Should be between 5% and 10% of available size as recorded by zpool.
 
-           zfs get -Hpo value available ${opt.dataPool}
+              To get available size on zpool:
 
-        Then to set manually, if needed:
+                 zfs get -Hpo value available ${opt.dataPool.name}
 
-           sudo zfs set reservation=100G ${opt.dataPool}
-      '';
-      example = "1T";
+              Then to set manually, if needed:
+
+                 sudo zfs set reservation=100G ${opt.dataPool.name}
+            '';
+            example = "1T";
+          };
+        };
+      };
     };
 
     initialBackupDataset = mkOption {
@@ -96,7 +108,7 @@ in
   config = {
     disko.devices = {
       disk = let
-        hasRaid = cfg.rootDisk2 != null;
+        hasRaid = cfg.rootPool.disk2 != null;
 
         rootSoleContent = {
           type = "filesystem";
@@ -130,7 +142,7 @@ in
                 size = "100%";
                 content = {
                   type = "zfs";
-                  pool = cfg.rootPool;
+                  pool = cfg.rootPool.name;
                 };
               };
             };
@@ -147,20 +159,20 @@ in
                 size = "100%";
                 content = {
                   type = "zfs";
-                  pool = cfg.dataPool;
+                  pool = cfg.dataPool.name;
                 };
               };
             };
           };
         };
       in {
-        root = mkRoot cfg.rootDisk;
-        root1 = mkIf hasRaid (mkRoot cfg.rootDisk2);
-        data1 = mkIf cfg.enableDataPool (mkDataDisk cfg.dataDisk1);
-        data2 = mkIf cfg.enableDataPool (mkDataDisk cfg.dataDisk2);
+        root = mkRoot cfg.rootPool.disk1;
+        root1 = mkIf hasRaid (mkRoot cfg.rootPool.disk2);
+        data1 = mkIf cfg.dataPool.enable (mkDataDisk cfg.dataPool.disk1);
+        data2 = mkIf cfg.dataPool.enable (mkDataDisk cfg.dataPool.disk2);
       };
       mdadm = {
-        boot = mkIf (cfg.rootDisk2 != null) {
+        boot = mkIf (cfg.rootPool.disk2 != null) {
           type = "mdadm";
           level = 1;
           metadata = "1.0";
@@ -178,7 +190,7 @@ in
         };
       };
       zpool = {
-        ${cfg.rootPool} = {
+        ${cfg.rootPool.name} = {
           type = "zpool";
           # Only one disk
           mode = "";
@@ -216,7 +228,7 @@ in
                 canmount = "off";
                 mountpoint = "none";
                 # TODO: compute this value using percentage
-                reservation = cfg.rootReservation;
+                reservation = cfg.rootPool.reservation;
               };
               type = "zfs_fs";
             };
@@ -225,7 +237,7 @@ in
               type = "zfs_fs";
               mountpoint = "/";
               options.mountpoint = "legacy";
-              postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^${cfg.rootPool}/local/root@blank$' || zfs snapshot ${cfg.rootPool}/local/root@blank";
+              postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^${cfg.rootPool.name}/local/root@blank$' || zfs snapshot ${cfg.rootPool.name}/local/root@blank";
             };
 
             "local/nix" = {
@@ -245,14 +257,14 @@ in
               mountpoint = "/persist";
               # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
               options.mountpoint = "legacy";
-              postMountHook = optionalString cfg.enableDataPool ''
+              postMountHook = optionalString cfg.dataPool.enable ''
                 cp /tmp/data_passphrase /mnt/persist/data_passphrase
               '';
             };
           };
         };
 
-        ${cfg.dataPool} = mkIf cfg.enableDataPool {
+        ${cfg.dataPool.name} = mkIf cfg.dataPool.enable {
           type = "zpool";
           mode = "mirror";
           options = {
@@ -286,7 +298,7 @@ in
                 canmount = "off";
                 mountpoint = "none";
                 # TODO: compute this value using percentage
-                reservation = cfg.dataReservation;
+                reservation = cfg.dataPool.reservation;
               };
               type = "zfs_fs";
             };
@@ -305,14 +317,14 @@ in
         };
       };
     };
-    fileSystems."/srv/backup" = mkIf (cfg.enableDataPool && cfg.initialBackupDataset) {
+    fileSystems."/srv/backup" = mkIf (cfg.dataPool.enable && cfg.initialBackupDataset) {
       options = [ "nofail" ];
     };
 
     boot.supportedFilesystems = [ "zfs" ];
     boot.zfs.forceImportRoot = false;
     # To import the zpool automatically
-    boot.zfs.extraPools = optionals cfg.enableDataPool [ cfg.dataPool ];
+    boot.zfs.extraPools = optionals cfg.dataPool.enable [ cfg.dataPool.name ];
 
     # This is needed to make the /boot/host_key available early
     # enough to be able to decrypt the sops file on boot,
@@ -322,7 +334,7 @@ in
     # Follows https://grahamc.com/blog/erase-your-darlings/
     # https://github.com/NixOS/nixpkgs/pull/346247/files
     boot.initrd.postResumeCommands = lib.mkAfter ''
-      zfs rollback -r ${cfg.rootPool}/local/root@blank
+      zfs rollback -r ${cfg.rootPool.name}/local/root@blank
     '';
 
     # Enables DHCP in stage-1 even if networking.useDHCP is false.
@@ -351,7 +363,7 @@ in
 
       postCommands = ''
       zpool import -a
-      echo "zfs load-key ${cfg.rootPool}; killall zfs; exit" >> /root/.profile
+      echo "zfs load-key ${cfg.rootPool.name}; killall zfs; exit" >> /root/.profile
       '';
     };
 
