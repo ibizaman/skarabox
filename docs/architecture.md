@@ -186,7 +186,7 @@ boot.initrd.network = {
     enable = true;
     port = lib.mkDefault cfg.bootSSHPort;
     authorizedKeyFiles = [
-      ./ssh_skarabox.pub
+      ./ssh.pub
     ];
   };
 
@@ -200,8 +200,8 @@ We enable `boot.initrd.network` and the `.ssh` options.
 We set the port to 2222 by default.
 We add an ssh public key so we can connect as the root user.
 
-This ssh public key is generated as part of the [initialization](../lib/initialgen.nix)
-process in `./ssh_skarabox.pub` and the private key in `./skarabox`.
+This ssh public key is generated as part of the [initialization](../lib/gen-initial.nix)
+process in `./ssh.pub` and the private key in `./skarabox`.
 We also add that file to `.gitignore` to ensure
 we don't store the private file in the repo.
 
@@ -395,12 +395,12 @@ We must allow us, the user, to decrypt this `./secrets.yaml` file
 as well as allow the target host to decrypt it.
 This means we need to encrypt the file with two keys.
 
-The user's SOPS private key is generated in [initialgen.nix][] with:
+The user's SOPS private key is generated in [gen-initial.nix][] with:
 ```bash
 age-keygen -o sops.key
 ```
 
-[initialgen.nix]: ../lib/initialgen.nix
+[gen-initial.nix]: ../lib/gen-initial.nix
 
 and get the associated SOPS public key with:
 

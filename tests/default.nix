@@ -1,8 +1,13 @@
-{ pkgs, system }:
+{ pkgs, system, nix-flake-tests }:
 let
   nix = "${pkgs.nix}/bin/nix --extra-experimental-features nix-command -L";
 in
 {
+  lib = nix-flake-tests.lib.check {
+    inherit pkgs;
+    tests = pkgs.callPackage ./lib.nix {};
+  };
+
   template = pkgs.writeShellScriptBin "template-test" ''
     set -e
 
@@ -104,7 +109,7 @@ in
     e "Beacon VM has started."
 
     e "Checking password for skarabox user has been set."
-    hashedpwd="$(${nix} run .#sops -- decrypt --extract '["skarabox"]["user"]["hashedPassword"]' secrets.yaml)"
+    hashedpwd="$(${nix} run .#sops -- decrypt --extract '["myskarabox"]["user"]["hashedPassword"]' ./myskarabox/secrets.yaml)"
     ${nix} run .#myskarabox-ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
     e "Password has been set."
 

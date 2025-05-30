@@ -27,6 +27,10 @@
     deploy-rs = {
       url = "github:serokell/deploy-rs";
     };
+
+    nix-flake-tests = {
+      url = "github:antifuchs/nix-flake-tests";
+    };
   };
 
   outputs = inputs@{
@@ -36,6 +40,7 @@
     nixos-anywhere,
     nixos-facter-modules,
     deploy-rs,
+    nix-flake-tests,
     ...
   }: flake-parts.lib.mkFlake { inherit inputs; } {
     systems = [
@@ -50,17 +55,38 @@
         #
         # print help:
         #  init -h
-        init = import ./lib/initialgen.nix {
-          inherit pkgs gen-sopsconfig-file;
+        init = import ./lib/gen-initial.nix {
+          inherit pkgs gen-new-host sops-create-main-key sops-add-main-key;
         };
 
-        gen-sopsconfig-file = import ./lib/gensopsconfigfile.nix {
+        add-sops-cfg = import ./lib/add-sops-cfg.nix {
           inherit pkgs;
+        };
+
+        sops-create-main-key = import ./lib/sops-create-main-key.nix {
+          inherit pkgs;
+        };
+
+        sops-add-main-key = import ./lib/sops-add-main-key.nix {
+          inherit pkgs add-sops-cfg;
+        };
+
+        gen-new-host = import ./lib/gen-new-host.nix {
+          inherit add-sops-cfg pkgs;
         };
       };
 
       checks = import ./tests {
-        inherit pkgs system;
+        inherit pkgs system nix-flake-tests;
+      };
+
+      # Used to experiment with ruamel library.
+      devShells.pythonShell = pkgs.mkShell {
+        packages = [
+          (pkgs.python3.withPackages (python-pkgs: [
+            python-pkgs.ruamel-yaml
+          ]))
+        ];
       };
     };
 

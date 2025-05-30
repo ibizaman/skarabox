@@ -43,7 +43,7 @@ in
           sshPrivateKeyName = mkOption {
             # Using string here so the sops key does not end up in the nix store.
             type = types.str;
-            default = "ssh_skarabox";
+            default = "ssh";
           };
           secretsFileName = mkOption {
             type = types.str;
@@ -51,11 +51,11 @@ in
           };
           secretsRootPassphrasePath = mkOption {
             type = types.str;
-            default = "['skarabox']['disks']['rootPassphrase']";
+            default = "['${name}']['disks']['rootPassphrase']";
           };
           secretsDataPassphrasePath = mkOption {
             type = types.str;
-            default = "['skarabox']['disks']['dataPassphrase']";
+            default = "['${name}']['disks']['dataPassphrase']";
           };
           sshPublicKey = mkOption {
             type = types.path;
@@ -248,7 +248,7 @@ in
             name = "gen-knownhosts-file";
 
             runtimeInputs = [
-              (import ./lib/genknownhostsfile.nix {
+              (import ./lib/gen-knownhosts-file.nix {
                 inherit pkgs;
               })
             ];
@@ -277,7 +277,7 @@ in
           install-on-beacon = pkgs.writeShellApplication {
             name = "install-on-beacon";
             runtimeInputs = [
-              (import ./lib/installonbeacon.nix {
+              (import ./lib/install-on-beacon.nix {
                 inherit pkgs;
                 inherit (inputs.nixos-anywhere.packages.${system}) nixos-anywhere;
               })
@@ -294,6 +294,7 @@ in
                 -f "$flake" \
                 -k ${name}/${cfg'.hostKeyName} \
                 -s ${cfg.sopsKeyName} \
+                -e ${name}/${cfg'.secretsFileName} \
                 -r "${cfg'.secretsRootPassphrasePath}" \
                 -d "${cfg'.secretsDataPassphrasePath}" \
                 -a "--ssh-option ConnectTimeout=10 -i ${name}/${cfg'.sshPrivateKeyName} $*"
@@ -347,7 +348,7 @@ in
             ];
 
             text = ''
-              root_passphrase="$(sops decrypt --extract "${cfg'.secretsRootPassphrasePath}" "${cfg'.secretsFileName}")"
+              root_passphrase="$(sops decrypt --extract "${cfg'.secretsRootPassphrasePath}" "${name}/${cfg'.secretsFileName}")"
               printf '%s' "$root_passphrase" | boot-ssh "$@"
             '';
           };
@@ -366,12 +367,25 @@ in
       packages = let
         beacon-usbimager = pkgs.usbimager;
 
-        # nix run .#gen-sopsconfig-file -s sops.key -p host_key.pub
-        gen-sopsconfig-file = import ./lib/gensopsconfigfile.nix {
+        add-sops-cfg = import ./lib/add-sops-cfg.nix {
           inherit pkgs;
         };
+
+        sops-create-main-key = import ./lib/sops-create-main-key.nix {
+          inherit pkgs;
+        };
+
+        sops-add-main-key = import ./lib/sops-add-main-key.nix {
+          inherit pkgs add-sops-cfg;
+        };
+
+        gen-new-host = import ./lib/gen-new-host.nix {
+          inherit add-sops-cfg pkgs;
+        };
       in {
-        inherit beacon-usbimager gen-sopsconfig-file sops;
+        inherit beacon-usbimager gen-new-host;
+        inherit add-sops-cfg sops sops-add-main-key sops-create-main-key;
+        inherit (pkgs) age;
       } // (concatMapAttrs mkHostPackages cfg.hosts);
 
       apps = {

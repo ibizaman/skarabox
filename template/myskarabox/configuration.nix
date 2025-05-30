@@ -17,9 +17,9 @@ in
   config = mkMerge [
     # Skarabox config. Update the values to match your hardware.
     {
-      skarabox.hostname = "skarabox";
+      skarabox.hostname = "myskarabox";
       skarabox.username = "skarabox";
-      skarabox.hashedPasswordFile = config.sops.secrets."skarabox/user/hashedPassword".path;
+      skarabox.hashedPasswordFile = config.sops.secrets."myskarabox/user/hashedPassword".path;
       skarabox.facter-config = ./facter.json;
       skarabox.disks.rootDisk = "/dev/nvme0n1";  # Update with result of running `fdisk -l` on the USB stick.
       skarabox.disks.rootDisk2 = null;  # Set a value only if you have a second disk for the root partition.
@@ -31,7 +31,7 @@ in
       # For security by obscurity, we choose another ssh port here than the default 22.
       skarabox.disks.bootSSHPort = lib.toInt (builtins.readFile ./ssh_boot_port);
       skarabox.sshPorts = [ (lib.toInt (builtins.readFile ./ssh_port)) ];
-      skarabox.sshAuthorizedKeyFile = ./ssh_skarabox.pub;
+      skarabox.sshAuthorizedKeyFile = ./ssh.pub;
       skarabox.hostId = lib.trim (builtins.readFile ./hostid);
       skarabox.setupLanWithDHCP = true;  # Set to false to disable the catch-all network configuration from skarabox and instead set your own
 
@@ -48,18 +48,16 @@ in
       # if some drivers are missing.
       hardware.enableAllHardware = false;
 
-      sops.defaultSopsFile = ../secrets.yaml;
+      sops.defaultSopsFile = ./secrets.yaml;
       sops.age = {
         sshKeyPaths = [ "/boot/host_key" ];
       };
 
-      sops.secrets."skarabox/user/hashedPassword" = {
+      sops.secrets."myskarabox/user/hashedPassword" = {
         # Keep this option true or the user will not be able to log in.
         # https://github.com/Mic92/sops-nix?tab=readme-ov-file#setting-a-users-password
         neededForUsers = true;
       };
-      sops.secrets."skarabox/disks/rootPassphrase" = {};
-      sops.secrets."skarabox/disks/dataPassphrase" = {};
     }
     # Your config
     {

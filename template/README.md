@@ -33,6 +33,108 @@ and afterwards generate [./known_hosts](./known_hosts) with:
 nix run .#myskarabox-gen-knownhosts-file
 ```
 
+## Add in Existing Repo
+
+Add inputs:
+
+```nix
+inputs = {
+  nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  skarabox.url = "github:ibizaman/skarabox";
+
+  nixos-generators.url = "github:nix-community/nixos-generators";
+  nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
+
+  nixos-anywhere.url = "github:nix-community/nixos-anywhere";
+  nixos-anywhere.inputs.nixpkgs.follows = "nixpkgs";
+
+  nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
+  flake-parts.url = "github:hercules-ci/flake-parts";
+  deploy-rs.url = "github:serokell/deploy-rs";
+  sops-nix.url = "github:Mic92/sops-nix";
+};
+```
+
+Transform the outputs in a flake-parts module like outlined [in the official tutorial][tutorial].
+
+[tutorial]: https://flake.parts/getting-started.html#existing-flake
+
+In short:
+1. Add `mkFlake` around the outputs attrset:
+
+```nix
+outputs = inputs@{ self, skarabox, sops-nix, nixpkgs, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } (let
+in {
+});
+```
+
+2. Add the `systems` you want to handle:
+
+```nix
+systems = [
+  "x86_64-linux"
+  "aarch64-linux"
+];
+```
+
+3. Import Skarabox' flake module:
+
+```nix
+imports = [
+  skarabox.flakeModules.default
+];
+```
+
+4. Add NixOS module importing your module. 
+
+```nix
+flake = {
+  nixosModules = {
+    myskarabox = {
+      imports = [
+        ./myskarabox/configuration.nix
+      ];
+    };
+  };
+};
+```
+
+5. Add a Skarabox managed host, here called `myskarabox`
+   that uses the above NixOS module:
+
+```nix
+skarabox.hosts = {
+  myskarabox = {
+    system = "x86_64-linux";
+    hostKeyPub = ./myskarabox/host_key.pub;
+    ip = "192.168.1.XX";
+    sshPublicKey = ./myskarabox/ssh.pub;
+    knownHosts = ./myskarabox/known_hosts;
+    sshPort = 22;
+    sshBootPort = 2222;
+
+    modules = [
+      sops-nix.nixosModules.default
+      self.nixosModules.myskarabox
+    ];
+  };
+};
+```
+
+6. Create Sops main key `sops.key` if needed:
+
+   `nix run .#sops-create-main-key`.
+
+7. Add Sops main key to Sops config `.sops.yaml`:
+
+   `nix run .#sops-add-main-key`.
+
+8. Create config for host `myskarabox` in folder `./myskarabox`:
+
+   `nix run .#gen-new-host myskarabox`.
+
+   Tweak `./myskarabox/configuration.nix`.
+
 ## Installation
 
 The installation procedure can be followed on a [VM][],
@@ -178,8 +280,16 @@ All commands are prefixed by the hostname, allowing to handle multiple hosts.
 6. Edit secrets
 
    ```bash
-   $ nix run .#sops secrets.yaml
+   $ nix run .#sops ./myskarabox/secrets.yaml
    ```
+
+7. Add other hosts
+
+   ```bash
+   $ nix run .#gen-new-host otherhost.
+   ```
+
+   and copy needed config in `./flake.nix`.
 
 ## Post Installation Checklist
 
