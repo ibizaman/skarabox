@@ -186,7 +186,7 @@ boot.initrd.network = {
     enable = true;
     port = lib.mkDefault cfg.bootSSHPort;
     authorizedKeyFiles = [
-      ./ssh.pub
+      ./<hostname>/ssh.pub
     ];
   };
 
@@ -201,7 +201,7 @@ We set the port to 2222 by default.
 We add an ssh public key so we can connect as the root user.
 
 This ssh public key is generated as part of the [initialization](../lib/gen-initial.nix)
-process in `./ssh.pub` and the private key in `./skarabox`.
+process in `./<hostname>/ssh.pub` and the private key in `./<hostname>/ssh`.
 We also add that file to `.gitignore` to ensure
 we don't store the private file in the repo.
 
@@ -383,15 +383,20 @@ services.openssh = {
 ## SOPS
 
 To store the secrets, we use [sops-nix][] which stores the secrets
-encrypted in the repository, here in a `./secrets.yaml` file.
-It's creation and update is governed by the `./.sops.yaml` file.
+encrypted in the repository, here in a `./<hostname>/secrets.yaml` file.
+It's creation and update is governed by a unique `./.sops.yaml` file.
 
 The process to create this SOPS file is quite involved
 but is fully automatic, so that's nice.
 
+Note that we use one separate secrets file per host to avoid sharing
+secrets across hosts and avoid leaking secrets this way.
+It is possible to have shared secrets if needed but
+not supported out of the box.
+
 [sops-nix]: https://github.com/Mic92/sops-nix
 
-We must allow us, the user, to decrypt this `./secrets.yaml` file
+We must allow us, the user, to decrypt this `./<hostname>/secrets.yaml` file
 as well as allow the target host to decrypt it.
 This means we need to encrypt the file with two keys.
 
@@ -412,7 +417,7 @@ By the way, we add that file to `.gitignore` to ensure
 we don't store the private file in the repo.
 
 The hosts' SOPS public key is derived from the host' public ssh key
-we generated [earlier](#host-key) in `./host_key.pub` with:
+we generated [earlier](#host-key) in `./<hostname>/host_key.pub` with:
 
 ```bash
 cat host_key.pub | ssh-to-age
@@ -434,16 +439,19 @@ creation_rules:
       - *server
 ```
 
+This Sops config file is managed programmatically with some
+home brew scripts.
+
 And finally we encrypt the `secrets.yaml` file with:
 
 ```bash
 SOPS_AGE_KEY_FILE=sops.key sops encrypt -i secrets.yaml
 ```
 
-Note the `./secrets.yaml` cannot be empty to be encrypted,
+Note the `./<hostname>/secrets.yaml` cannot be empty to be encrypted,
 that's a limitation of SOPS itself.
 
-We only add secrets to the `./secrets.yaml` file
+We only add secrets to the `./<hostname>/secrets.yaml` file
 after it has been encrypted, as an added precaution.
 This is done by using the `set` [subcommand][set] of the `sops` command.
 
@@ -457,10 +465,16 @@ Similarly, we can decrypt one value with the `decrypt --extract` [option][extrac
 The `hostid` must be unique and not change during the lifetime of the server.
 It is only used by ZFS which refuses to import the pools if the `hostid` changes.
 
-The configuration for it is pretty simple:
+It is generated with:
+
+```bash
+uuidgen | head -c 8
+```
+
+And its configuration is trivial:
 
 ```nix
-networking.hostId = lib.trim (builtins.readFile ./hostid);
+networking.hostId = ./<hostname>/hostid;
 ```
 
 ## ZFS settings
