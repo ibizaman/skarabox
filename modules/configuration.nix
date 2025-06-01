@@ -85,9 +85,6 @@ in
   config = {
     nixpkgs.hostPlatform = cfg.system;
 
-    boot.loader.systemd-boot.enable = true;
-    boot.loader.efi.canTouchEfiVariables = true;
-
     facter.reportPath = lib.mkIf (builtins.pathExists cfg.facter-config) cfg.facter-config;
 
     networking.hostName = cfg.hostname;

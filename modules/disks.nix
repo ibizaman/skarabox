@@ -118,33 +118,28 @@ in
       disk = let
         hasRaid = cfg.rootPool.disk2 != null;
 
-        rootSoleContent = {
-          type = "filesystem";
-          format = "vfat";
-          mountpoint = "/boot";
-          # Otherwise you get https://discourse.nixos.org/t/security-warning-when-installing-nixos-23-11/37636/2
-          mountOptions = [ "umask=0077" ];
-          # Copy the host_key needed for initrd in a location accessible on boot.
-          # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
-          # We're using the same host key because, well, it's the same host!
-          postMountHook = ''
-            cp /tmp/host_key /mnt/boot/host_key
-          '';
-        };
-        rootRaidContent = {
-          type = "mdraid";
-          name = "boot";
-        };
-        mkRoot = rootDisk: {
+        mkRoot = { disk, id ? "" }: {
           type = "disk";
-          device = rootDisk;
+          device = disk;
           content = {
             type = "gpt";
             partitions = {
               ESP = {
                 size = "500M";
                 type = "EF00";
-                content = if hasRaid then rootRaidContent else rootSoleContent;
+                content = {
+                  type = "filesystem";
+                  format = "vfat";
+                  mountpoint = "/boot${id}";
+                  # Otherwise you get https://discourse.nixos.org/t/security-warning-when-installing-nixos-23-11/37636/2
+                  mountOptions = [ "umask=0077" ];
+                  # Copy the host_key needed for initrd in a location accessible on boot.
+                  # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
+                  # We're using the same host key because, well, it's the same host!
+                  postMountHook = ''
+                    cp /tmp/host_key /mnt/boot${id}/host_key
+                  '';
+                };
               };
               zfs = {
                 size = "100%";
@@ -174,34 +169,16 @@ in
           };
         };
       in {
-        root = mkRoot cfg.rootPool.disk1;
-        root1 = mkIf hasRaid (mkRoot cfg.rootPool.disk2);
+        root = mkRoot { disk = cfg.rootPool.disk1; };
+        # Second root must have id=-backup.
+        root1 = mkIf hasRaid (mkRoot { disk = cfg.rootPool.disk2; id = "-backup"; });
         data1 = mkIf cfg.dataPool.enable (mkDataDisk cfg.dataPool.disk1);
         data2 = mkIf cfg.dataPool.enable (mkDataDisk cfg.dataPool.disk2);
-      };
-      mdadm = {
-        boot = mkIf (cfg.rootPool.disk2 != null) {
-          type = "mdadm";
-          level = 1;
-          metadata = "1.0";
-          content = {
-            type = "filesystem";
-            format = "vfat";
-            mountpoint = "/boot";
-            mountOptions = [ "umask=0077" ];
-            # Copy the host_key needed for initrd in a location accessible on boot.
-            # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
-            postMountHook = ''
-              cp /tmp/host_key /mnt/boot/host_key
-            '';
-          };
-        };
       };
       zpool = {
         ${cfg.rootPool.name} = {
           type = "zpool";
-          # Only one disk
-          mode = "";
+          mode = if cfg.rootPool.disk2 != null then "mirror" else "";
           options = {
             ashift = "12";
             autotrim = "on";
@@ -334,10 +311,33 @@ in
     # To import the zpool automatically
     boot.zfs.extraPools = optionals cfg.dataPool.enable [ cfg.dataPool.name ];
 
-    # This is needed to make the /boot/host_key available early
+    # This is needed to make the /boot*/host_key available early
     # enough to be able to decrypt the sops file on boot,
     # when the /etc/shadow file is first generated.
-    fileSystems."/boot".neededForBoot = true;
+    # We assume mkRoot will always be called with at least id=1.
+    fileSystems = {
+      "/boot".neededForBoot = true;
+      "/boot-backup" = mkIf (cfg.rootPool.disk2 != null) { neededForBoot = true; };
+    };
+    # Setup Grub to support UEFI.
+    # nodev is for UEFI.
+    boot.loader.grub = {
+      enable = true;
+      efiSupport = true;
+      efiInstallAsRemovable = true;
+
+      mirroredBoots = lib.mkForce ([
+        {
+          path = "/boot";
+          devices = [ "nodev" ];
+        }
+      ] ++ (optionals (cfg.rootPool.disk2 != null) [
+        {
+          path = "/boot-backup";
+          devices = [ "nodev" ];
+        }
+      ]));
+    };
 
     # Follows https://grahamc.com/blog/erase-your-darlings/
     # https://github.com/NixOS/nixpkgs/pull/346247/files
@@ -359,7 +359,7 @@ in
         # To prevent ssh clients from freaking out because a different host key is used,
         # a different port for ssh is used.
         port = lib.mkDefault cfg.bootSSHPort;
-        hostKeys = lib.mkForce [ "/boot/host_key" ];
+        hostKeys = lib.mkForce ([ "/boot/host_key" ] ++ (optionals (cfg.rootPool.disk2 != null) [ "/boot-backup/host_key" ]));
         # Public ssh key used for login.
         # This should contain just one line and removing the trailing
         # newline could be fixed with a removeSuffix call but treating

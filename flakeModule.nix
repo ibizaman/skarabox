@@ -217,13 +217,17 @@ in
           };
           nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
           qemu = nixos-qemu.qemuBinary pkgs.qemu;
+          # About bootindex. On first boot, the nvme* drives cannot boot
+          # so we will instead boot on the cdrom. After a successful installation,
+          # we will be able to boot on the nvme* drives instead.
         in (pkgs.writeShellScriptBin "beacon-vm" ''
-          disk1=.skarabox-tmp/disk1.qcow2
-          disk2=.skarabox-tmp/disk2.qcow2
-          disk3=.skarabox-tmp/disk3.qcow2
+          diskRoot1=.skarabox-tmp/diskRoot1.qcow2
+          diskRoot2=.skarabox-tmp/diskRoot2.qcow2
+          diskData1=.skarabox-tmp/diskData1.qcow2
+          diskData2=.skarabox-tmp/diskData2.qcow2
 
           mkdir -p .skarabox-tmp
-          for d in $disk1 $disk2 $disk3; do
+          for d in $diskRoot1 $diskRoot2 $diskData1 $diskData2; do
             [ ! -f $d ] && ${pkgs.qemu}/bin/qemu-img create -f qcow2 $d 20G
           done
 
@@ -241,12 +245,14 @@ in
             --virtfs local,path=/nix/store,security_model=none,mount_tag=nix-store \
             --drive if=pflash,format=raw,unit=0,readonly=on,file=${pkgs.OVMF.firmware} \
             --drive media=cdrom,format=raw,readonly=on,file=${iso}/iso/beacon.iso \
-            --drive format=qcow2,file=$disk1,if=none,id=nvm \
-            --device nvme,serial=deadbeef,drive=nvm \
-            --drive id=disk2,format=qcow2,if=none,file=$disk2 \
-            --device ide-hd,drive=disk2 \
-            --drive id=disk3,format=qcow2,if=none,file=$disk3 \
-            --device ide-hd,drive=disk3 \
+            --drive format=qcow2,file=$diskRoot1,if=none,id=diskRoot1 \
+            --device nvme,drive=diskRoot1,serial=nvme0,bootindex=1 \
+            --drive format=qcow2,file=$diskRoot2,if=none,id=diskRoot2 \
+            --device nvme,drive=diskRoot2,serial=nvme1,bootindex=2 \
+            --drive id=diskData1,format=qcow2,if=none,file=$diskData1 \
+            --device ide-hd,drive=diskData1,serial=sda \
+            --drive id=diskData2,format=qcow2,if=none,file=$diskData2 \
+            --device ide-hd,drive=diskData2,serial=sdb \
             $@
           '');
 

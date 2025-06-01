@@ -103,8 +103,9 @@ USAGE
     e "This script will initiate a Skarabox template in the current directory."
     yes_or_no "Most of the steps are automatic but there are some instructions you'll need to follow manually at the end, continue?"
 
-    if ls -A .; then
+    if [ "$(find . -mindepth 1 | wc -l)" -gt 0 ]; then
       e "Current directory is not empty, aborting."
+      exit 1
     fi
 
     ${nix} flake init --template ${../.}
