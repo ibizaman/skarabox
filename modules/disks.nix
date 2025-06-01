@@ -31,7 +31,7 @@ in
 
           disk2 = mkOption {
             type = types.nullOr types.str;
-            description = "Second SSD disk on which to install. Optional.";
+            description = "Mirror SSD disk on which to install. Optional. Boot partition will be mirrored too.";
             example = "/dev/nvme0n2";
             default = null;
           };
