@@ -217,6 +217,9 @@ in
           };
           nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
           qemu = nixos-qemu.qemuBinary pkgs.qemu;
+          # About bootindex. On first boot, the nvme* drives cannot boot
+          # so we will instead boot on the cdrom. After a successful installation,
+          # we will be able to boot on the nvme* drives instead.
         in (pkgs.writeShellScriptBin "beacon-vm" ''
           diskRoot1=.skarabox-tmp/diskRoot1.qcow2
           diskRoot2=.skarabox-tmp/diskRoot2.qcow2
@@ -243,9 +246,9 @@ in
             --drive if=pflash,format=raw,unit=0,readonly=on,file=${pkgs.OVMF.firmware} \
             --drive media=cdrom,format=raw,readonly=on,file=${iso}/iso/beacon.iso \
             --drive format=qcow2,file=$diskRoot1,if=none,id=diskRoot1 \
-            --device nvme,drive=diskRoot1,serial=nvme0 \
+            --device nvme,drive=diskRoot1,serial=nvme0,bootindex=1 \
             --drive format=qcow2,file=$diskRoot2,if=none,id=diskRoot2 \
-            --device nvme,drive=diskRoot2,serial=nvme1 \
+            --device nvme,drive=diskRoot2,serial=nvme1,bootindex=2 \
             --drive id=diskData1,format=qcow2,if=none,file=$diskData1 \
             --device ide-hd,drive=diskData1,serial=sda \
             --drive id=diskData2,format=qcow2,if=none,file=$diskData2 \

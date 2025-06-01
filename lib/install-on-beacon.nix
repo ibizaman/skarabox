@@ -86,8 +86,6 @@ pkgs.writeShellApplication {
     root_passphrase=$(sops decrypt --extract "$root_passphrase_path" "$secretsfile")
     data_passphrase=$(sops decrypt --extract "$data_passphrase_path" "$secretsfile")
 
-    set -x
-
     nixos-anywhere \
       --flake "$flake" \
       --disk-encryption-keys /tmp/host_key "$host_key_file" \
