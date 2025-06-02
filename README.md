@@ -129,7 +129,8 @@ The flake [template](./template) combines turn-key style:
 - [nixos-anywhere][] to install NixOS headlessly.
 - [disko][] to format the drives using native ZFS encryption
 - Remote root pool decryption through ssh.
-- 1 or 2 disks in raid1 using mdadm for the OS
+- Disk mirroring: 1 or 2 disks in raid1 using ZFS mirroring for the OS,
+  boot partition is then mirrored using grub mirrored devices
   and 0 or 2 disks in raid1 using ZFS mirroring for the data disks.
 - [nixos-facter][] to handle hardware configuration.
 - [flake-parts][] to make the resulting `flake.nix` small.
