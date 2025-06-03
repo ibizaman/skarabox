@@ -33,6 +33,7 @@ in
     };
 
     hosts = mkOption {
+      default = {};
       type = types.attrsOf (types.submodule ({ name, ... }: {
         options = {
           hostKeyName = mkOption {
