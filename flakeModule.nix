@@ -36,6 +36,11 @@ in
       default = {};
       type = types.attrsOf (types.submodule ({ name, ... }: {
         options = {
+          pkgs = mkOption {
+            type = types.anything;
+            default = null;
+            description = "Override pkgs in the nixosConfiguration.";
+          };
           hostKeyName = mkOption {
             type = types.str;
             default = "host_key";
@@ -413,7 +418,7 @@ in
 
     flake = { pkgs, ... }: let
       mkFlake = name: cfg': {
-        nixosConfigurations.${name} = inputs.nixpkgs.lib.nixosSystem {
+        nixosConfigurations.${name} = (if cfg'.pkgs != null then cfg'.pkgs else inputs.nixpkgs).lib.nixosSystem {
           inherit (cfg') system;
           modules = cfg'.modules ++ [
             inputs.skarabox.nixosModules.skarabox
