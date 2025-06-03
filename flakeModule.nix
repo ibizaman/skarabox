@@ -100,6 +100,10 @@ in
             type = types.listOf types.anything;
             default = [];
           };
+          extraBeaconModules = mkOption {
+            type = types.listOf types.anything;
+            default = [];
+          };
         };
       }));
     };
@@ -153,7 +157,7 @@ in
           inherit system;
           format = "install-iso";
 
-          modules = [
+          modules = cfg'.extraBeaconModules ++ [
             beacon-module
             {
               skarabox.sshPublicKey = cfg'.sshPublicKey;
