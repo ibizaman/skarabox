@@ -49,6 +49,20 @@ in {
       };
     };
 
+    environment.systemPackages = let
+      skarabox-help = pkgs.writeText "skarabox-help" config.services.getty.helpLine;
+    in [
+      (pkgs.writeShellScriptBin "skarabox" ''
+       cat ${skarabox-help}
+       '')
+      pkgs.nixos-facter
+
+      pkgs.tmux
+      pkgs.htop
+      pkgs.glances
+      pkgs.iotop
+    ];
+
     services.getty.helpLine = mkForce ''
 
         /           \\
@@ -117,14 +131,5 @@ in {
       No step 4. The server will reboot automatically in the new system as soon as the
       installer ran successfully. Enjoy your NixOS system powered by Skarabox!
     '';
-
-    environment.systemPackages = let
-      skarabox-help = pkgs.writeText "skarabox-help" config.services.getty.helpLine;
-    in [
-      (pkgs.writeShellScriptBin "skarabox" ''
-       cat ${skarabox-help}
-       '')
-      pkgs.nixos-facter
-    ];
   };
 }
