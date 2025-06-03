@@ -48,7 +48,7 @@ in
 
     sshPort = mkOption {
       type = with types; oneOf [ int str path ];
-      default = [ 22 ];
+      default = 22;
       description = ''
         Port the SSH daemon listens to.
       '';
