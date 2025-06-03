@@ -90,6 +90,7 @@ in
       networks."10-lan" = {
         matchConfig.Name = "en*";
         networkConfig.DHCP = "ipv4";
+        linkConfig.RequiredForOnline = true;
       };
     };
 
