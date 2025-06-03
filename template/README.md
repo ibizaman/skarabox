@@ -1,12 +1,27 @@
 # Skarabox
 
+<!--toc:start-->
+- [Bootstrapping](#bootstrapping)
+- [Add in Existing Repo](#add-in-existing-repo)
+- [Installation](#installation)
+  - [A.1. Test on a VM](#a1-test-on-a-vm)
+  - [A.2. Install on a Real Server](#a2-install-on-a-real-server)
+  - [B. Run the Installation](#b-run-the-installation)
+- [Normal Operations](#normal-operations)
+- [Post Installation Checklist](#post-installation-checklist)
+  - [Domain Name](#domain-name)
+  - [Router Configuration](#router-configuration)
+  - [Add Services](#add-services)
+  - [Recovery](#recovery)
+<!--toc:end-->
+
 This repository originates from https://github.com/ibizaman/skarabox.
 
-Help can be asked by [opening an issue][] in the repository
-or by [joining the Matrix channel][].
+Help can be asked by [opening an issue][issue] in the repository
+or by [joining the Matrix channel][matrix].
 
-[opening an issue]: https://github.com/ibizaman/skarabox/issues/new
-[joining the Matrix channel]: https://matrix.to/#/#selfhostblocks:matrix.org
+[issue]: https://github.com/ibizaman/skarabox/issues/new
+[matrix]: https://matrix.to/#/#selfhostblocks:matrix.org
 
 ## Bootstrapping
 
@@ -85,7 +100,7 @@ imports = [
 ];
 ```
 
-4. Add NixOS module importing your module. 
+4. Add NixOS module importing your module.
 
 ```nix
 flake = {
@@ -186,7 +201,7 @@ _This guide assumes you know how to boot your server on a USB stick._
    ```bash
    $ nix run .#beacon-usbimager
    ```
-   
+
    - Select `./result/iso/beacon.iso` file in row 1 (`...`).
    - Select USB key in row 3.
    - Click write (arrow down) in row 2.
@@ -234,18 +249,18 @@ as outlined in the next section.
 
 All commands are prefixed by the hostname, allowing to handle multiple hosts.
 
-1. Decrypt root pool after boot
+1. Decrypt `root` pool after boot
 
    ```bash
    $ nix run .#myskarabox-unlock
    ```
 
    The connection will then disconnect automatically with:
-   
+
    ```
    Connection to <ip> closed.
    ```
-   
+
    This is normal behavior.
 
 2. SSH in
@@ -259,13 +274,13 @@ All commands are prefixed by the hostname, allowing to handle multiple hosts.
    ```bash
    $ nix run .#myskarabox-ssh sudo reboot
    ```
-   
+
    You will then be required to decrypt the hard drives upon reboot as explained above.
 
 4. Deploy an Update
 
    Modify the [./configuration.nix](./configuration.nix) file then run:
-   
+
    ```bash
    $ nix run .#deploy-rs
    ```
@@ -330,3 +345,157 @@ but instead of using the IP address, use the domain name in `./ip`.
 ### Add Services
 
 I do recommend using the sibling project [Self Host Blocks](https://github.com/ibizaman/selfhostblocks) to setup services like Vaultwarden, Nextcloud and others.
+
+### Recovery
+
+If the system becomes unbootable,
+recovering it amounts to the following steps.
+You might be able to skip some steps, but follow them in order.
+
+1. Boot on beacon
+
+    Follow steps at [A.2. Install on a Real Server](#a2-install-on-a-real-server).
+
+2. Import ZFS pools
+
+    Without doing this, listing the pools will return an empty list.
+    Avoid yourself the same heart attack as me and run this command first.
+
+    ```bash
+    sudo zpool import root -f
+    sudo zpool import zdata -f
+    <... for other datasets>
+    ```
+
+    They are still locked with a passphrase, next 2 steps will take care of that.
+
+3. Mount `root` ZFS pool
+
+    First, unlock the ZFS pool:
+
+    ```bash
+    sudo zfs load-key root
+    # Enter root passphrase
+    ```
+
+    Then mount required directories:
+
+    ```bash
+    sudo mount -t zfs root/local/root /mnt
+    sudo mount -t zfs root/local/nix /mnt/nix
+    sudo mount -t zfs root/safe/home /mnt/home
+    sudo mount -t zfs root/safe/persist /mnt/persist
+    ```
+
+    The `/persist` filesystem holds the passphrases of the other ZFS pools, if any.
+
+4. Enter the NixOS installation
+
+    This will activate the system and even populate secrets in `/run/secrets`.
+
+    ```bash
+    sudo nixos-enter
+    ```
+
+    **The rest of the instructions are from within this new shell.**
+
+5. List ZFS pools and datasets
+
+    This is mostly to make sure everything looks good before continuing.
+
+    ```bash
+    zpool list
+    zfs list
+    ```
+
+6. Unlock other pools
+
+    With `/persist` mounted and from inside the NixOS installation,
+    unlocking the other pools becomes easy:
+
+    ```bash
+    zfs load-key zdata
+    ```
+
+    No prompt will be shown on `load-key`.
+
+    Repeat for other ZFS pools.
+
+7. Make a snapshot of all datasets
+
+    Useful to safeguard against mistakes but also
+    to be able to send the snapshot somewhere else
+    like in next step.
+
+    The following command does a recursive snapshot,
+    descending in all children datasets.
+
+    ```bash
+    zfs snapshot -r root@<name of snapshot>
+    ```
+
+    Do that for each ZFS pool.
+
+    List the snapshots with:
+
+    ```bash
+    zfs list -t snapshot
+    ```
+
+8. Send full clone elsewhere
+
+    Assuming you made a snapshot like in the previous step,
+    the following command clones the whole `root` ZFS pool
+    to the `backup` ZFS pool.
+
+    ```bash
+    zfs send -v -wR root@<name of snaphost> | zfs recv -Fu backup/root
+    ```
+
+    The `-w` command sends the raw stream, which is required for encrypted ZFS pools.
+
+9. Re-install bootloader
+
+    Following the steps from the [wiki](https://nixos.wiki/wiki/Bootloader#Re-installing_the_bootloader)
+    gives:
+
+    ```bash
+    NIXOS_INSTALL_BOOTLOADER=1 /nix/var/nix/profiles/system/bin/switch-to-configuration boot
+    ```
+
+10. Install fresh system
+
+    Of course, **this will wipe out the whole system and partition the hard drives.**
+
+    So before anything,
+    perform a ZFS snapshot of the root filesystem and send it elsewhere.
+
+    Next, physically disconnect all hard drives except those required
+    for the `root` ZFS pool. In other words, remove the hard drives
+    for the `zdata` and any other ZFS pool.
+
+    When all that is done, with the beacon booted and accessible from the network,
+    follow step [B. Run the Installation](#b-run-the-installation).
+
+    The system should have rebooted on the new installation.
+    If not, hop on the [matrix channel][matrix]
+    or [post an issue][issue].
+
+    Some services may fail to boot since some hard drives are missing.
+    But more importantly, not all data is present since we did a clean installation.
+    We will fix that in the next step.
+
+11. Restore previous system
+
+    Connect back the hard drives for the other ZFS pools and boot on the beacon
+
+    Restore the system to its previous state with:
+
+    ```bash
+    zfs send -v -wR backup/root@<name of snaphost> | zfs recv -Fu root
+    ```
+
+    Reboot on the new system and all services should be up and running
+    with the state they had before.
+    If not, hop on the [matrix channel][matrix]
+    or [post an issue][issue].

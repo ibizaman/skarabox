@@ -64,6 +64,10 @@ with all batteries included.
            - `/dev/sdb`
 
     b. Or install on an on-premise host
+
+        By default, the beacon uses DHCP to get an IP address.
+        To use a static IP instead, or modify the beacon configuration
+        in any way, modify the `extraBeaconModules` in [./template/flake.nix](./template/flake.nix).
      
         ```bash
         nix build .#myskarabox-beacon
@@ -144,6 +148,7 @@ The flake [template](./template) combines turn-key style:
   and [CI][] to make sure the installation procedure does work!
   Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
 - Supporting `x86_64-linux` and `aarch64-linux` platform.
+- Some pretty extensive [recovery][] instructions. (Tests yet to be written)
 
 I used this successfully on my own on-premise x86 server
 and on Hetzner dedicated ARM and x86 hosts.
@@ -156,6 +161,7 @@ and on Hetzner dedicated ARM and x86 hosts.
 [deploy-rs]: https://github.com/serokell/deploy-rs
 [tests]: ./tests/default.nix
 [CI]: ./.github/workflows/build.yaml
+[recovery]: ./template/README.md#recovery
 
 This repository does not invent any of those wonderful tools.
 It merely provides an opinionated way to make them all fit together.
