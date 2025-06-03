@@ -41,6 +41,35 @@
           sops-nix.nixosModules.default
           self.nixosModules.myskarabox
         ];
+        extraBeaconModules = [
+          {
+            # Uncomment the following snippet to get
+            # static IP assigned on the beacon.
+            #
+            # systemd.network = {
+            #   enable = true;
+            #   networks."10-lan" = {
+            #     matchConfig.Name = "en*";
+            #     address = [
+            #       "192.168.1.10/24"
+            #     ];
+            #     routes = [
+            #       { Gateway = "192.168.1.1"; }
+            #     ];
+            #     linkConfig.RequiredForOnline = true;
+            #   };
+            # };
+            #
+            # Add more utilities
+            #
+            # environment.systemPackages = [
+            #   pkgs.tmux
+            #   pkgs.htop
+            #   pkgs.glances
+            #   pkgs.iotop
+            # ];
+          }
+        ];
       };
     };
 
