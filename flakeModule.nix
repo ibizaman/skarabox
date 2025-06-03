@@ -427,7 +427,7 @@ in
           modules = cfg'.modules ++ [
             inputs.skarabox.nixosModules.skarabox
             {
-              skarabox.system = cfg'.system;
+              nixpkgs.hostPlatform = cfg'.system;
             }
           ];
         };

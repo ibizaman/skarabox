@@ -76,15 +76,9 @@ in
       '';
       default = true;
     };
-
-    system = mkOption {
-      type = types.str;
-    };
   };
 
   config = {
-    nixpkgs.hostPlatform = cfg.system;
-
     facter.reportPath = lib.mkIf (builtins.pathExists cfg.facter-config) cfg.facter-config;
 
     networking.hostName = cfg.hostname;
