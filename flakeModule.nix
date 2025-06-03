@@ -74,9 +74,9 @@ in
           sshPublicKey = mkOption {
             type = types.path;
           };
-          knownHostsName = mkOption {
+          knownHostsPath = mkOption {
             type = types.str;
-            default = "known_hosts";
+            default = "${name}/known_hosts";
           };
           knownHosts = mkOption {
             type = types.path;
@@ -288,7 +288,7 @@ in
 
               gen-knownhosts-file \
                 $host_key_pub "$ip" $ssh_port $ssh_boot_port \
-                > ${name}/${cfg'.knownHostsName}
+                > ${cfg'.knownHostsPath}
             '';
           };
 
