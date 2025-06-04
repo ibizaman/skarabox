@@ -26,7 +26,7 @@ let
 in
 {
   options.skarabox = {
-    sopsKeyName = mkOption {
+    sopsKeyPath = mkOption {
       # Using string here so the sops key does not end up in the nix store.
       type = types.str;
       default = "sops.key";
@@ -59,9 +59,9 @@ in
             type = types.str;
             default = "ssh";
           };
-          secretsFileName = mkOption {
+          secretsFilePath = mkOption {
             type = types.str;
-            default = "secrets.yaml";
+            default = "${name}/secrets.yaml";
           };
           secretsRootPassphrasePath = mkOption {
             type = types.str;
@@ -119,7 +119,7 @@ in
         ];
 
         text = ''
-          SOPS_AGE_KEY_FILE=${cfg.sopsKeyName} sops "$@"
+          SOPS_AGE_KEY_FILE=${cfg.sopsKeyPath} sops "$@"
         '';
       };
 
@@ -320,8 +320,8 @@ in
                 -p $ssh_port \
                 -f "$flake" \
                 -k ${name}/${cfg'.hostKeyName} \
-                -s ${cfg.sopsKeyName} \
-                -e ${name}/${cfg'.secretsFileName} \
+                -s ${cfg.sopsKeyPath} \
+                -e ${cfg'.secretsFilePath} \
                 -r "${cfg'.secretsRootPassphrasePath}" \
                 -d "${cfg'.secretsDataPassphrasePath}" \
                 -a "--ssh-option ConnectTimeout=10 -i ${name}/${cfg'.sshPrivateKeyName} $*"
@@ -375,7 +375,7 @@ in
             ];
 
             text = ''
-              root_passphrase="$(sops decrypt --extract "${cfg'.secretsRootPassphrasePath}" "${name}/${cfg'.secretsFileName}")"
+              root_passphrase="$(sops decrypt --extract "${cfg'.secretsRootPassphrasePath}" "${cfg'.secretsFilePath}")"
               printf '%s' "$root_passphrase" | boot-ssh "$@"
             '';
           };
