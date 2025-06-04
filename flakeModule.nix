@@ -54,10 +54,10 @@ in
             default = "127.0.0.1";
             apply = readAsStr;
           };
-          sshPrivateKeyName = mkOption {
+          sshPrivateKeyPath = mkOption {
             # Using string here so the sops key does not end up in the nix store.
             type = types.str;
-            default = "ssh";
+            default = "${name}/ssh";
           };
           secretsFilePath = mkOption {
             type = types.str;
@@ -143,7 +143,7 @@ in
               root \
               -o UserKnownHostsFile=${cfg'.knownHosts} \
               -o ConnectTimeout=10 \
-              -i ${name}/${cfg'.sshPrivateKeyName} \
+              -i ${cfg'.sshPrivateKeyPath} \
               "$*"
           '';
         };
@@ -324,7 +324,7 @@ in
                 -e ${cfg'.secretsFilePath} \
                 -r "${cfg'.secretsRootPassphrasePath}" \
                 -d "${cfg'.secretsDataPassphrasePath}" \
-                -a "--ssh-option ConnectTimeout=10 -i ${name}/${cfg'.sshPrivateKeyName} $*"
+                -a "--ssh-option ConnectTimeout=10 -i ${cfg'.sshPrivateKeyPath} $*"
             '';
           };
 
@@ -349,7 +349,7 @@ in
                 ${topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username} \
                 -o UserKnownHostsFile=${cfg'.knownHosts} \
                 -o ConnectTimeout=10 \
-                -i ${name}/${cfg'.sshPrivateKeyName} \
+                -i ${cfg'.sshPrivateKeyPath} \
                 "$@"
             '';
           };
@@ -470,7 +470,7 @@ in
                 "-o" "IdentitiesOnly=yes"
                 "-o" "UserKnownHostsFile=${cfg'.knownHosts}"
                 "-o" "ConnectTimeout=10"
-                "-i" "${name}/${cfg'.sshPrivateKeyName}"
+                "-i" "${cfg'.sshPrivateKeyPath}"
                 "-p" (toString cfg'.sshPort)
               ];
               profiles = {
