@@ -41,9 +41,9 @@ in
             default = null;
             description = "Override pkgs in the nixosConfiguration.";
           };
-          hostKeyName = mkOption {
+          hostKeyPath = mkOption {
             type = types.str;
-            default = "host_key";
+            default = "${name}/host_key";
           };
           hostKeyPub = mkOption {
             type = types.path;
@@ -355,7 +355,7 @@ in
                 -i $ip \
                 -p $ssh_port \
                 -f "$flake" \
-                -k ${name}/${cfg'.hostKeyName} \
+                -k ${cfg'.hostKeyPath} \
                 -a "--ssh-option ConnectTimeout=10 -i ${cfg'.sshPrivateKeyPath} ${concatStringsSep " " diskEncryptionOptions} $*"
             '';
           };
