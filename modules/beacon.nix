@@ -65,6 +65,11 @@ in {
       pkgs.nixos-facter
 
       pkgs.tmux
+
+      # Useful network tools
+      pkgs.dig
+
+      # Useful system tools
       pkgs.htop
       pkgs.glances
       pkgs.iotop
