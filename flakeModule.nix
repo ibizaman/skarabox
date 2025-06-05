@@ -296,11 +296,12 @@ in
           #
           # This command is intended to be run against a server which
           # was booted on the beacon. Although, the server could be booted
-          # on any OS supported by nixos-anywhere. The latter was not tested.
-          # nix run .#install-on-beacon FLAKE [<command> ...]
-          # nix run .#install-on-beacon
-          # nix run .#install-on-beacon .#skarabox
-          # nix run .#install-on-beacon .#skarabox -v
+          # on any OS supported by nixos-anywhere. The latter has not been
+          # tested in the context of Skarabox.
+          #
+          #   nix run .#install-on-beacon [<command> ...]
+          #   nix run .#install-on-beacon
+          #   nix run .#install-on-beacon -v
           install-on-beacon = pkgs.writeShellApplication {
             name = "install-on-beacon";
             runtimeInputs = [
@@ -312,8 +313,7 @@ in
             text = ''
               ip=${toString cfg'.ip}
               ssh_port=${toString cfg'.sshPort}
-              flake="$1"
-              shift
+              flake=".#${toString name}"
 
               install-on-beacon \
                 -i $ip \
@@ -450,7 +450,7 @@ in
           deployPkgs = import inputs.nixpkgs {
             inherit (cfg') system;
             overlays = [
-              inputs.deploy-rs.overlay
+              inputs.deploy-rs.overlays.default
               (self: super: {
                 deploy-rs = {
                   inherit (pkgs') deploy-rs;
