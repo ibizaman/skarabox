@@ -125,8 +125,6 @@ skarabox.hosts = {
     ip = "192.168.1.XX";
     sshPublicKey = ./myskarabox/ssh.pub;
     knownHosts = ./myskarabox/known_hosts;
-    sshPort = 22;
-    sshBootPort = 2222;
 
     modules = [
       sops-nix.nixosModules.default

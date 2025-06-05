@@ -12,10 +12,6 @@ let
 
   readAndTrim = f: lib.strings.trim (builtins.readFile f);
   readAsStr = v: if lib.isPath v then readAndTrim v else v;
-  readAsInt = v: let
-    vStr = readAsStr v;
-  in
-    if lib.isString vStr then toInt vStr else vStr;
 
   beacon-module = { config, lib, modulesPath, ... }: {
     imports = [
@@ -68,7 +64,7 @@ in
             default = "['${name}']['disks']['rootPassphrase']";
           };
           secretsDataPassphrasePath = mkOption {
-            type = types.nullOr types.str;
+            type = types.str;
             default = "['${name}']['disks']['dataPassphrase']";
           };
           extraSecretsPassphrasesPath = mkOption {
@@ -89,16 +85,6 @@ in
           };
           knownHosts = mkOption {
             type = types.path;
-          };
-          sshPort = mkOption {
-            type = with types; oneOf [ int str path ];
-            default = 22;
-            apply = readAsInt;
-          };
-          sshBootPort = mkOption {
-            type = with types; oneOf [ int str path ];
-            default = 2222;
-            apply = readAsInt;
           };
           system = mkOption {
             type = with types; oneOf [ str path ];
@@ -133,6 +119,8 @@ in
       };
 
       mkHostPackages = name: cfg': let
+        hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;
+
         # nix run .#boot-ssh [<command> ...]
         # nix run .#boot-ssh
         # nix run .#boot-ssh echo hello
@@ -148,7 +136,7 @@ in
           text = ''
             ssh \
               "${cfg'.ip}" \
-              "${toString cfg'.sshBootPort}" \
+              "${toString hostCfg.skarabox.disks.bootSSHPort}" \
               root \
               -o UserKnownHostsFile=${cfg'.knownHosts} \
               -o ConnectTimeout=10 \
@@ -253,9 +241,9 @@ in
           set -x
 
           guestport=2222
-          hostport=${toString cfg'.sshPort}
+          hostport=${toString hostCfg.skarabox.sshPort}
           guestbootport=2223
-          hostbootport=${toString cfg'.sshBootPort}
+          hostbootport=${toString hostCfg.skarabox.disks.bootSSHPort}
 
           ${qemu} \
             -m 2048M \
@@ -291,8 +279,8 @@ in
 
             text = ''
               ip=${cfg'.ip}
-              ssh_port=${toString cfg'.sshPort}
-              ssh_boot_port=${toString cfg'.sshBootPort}
+              ssh_port=${toString hostCfg.skarabox.sshPort}
+              ssh_boot_port=${toString hostCfg.skarabox.disks.bootSSHPort}
               host_key_pub=${cfg'.hostKeyPub}
 
               gen-knownhosts-file \
@@ -325,7 +313,7 @@ in
                 {
                   "root_passphrase" = cfg'.secretsRootPassphrasePath;
                 }
-                // (optionalAttrs (cfg'.secretsDataPassphrasePath != null) {
+                // (optionalAttrs hostCfg.skarabox.disks.dataPool.enable {
                   "data_passphrase" = cfg'.secretsDataPassphrasePath;
                 })
                 // cfg'.extraSecretsPassphrasesPath;
@@ -342,7 +330,7 @@ in
                 mapAttrsToList mkVar secrets;
             in ''
               ip=${toString cfg'.ip}
-              ssh_port=${toString cfg'.sshPort}
+              ssh_port=${toString hostCfg.skarabox.sshPort}
               flake=".#${toString name}"
 
               export SOPS_AGE_KEY_FILE="${cfg.sopsKeyPath}"
@@ -377,7 +365,7 @@ in
             text = ''
               ssh \
                 "${cfg'.ip}" \
-                "${toString cfg'.sshPort}" \
+                "${toString hostCfg.skarabox.sshPort}" \
                 ${topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username} \
                 -o UserKnownHostsFile=${cfg'.knownHosts} \
                 -o ConnectTimeout=10 \
@@ -492,7 +480,9 @@ in
             ];
           };
 
-          mkNode = name: cfg': {
+          mkNode = name: cfg': let
+            hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;
+          in {
             ${name} = {
               hostname = cfg'.ip;
               sshUser = topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username;
@@ -503,7 +493,7 @@ in
                 "-o" "UserKnownHostsFile=${cfg'.knownHosts}"
                 "-o" "ConnectTimeout=10"
                 "-i" "${cfg'.sshPrivateKeyPath}"
-                "-p" (toString cfg'.sshPort)
+                "-p" (toString hostCfg.skarabox.sshPort)
               ];
               profiles = {
                 system = {
