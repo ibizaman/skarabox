@@ -4,6 +4,11 @@
   cfg = config.skarabox;
 in {
   options.skarabox = {
+    hostname = lib.mkOption {
+      type = types.str;
+      default = "skarabox";
+    };
+
     username = lib.mkOption {
       type = types.str;
       description = "Username with which you can log on the beacon.";
@@ -17,6 +22,8 @@ in {
   };
 
   config = {
+    networking.hostName = cfg.hostname;
+
     # Also allow root to connect for nixos-anywhere.
     users.users.root = {
       openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
