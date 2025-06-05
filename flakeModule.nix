@@ -8,7 +8,7 @@ let
   topLevelConfig = config;
   cfg = config.skarabox;
 
-  inherit (lib) concatMapAttrs mkOption types toInt;
+  inherit (lib) concatMapAttrs concatStringsSep mapAttrsToList mkOption optionalAttrs types toInt;
 
   readAndTrim = f: lib.strings.trim (builtins.readFile f);
   readAsStr = v: if lib.isPath v then readAndTrim v else v;
@@ -68,8 +68,17 @@ in
             default = "['${name}']['disks']['rootPassphrase']";
           };
           secretsDataPassphrasePath = mkOption {
-            type = types.str;
+            type = types.nullOr types.str;
             default = "['${name}']['disks']['dataPassphrase']";
+          };
+          extraSecretsPassphrasesPath = mkOption {
+            type = with types; attrsOf str;
+            default = {};
+            example = lib.literalExpression ''
+              {
+                backup_passphrase = "['${name}']['disks']['backupPassphrase']";
+              }
+            '';
           };
           sshPublicKey = mkOption {
             type = types.path;
@@ -309,22 +318,45 @@ in
                 inherit pkgs;
                 inherit (inputs.nixos-anywhere.packages.${system}) nixos-anywhere;
               })
+              pkgs.sops
             ];
-            text = ''
+            text = let
+              secrets =
+                {
+                  "root_passphrase" = cfg'.secretsRootPassphrasePath;
+                }
+                // (optionalAttrs (cfg'.secretsDataPassphrasePath != null) {
+                  "data_passphrase" = cfg'.secretsDataPassphrasePath;
+                })
+                // cfg'.extraSecretsPassphrasesPath;
+
+              diskEncryptionOptions = let
+                mkOption = name: path: ''--disk-encryption-keys /tmp/${name} "<(echo "''$${name}")" '';
+              in
+                mapAttrsToList mkOption secrets;
+
+              diskEncryptionVars = let
+                mkVar = name: path: ''${name}="$(sops decrypt --extract "${path}" "${cfg'.secretsFilePath}")"'';
+
+              in
+                mapAttrsToList mkVar secrets;
+            in ''
               ip=${toString cfg'.ip}
               ssh_port=${toString cfg'.sshPort}
               flake=".#${toString name}"
+
+              export SOPS_AGE_KEY_FILE="${cfg.sopsKeyPath}"
+
+              ''
+            + concatStringsSep "\n" diskEncryptionVars
+            + ''
 
               install-on-beacon \
                 -i $ip \
                 -p $ssh_port \
                 -f "$flake" \
                 -k ${name}/${cfg'.hostKeyName} \
-                -s ${cfg.sopsKeyPath} \
-                -e ${cfg'.secretsFilePath} \
-                -r "${cfg'.secretsRootPassphrasePath}" \
-                -d "${cfg'.secretsDataPassphrasePath}" \
-                -a "--ssh-option ConnectTimeout=10 -i ${cfg'.sshPrivateKeyPath} $*"
+                -a "--ssh-option ConnectTimeout=10 -i ${cfg'.sshPrivateKeyPath} ${concatStringsSep " " diskEncryptionOptions} $*"
             '';
           };
 

@@ -18,10 +18,11 @@ jobs:
         id: filter
         with:
           files: |
+            lib/**
             modules/**
             tests/**
             flake.lock
-            flake.nix
+            *.nix
             .github/workflows/build.yaml
           separator: "\n"
 
