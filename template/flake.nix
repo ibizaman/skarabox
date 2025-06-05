@@ -34,8 +34,6 @@
         ip = ./myskarabox/ip;
         sshPublicKey = ./myskarabox/ssh.pub;
         knownHosts = ./myskarabox/known_hosts;
-        sshPort = ./myskarabox/ssh_port;
-        sshBootPort = ./myskarabox/ssh_boot_port;
 
         modules = [
           sops-nix.nixosModules.default
