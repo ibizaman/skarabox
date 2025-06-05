@@ -238,7 +238,7 @@ $ nix run .#myskarabox-debug-facter-nvd
 Now, run the installation process on the host:
 
 ```bash
-$ nix run .#install-on-beacon .#skarabox
+$ nix run .#myskarabox-install-on-beacon
 ```
 
 The server will reboot into NixOS on its own.

@@ -96,7 +96,7 @@ let
     e "Generation succeeded."
 
     e "Starting installation on beacon VM."
-    ${nix} run .#myskarabox-install-on-beacon -- .#myskarabox --no-substitute-on-destination
+    ${nix} run .#myskarabox-install-on-beacon -- --no-substitute-on-destination
     e "Installation succeeded."
 
     e "Starting ssh loop to figure out when VM is ready to receive root passphrase."

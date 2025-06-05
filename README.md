@@ -98,7 +98,7 @@ with all batteries included.
 
     ```bash
     nix run .#myskarabox-get-facter > ./myskarabox/facter.json
-    nix run .#myskarabox-install-on-beacon .#myskarabox
+    nix run .#myskarabox-install-on-beacon
     ```
     
     Target host will reboot and ask the passphrase to decrypt
