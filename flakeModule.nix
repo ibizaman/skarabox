@@ -158,6 +158,7 @@ in
             beacon-module
             {
               skarabox.username = hostCfg.skarabox.username;
+              skarabox.hostname = "${hostCfg.skarabox.hostname}-beacon";
               skarabox.sshPublicKey = cfg'.sshPublicKey;
             }
           ];
