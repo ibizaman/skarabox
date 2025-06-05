@@ -33,6 +33,7 @@ in {
     # Automatically log in at the virtual consoles.
     services.getty.autologinUser = lib.mkForce cfg.username;
     nix.settings.trusted-users = [ cfg.username ];
+    nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
     image.fileName = mkForce "beacon.iso";
     image.baseName = mkForce "beacon";
