@@ -10,14 +10,15 @@ pkgs.writeShellApplication {
   text = ''
     usage () {
       cat <<USAGE
-    Usage: $0 -i IP -p PORT -f FLAKE -k HOST_KEY_FILE [-a EXTRA_OPTS]
+    Usage: $0 -i IP -p PORT -f FLAKE -k HOST_KEY_FILE -u USERNAME [-a EXTRA_OPTS]
 
-      -h:                        Shows this usage
-      -i IP:                     IP of the target host running the beacon.
-      -p PORT:                   Port of the target host running the beacon.
-      -f FLAKE:                  Flake to install on the target host.
-      -k HOST_KEY_FILE:          SSH key to use as the host identification key.
-      -a EXTRA_OPTS:             Extra options to pass verbatim to nixos-anywhere.
+      -h:               Shows this usage
+      -i IP:            IP of the target host running the beacon.
+      -p PORT:          Port of the target host running the beacon.
+      -f FLAKE:         Flake to install on the target host.
+      -k HOST_KEY_FILE: SSH key to use as the host identification key.
+      -u USERNAME:      Username to connect to the host with.
+      -a EXTRA_OPTS:    Extra options to pass verbatim to nixos-anywhere.
     USAGE
     }
 
@@ -27,7 +28,7 @@ pkgs.writeShellApplication {
       fi
     }
 
-    while getopts "hi:p:f:k:d:a:" o; do
+    while getopts "hi:p:f:k:d:a:u:" o; do
       case "''${o}" in
         h)
           usage
@@ -45,6 +46,9 @@ pkgs.writeShellApplication {
         k)
           host_key_file=''${OPTARG}
           ;;
+        u)
+          username=''${OPTARG}
+          ;;
         a)
           read -ra extra_opts <<< "''${OPTARG}"
           ;;
@@ -60,12 +64,13 @@ pkgs.writeShellApplication {
     check_empty "$port" -p port
     check_empty "$flake" -f flake
     check_empty "$host_key_file" -k host_key_file
+    check_empty "$username" -u username
 
     nixos-anywhere \
       --flake "$flake" \
       --disk-encryption-keys /tmp/host_key "$host_key_file" \
       --ssh-port "$port" \
       "''${extra_opts[@]}" \
-      skarabox@"$ip"
+      "$username"@"$ip"
   '';
 }

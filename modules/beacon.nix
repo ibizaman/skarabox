@@ -1,11 +1,17 @@
 { config, lib, pkgs, ... }: let
-  inherit (lib) mkForce;
+  inherit (lib) mkForce types;
 
   cfg = config.skarabox;
 in {
   options.skarabox = {
+    username = lib.mkOption {
+      type = types.str;
+      description = "Username with which you can log on the beacon.";
+      default = "skarabox";
+    };
+
     sshPublicKey = lib.mkOption {
-      type = lib.types.path;
+      type = types.path;
       description = "Public key to connect to the beacon.";
     };
   };
@@ -16,7 +22,7 @@ in {
       openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
     };
     # Override user set in profiles/installation-device.nix
-    users.users.skarabox = {
+    users.users.${cfg.username} = {
       isNormalUser = true;
       extraGroups = [ "wheel" "networkmanager" "video" ];
       # Allow the graphical user to login without password
@@ -25,8 +31,8 @@ in {
       openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
     };
     # Automatically log in at the virtual consoles.
-    services.getty.autologinUser = lib.mkForce "skarabox";
-    nix.settings.trusted-users = [ "skarabox" ];
+    services.getty.autologinUser = lib.mkForce cfg.username;
+    nix.settings.trusted-users = [ cfg.username ];
 
     image.fileName = mkForce "beacon.iso";
     image.baseName = mkForce "beacon";
