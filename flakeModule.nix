@@ -157,6 +157,7 @@ in
           modules = cfg'.extraBeaconModules ++ [
             beacon-module
             {
+              skarabox.username = hostCfg.skarabox.username;
               skarabox.sshPublicKey = cfg'.sshPublicKey;
             }
           ];
@@ -341,6 +342,7 @@ in
 
               install-on-beacon \
                 -i $ip \
+                -u ${hostCfg.skarabox.username} \
                 -p $ssh_port \
                 -f "$flake" \
                 -k ${cfg'.hostKeyPath} \
