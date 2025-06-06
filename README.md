@@ -6,6 +6,7 @@ SkaraboxOS aims to be the fastest way to install NixOS on a server
 with all batteries included.
 
 <!--toc:start-->
+- [Content](#content)
 - [Usage](#usage)
 - [Provided operations:](#provided-operations)
 - [Why?](#why)
@@ -15,6 +16,59 @@ with all batteries included.
 - [Contribute](#contribute)
 - [Links](#links)
 <!--toc:end-->
+
+## Content
+
+See [usage][] if you're interested in what the commands to get all this look like.
+
+[usage]: #usage
+
+This flake [template](./template) combines turn-key style:
+
+- Creating a bootable ISO, installable on an USB key.
+- Alternatively, creating a VM based on the bootable ISO
+  to test the installation procedure (like shown in the snippet above).
+- Managing host keys, known hosts and ssh keys
+  to provide a secure and seamless SSH experience.
+- [nixos-anywhere][] to install NixOS headlessly.
+- [disko][] to format the drives using native ZFS encryption
+- Remote root pool decryption through ssh.
+- Disk mirroring: 1 or 2 disks in raid1 using ZFS mirroring for the OS,
+  boot partition is then mirrored using grub mirrored devices
+  and 0 or 2 disks in raid1 using ZFS mirroring for the data disks.
+- [nixos-facter][] to handle hardware configuration.
+- [flake-parts][] to make the resulting `flake.nix` small.
+- Handle having multiple hosts managed by one flake
+  and programmatically add more with generated secrets with one command.
+- [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
+- Programmatically populate Sops secrets file.
+- Fully pinned inputs.
+- [deploy-rs][] to deploy updates.
+- Backed by [tests][] for all disk variants
+  and [CI][] to make sure the installation procedure does work!
+  Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
+- Supporting `x86_64-linux` and `aarch64-linux` platform.
+- Some pretty extensive [recovery][] instructions. (Tests yet to be written)
+
+[nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
+[disko]: https://github.com/nix-community/disko
+[nixos-facter]: https://github.com/nix-community/nixos-facter
+[flake-parts]: https://flake.parts/
+[sops-nix]: https://github.com/Mic92/sops-nix
+[deploy-rs]: https://github.com/serokell/deploy-rs
+[tests]: ./tests/default.nix
+[CI]: ./.github/workflows/build.yaml
+[recovery]: ./template/README.md#recovery
+
+This repository does not invent any of those wonderful tools.
+It merely provides an opinionated way to make them all fit together.
+By being more opinionated, it gets you set up faster.
+
+Services can then be installed by using NixOS options directly
+or through [Self Host Blocks][].
+The latter, similarly to SkaraboxOS, provides an opinionated way to configure services in a seamless way.
+
+[Self Host Blocks]: https://github.com/ibizaman/selfhostblocks
 
 ## Usage
 
@@ -104,6 +158,9 @@ with all batteries included.
     Target host will reboot and ask the passphrase to decrypt
     the root partition. See next section for how to give it.
 
+I used this successfully on my own on-premise x86 server
+and on Hetzner dedicated ARM and x86 hosts.
+
 ## Provided operations:
 
 ```
@@ -122,54 +179,6 @@ nix run .#sops ./myskarabox/secrets.yaml
 # Reboot:
 nix run .#myskarabox-ssh sudo reboot
 ```
-
-The flake [template](./template) combines turn-key style:
-
-- Creating a bootable ISO, installable on an USB key.
-- Alternatively, creating a VM based on the bootable ISO
-  to test the installation procedure (like shown in the snippet above).
-- Managing host keys, known hosts and ssh keys
-  to provide a secure and seamless SSH experience.
-- [nixos-anywhere][] to install NixOS headlessly.
-- [disko][] to format the drives using native ZFS encryption
-- Remote root pool decryption through ssh.
-- Disk mirroring: 1 or 2 disks in raid1 using ZFS mirroring for the OS,
-  boot partition is then mirrored using grub mirrored devices
-  and 0 or 2 disks in raid1 using ZFS mirroring for the data disks.
-- [nixos-facter][] to handle hardware configuration.
-- [flake-parts][] to make the resulting `flake.nix` small.
-- Handle having multiple hosts managed by one flake
-  and programmatically add more with generated secrets with one command.
-- [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
-- Programmatically populate Sops secrets file.
-- Fully pinned inputs.
-- [deploy-rs][] to deploy updates.
-- Backed by [tests][] for all disk variants
-  and [CI][] to make sure the installation procedure does work!
-  Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
-- Supporting `x86_64-linux` and `aarch64-linux` platform.
-- Some pretty extensive [recovery][] instructions. (Tests yet to be written)
-
-I used this successfully on my own on-premise x86 server
-and on Hetzner dedicated ARM and x86 hosts.
-
-[nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
-[disko]: https://github.com/nix-community/disko
-[nixos-facter]: https://github.com/nix-community/nixos-facter
-[flake-parts]: https://flake.parts/
-[sops-nix]: https://github.com/Mic92/sops-nix
-[deploy-rs]: https://github.com/serokell/deploy-rs
-[tests]: ./tests/default.nix
-[CI]: ./.github/workflows/build.yaml
-[recovery]: ./template/README.md#recovery
-
-This repository does not invent any of those wonderful tools.
-It merely provides an opinionated way to make them all fit together.
-By being more opinionated, it gets you set up faster.
-
-Services can then be installed by using NixOS options directly
-or through [Self Host Blocks](https://github.com/ibizaman/selfhostblocks).
-The latter, similarly to SkaraboxOS, provides an opinionated way to configure services in a seamless way.
 
 ## Why?
 
@@ -213,17 +222,42 @@ and prioritized issues can be found in the [milestones][].
 
 ## Contribute
 
-Contributions are very welcomed!
+Contributions are very welcomed, help is wanted in all those areas:
 
-To push to the cache, run for example:
+- Use this project to install on an x86 or ARM machine.
+  Does everything work fine? Are there UX improvements possible?
+- Documentation. Text is hard to read or is missing information?
+- Tackle issues. Have an idea on how to fix an issue?
+- Refactoring. See something weird in the code? Could it be done better?
+- Propose new ideas. Something should be covered but is not?
+- Report bugs. Saw an issue? Please do report it.
 
-```
-nix build --no-link --print-out-paths .#packages.x86_64-linux.beacon-vm  \
-  | nix run nixpkgs#cachix push selfhostblocks
-```
+Issues that are being worked on are labeled with the [in progress][] label.
+Before starting work on those, you might want to talk about it in the issue tracker
+or in the [matrix][] channel.
 
-## Links
+[in progress]: https://github.com/ibizaman/skarabox/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22in%20progress%22
+[matrix]: https://matrix.to/#/#selfhostblocks:matrix.org
 
-- https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/profiles/installation-device.nix
-- https://github.com/NixOS/nixpkgs/blob/master/nixos/modules/installer/cd-dvd/installation-cd-base.nix
-- https://github.com/nix-community/nixos-anywhere/blob/main/docs/howtos/no-os.md#installing-on-a-machine-with-no-operating-system
+The prioritized issues are those belonging to the [next milestone][milestone].
+Those issues are not set in stone and I'd be very happy to solve
+an issue an user has before scratching my own itch.
+
+[milestone]: https://github.com/ibizaman/skarabox/milestones
+
+## Funding
+
+I was lucky to [obtain a grant][nlnet] from NlNet which is an European fund,
+under [NGI Zero Core][NGI0],
+to work on this project.
+This also funds the [Self Host Blocks][] project.
+
+Go apply for a grant too!
+
+[nlnet]: https://nlnet.nl/project/SelfHostBlocks
+[NGI0]: https://nlnet.nl/core/
+
+<p>
+<img alt="NlNet logo" src="https://nlnet.nl/logo/banner.svg" width="200" />
+<img alt="NGI Zero Core logo" src="https://nlnet.nl/image/logos/NGI0Core_tag.svg" width="200" />
+</p>
