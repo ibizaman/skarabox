@@ -84,69 +84,70 @@ The latter, similarly to SkaraboxOS, provides an opinionated way to configure se
 
     b. Or in existing repo
 
-       Merge [./template/flake.nix](./template/flake.nix) with yours, then:
+      Merge [./template/flake.nix](./template/flake.nix) with yours, then:
 
-       ```bash
-       # Create Sops main key `sops.key` if needed
-       nix run .#sops-create-main-key
+      ```bash
+      # Create Sops main key `sops.key` if needed
+      nix run .#sops-create-main-key
 
-       # Add Sops main key to Sops config `.sops.yaml`
-       nix run .#sops-add-main-key
+      # Add Sops main key to Sops config `.sops.yaml`
+      nix run .#sops-add-main-key
 
-       # Create config for host `myskarabox` in folder `./myskarabox`
-       nix run .#gen-new-host myskarabox
-       ```
+      # Create config for host `myskarabox` in folder `./myskarabox`
+      nix run .#gen-new-host myskarabox
+      ```
 
 2. Start beacon
 
     a. Either test on VM
 
-      ```bash
-      nix run .#myskarabox-beacon-vm &
+     ```bash
+     nix run .#myskarabox-beacon-vm &
 
-      echo 127.0.0.1 > myskarabox/ip
-      echo x86_64-linux > myskarabox/system
-      echo 2222 > myskarabox/ssh_port
-      echo 2223 > myskarabox/ssh_boot_port
-      nix run .#myskarabox-gen-knownhosts-file
-      ```
+     echo 127.0.0.1 > myskarabox/ip
+     echo x86_64-linux > myskarabox/system
+     echo 2222 > myskarabox/ssh_port
+     echo 2223 > myskarabox/ssh_boot_port
+     nix run .#myskarabox-gen-knownhosts-file
+     ```
 
-      This VM has 4 hard drives:
-         - `/dev/nvme0`
-         - `/dev/nvme1`
-         - `/dev/sda`
-         - `/dev/sdb`
+     This VM has 4 hard drives:
+
+        - `/dev/nvme0`
+        - `/dev/nvme1`
+        - `/dev/sda`
+        - `/dev/sdb`
 
     b. Or install on an on-premise host
 
-       By default, the beacon uses DHCP to get an IP address.
-       To use a static IP instead, or modify the beacon configuration
-       in any way, modify the `extraBeaconModules` in [./template/flake.nix](./template/flake.nix).
+      By default, the beacon uses DHCP to get an IP address.
+      To use a static IP instead, or modify the beacon configuration
+      in any way, modify the `extraBeaconModules` in [./template/flake.nix](./template/flake.nix).
      
-       ```bash
-       nix build .#myskarabox-beacon
-       nix run .#beacon-usbimager
-       ```
+      ```bash
+      nix build .#myskarabox-beacon
+      nix run .#beacon-usbimager
+      ```
 
-       Use usbimager to burn `./result/iso/beacon.iso` 
-       on a USB key, then boot on that USB key.
-       Get IP from host and use it in next snippet:
-       
-       ```bash
-       echo 192.168.1.XX > myskarabox/ip
-       echo x86_64-linux > myskarabox/system
-       nix run .#myskarabox-gen-knownhosts-file
-       ```
+      Use usbimager to burn `./result/iso/beacon.iso` 
+      on a USB key, then boot on that USB key.
+      Get IP from host and use it in next snippet:
+      
+      ```bash
+      echo 192.168.1.XX > myskarabox/ip
+      echo x86_64-linux > myskarabox/system
+      nix run .#myskarabox-gen-knownhosts-file
+      ```
 
     c. Or install on Cloud Instance
 
-       For Hetzner, start in recovery mode and retrieve the IP.
-       
-       ```bash
-       echo <ip> > myskarabox/ip
-       echo x86_64-linux > myskarabox/system
-       nix run .#myskarabox-gen-knownhosts-file
-       ```
+      For Hetzner, start in recovery mode and retrieve the IP.
+      
+      ```bash
+      echo <ip> > myskarabox/ip
+      echo x86_64-linux > myskarabox/system
+      nix run .#myskarabox-gen-knownhosts-file
+      ```
 
 3. Install on target host
 
