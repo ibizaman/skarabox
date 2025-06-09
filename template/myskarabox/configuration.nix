@@ -33,7 +33,10 @@ in
         reservation = "10G";  # Set to 5% of size Hard Drives.
       };
       # For security by obscurity, we choose another ssh port here than the default 22.
-      skarabox.disks.bootSSHPort = ./ssh_boot_port;
+      skarabox.disks.boot = {
+        sshPort = ./ssh_boot_port;
+        staticNetwork = null;
+      };
       skarabox.sshPort = ./ssh_port;
       skarabox.sshAuthorizedKeyFile = ./ssh.pub;
       skarabox.hostId = ./hostid;

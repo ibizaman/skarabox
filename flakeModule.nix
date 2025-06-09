@@ -136,7 +136,7 @@ in
           text = ''
             ssh \
               "${cfg'.ip}" \
-              "${toString hostCfg.skarabox.disks.bootSSHPort}" \
+              "${toString hostCfg.skarabox.disks.boot.sshPort}" \
               root \
               -o UserKnownHostsFile=${cfg'.knownHosts} \
               -o ConnectTimeout=10 \
@@ -245,7 +245,7 @@ in
           guestport=2222
           hostport=${toString hostCfg.skarabox.sshPort}
           guestbootport=2223
-          hostbootport=${toString hostCfg.skarabox.disks.bootSSHPort}
+          hostbootport=${toString hostCfg.skarabox.disks.boot.sshPort}
 
           ${qemu} \
             -m 2048M \
@@ -282,7 +282,7 @@ in
             text = ''
               ip=${cfg'.ip}
               ssh_port=${toString hostCfg.skarabox.sshPort}
-              ssh_boot_port=${toString hostCfg.skarabox.disks.bootSSHPort}
+              ssh_boot_port=${toString hostCfg.skarabox.disks.boot.sshPort}
               host_key_pub=${cfg'.hostKeyPub}
 
               gen-knownhosts-file \

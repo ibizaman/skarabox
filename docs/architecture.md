@@ -184,7 +184,7 @@ boot.initrd.network = {
 
   ssh = {
     enable = true;
-    port = lib.mkDefault cfg.bootSSHPort;
+    port = lib.mkDefault cfg.boot.sshPort;
     authorizedKeyFiles = [
       ./<hostname>/ssh.pub
     ];
