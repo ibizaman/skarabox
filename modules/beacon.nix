@@ -5,19 +5,20 @@
 in {
   options.skarabox = {
     hostname = lib.mkOption {
+      description = "Hostname to give the beacon. Use the same as for the host to simplify installation.";
       type = types.str;
       default = "skarabox";
     };
 
     username = lib.mkOption {
+      description = "Username with which you can log on the beacon. Use the same as for the host to simplify installation.";
       type = types.str;
-      description = "Username with which you can log on the beacon.";
       default = "skarabox";
     };
 
     sshPublicKey = lib.mkOption {
+      description = "Public key to connect to the beacon. Use the same as for the host to simplify installation.";
       type = types.path;
-      description = "Public key to connect to the beacon.";
     };
   };
 

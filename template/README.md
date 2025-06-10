@@ -8,6 +8,7 @@
   - [B. (option 2) Install on a Real Server](#b-option-2-install-on-a-real-server)
   - [C. Run the Installer](#c-run-the-installer)
 - [Normal Operations](#normal-operations)
+- [Options](#options)
 - [Post Installation Checklist](#post-installation-checklist)
   - [Domain Name](#domain-name)
   - [Router Configuration](#router-configuration)
@@ -324,6 +325,15 @@ All commands are prefixed by the hostname, allowing to handle multiple hosts.
    $ nix run .#deploy-rs
    $ nix run .#baryum-gen-knownhosts-file
    ```
+
+## Options
+  
+(WIP: generate the options here automatically see [skarabox#51](https://github.com/ibizaman/skarabox/issues/51)).
+
+For now, rely on the `template/flake.nix` which exposes the options or look in the code
+at [flakeModule.nix](https://github.com/ibizaman/skarabox/blob/main/flakeModule.nix),
+[configuration.nix](https://github.com/ibizaman/skarabox/blob/main/modules/configuration.nix)
+and [disks.nix](https://github.com/ibizaman/skarabox/blob/main/modules/disks.nix).
 
 ## Post Installation Checklist
 

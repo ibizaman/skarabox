@@ -8,7 +8,7 @@ let
   topLevelConfig = config;
   cfg = config.skarabox;
 
-  inherit (lib) concatMapAttrs concatStringsSep mapAttrsToList mkOption optionalAttrs types toInt;
+  inherit (lib) concatMapAttrs concatStringsSep mapAttrsToList mkOption optionalAttrs types;
 
   readAndTrim = f: lib.strings.trim (builtins.readFile f);
   readAsStr = v: if lib.isPath v then readAndTrim v else v;
@@ -23,6 +23,7 @@ in
 {
   options.skarabox = {
     sopsKeyPath = mkOption {
+      description = "Path from the top of the repo to the main sops key.";
       # Using string here so the sops key does not end up in the nix store.
       type = types.str;
       default = "sops.key";
@@ -35,39 +36,64 @@ in
           pkgs = mkOption {
             type = types.anything;
             default = null;
-            description = "Override pkgs in the nixosConfiguration.";
+            description = ''
+              If given, overrides pkgs in the nixosConfiguration.
+
+              By default, use the pkgs from the nixpkgs input.
+            '';
           };
           hostKeyPath = mkOption {
+            description = "Path from the top of the repo to the ssh private file used as the host key.";
             type = types.str;
             default = "${name}/host_key";
           };
           hostKeyPub = mkOption {
+            description = "SSH public file used as the host key.";
             type = types.path;
+            example = lib.literalExpression "./${name}/host_key.pub";
           };
-
           ip = mkOption {
+            description = ''
+              IP or hostname used to ssh into the server.
+
+              Can be the IP or hostname directly or a file containing the value.
+            '';
             type = with types; oneOf [ str path ];
             default = "127.0.0.1";
             apply = readAsStr;
           };
           sshPrivateKeyPath = mkOption {
-            # Using string here so the sops key does not end up in the nix store.
+            description = "Path from the top of the repo to the ssh private file used to ssh into the host.";
             type = types.str;
             default = "${name}/ssh";
           };
+          sshPublicKey = mkOption {
+            description = "SSH public file used to ssh into the host.";
+            type = types.path;
+          };
           secretsFilePath = mkOption {
+            description = ''
+              Path from the top of the repo to the SOPS secrets file.
+
+              By default Skarabox assumes one secret file per host to avoid
+              sharing secrets across them but having only one file by specifying
+              "./secrets.yaml" is possible too.
+            '';
             type = types.str;
             default = "${name}/secrets.yaml";
           };
           secretsRootPassphrasePath = mkOption {
+            description = "Path in python dictionary format to the passphrase of the root ZFS pool as it is stored in the SOPS secrets file.";
             type = types.str;
             default = "['${name}']['disks']['rootPassphrase']";
           };
           secretsDataPassphrasePath = mkOption {
+            description = "Path in python dictionary format to the passphrase of the data ZFS pool as it is stored in the SOPS secrets file.";
             type = types.str;
             default = "['${name}']['disks']['dataPassphrase']";
           };
           extraSecretsPassphrasesPath = mkOption {
+            description = "Paths in python dictionary format to other passphrases for extra ZFS pools as they is stored in the SOPS secrets file.";
             type = with types; attrsOf str;
             default = {};
             example = lib.literalExpression ''
@@ -76,28 +102,56 @@ in
               }
             '';
           };
-          sshPublicKey = mkOption {
-            type = types.path;
-          };
           knownHostsPath = mkOption {
+            description = "Path from the top of the repo to known hosts file.";
             type = types.str;
             default = "${name}/known_hosts";
           };
           knownHosts = mkOption {
+            description = "Known hosts file.";
             type = types.path;
           };
           system = mkOption {
+            description = ''
+              System of the host.
+
+              Can be the systm directly or a file containing the value.
+            '';
             type = with types; oneOf [ str path ];
             apply = readAsStr;
           };
 
           modules = mkOption {
+            description = "Modules to add to the host nixosConfiguration. Add here all your own configuration.";
             type = types.listOf types.anything;
             default = [];
           };
           extraBeaconModules = mkOption {
+            description = "Modules to add to the beacon configuration. Use this to add static network config, for example.";
             type = types.listOf types.anything;
             default = [];
+            example = ''
+              extraBeaconModules = [
+                {
+                  systemd.network = {
+                    enable = true;
+                    networks."10-lan" = {
+                      matchConfig.Name = "en*";
+                      address = [
+                        "192.168.1.30/24"
+                      ];
+                      routes = [
+                        { Gateway = "192.168.1.1"; }
+                      ];
+                      linkConfig.RequiredForOnline = true;
+                      dns = [
+                        "192.168.1.1"
+                      ];
+                    };
+                  };
+                }
+              ];
+            '';
           };
         };
       }));
