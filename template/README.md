@@ -1,12 +1,12 @@
 # Skarabox
 
 <!--toc:start-->
-- [Bootstrapping](#bootstrapping)
-- [Add in Existing Repo](#add-in-existing-repo)
-- [Installation](#installation)
-  - [A.1. Test on a VM](#a1-test-on-a-vm)
-  - [A.2. Install on a Real Server](#a2-install-on-a-real-server)
-  - [B. Run the Installation](#b-run-the-installation)
+- [Installation Procedure](#installation-procedure)
+  - [A. (option 1) Bootstrapping](#a-option-1-bootstrapping)
+  - [A. (option 2) Add in Existing Repo](#a-option-2-add-in-existing-repo)
+  - [B. (option 1) Test on a VM](#b-option-1-test-on-a-vm)
+  - [B. (option 2) Install on a Real Server](#b-option-2-install-on-a-real-server)
+  - [C. Run the Installer](#c-run-the-installer)
 - [Normal Operations](#normal-operations)
 - [Post Installation Checklist](#post-installation-checklist)
   - [Domain Name](#domain-name)
@@ -23,7 +23,32 @@ or by [joining the Matrix channel][matrix].
 [issue]: https://github.com/ibizaman/skarabox/issues/new
 [matrix]: https://matrix.to/#/#selfhostblocks:matrix.org
 
-## Bootstrapping
+## Installation Procedure
+
+If you don't have an existing repository, choose the [bootstrapping][]
+method. If you do have one you want to integrate with Skarabox,
+follow the [Add in Existing Repo][] method.
+
+The installation procedure can be followed on a [VM][],
+to test the installation process, or on a [real server][].
+For the former, this flake template will create a suitable VM to
+test on and for the latter, an ISO file will be produced that you
+can install on a USB stick and boot from on your real server.
+
+Finally, [run the installer][].
+
+> [!CAUTION]
+> Following the installation procedure on a real server
+> WILL ERASE THE CONTENT of any disk on that server.
+> Take the time to remove any disk you care about.
+
+[bootstrapping]: #a-option-1-bootstrapping
+[Add in Existing Repo]: #a-option-2-add-in-existing-repo
+[VM]: #b-option-1-test-on-a-vm
+[Real Server]: #b-option-2-install-on-a-real-server
+[Run the Installer]: #c-run-the-installer
+
+### A. (option 1) Bootstrapping
 
 Create a directory and download the template.
 
@@ -48,7 +73,7 @@ and afterwards generate [./known_hosts](./known_hosts) with:
 nix run .#myskarabox-gen-knownhosts-file
 ```
 
-## Add in Existing Repo
+### A. (option 2) Add in Existing Repo
 
 Add inputs:
 
@@ -100,7 +125,7 @@ imports = [
 ];
 ```
 
-4. Add NixOS module importing your module.
+4. Add NixOS module importing your configuration.
 
 ```nix
 flake = {
@@ -148,20 +173,7 @@ skarabox.hosts = {
 
    Tweak `./myskarabox/configuration.nix`.
 
-## Installation
-
-The installation procedure can be followed on a [VM][],
-to test the installation process, or on a [real server][].
-
-> [!CAUTION]
-> Following the installation procedure on a real server
-> WILL ERASE THE CONTENT of any disk on that server.
-> Take the time to remove any disk you care about.
-
-[VM]: #a1-test-on-a-vm
-[real server]: #a2-install-on-a-real-server
-
-### A.1. Test on a VM
+### B. (option 1) Test on a VM
 
 Assuming the [./configuration.nix](./myskarabox/configuration.nix) file is left untouched,
 you can now test the installation process on a VM.
@@ -184,7 +196,7 @@ $ nix run .#myskarabox-beacon-vm &
 
 Now, skip to [step B](#b-run-the-installation-process).
 
-### A.2. Install on a Real Server
+### B. (option 2) Install on a Real Server
 
 _This guide assumes you know how to boot your server on a USB stick._
 
@@ -214,7 +226,7 @@ _This guide assumes you know how to boot your server on a USB stick._
 
 5. Open the [./myskarabox/configuration.nix](./configuration.nix) file and tweak values to match your hardware.
 
-### B. Run the Installation
+### C. Run the Installer
 
 Create a `./myskarabox/facter.json` file containing
 the hardware specification of the host (or the VM) with:
