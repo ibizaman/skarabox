@@ -15,27 +15,27 @@ in
 {
   options.skarabox = {
     hostname = mkOption {
+      description = "Hostname to give to the server.";
       type = types.str;
       default = "skarabox";
-      description = "Hostname to give to the server.";
     };
 
     username = mkOption {
+      description = "Name given to the admin user on the server.";
       type = types.str;
       default = "skarabox";
-      description = "Name given to the admin user on the server.";
     };
 
     hashedPasswordFile = mkOption {
+      description = "Contains hashed password for the admin user.";
       type = types.str;
-      description = "Contains password for the admin user.";
     };
 
     facter-config = lib.mkOption {
-      type = lib.types.path;
       description = ''
         nixos-facter config file.
       '';
+      type = lib.types.path;
     };
 
     hostId = mkOption {

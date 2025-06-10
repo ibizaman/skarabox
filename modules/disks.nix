@@ -115,6 +115,7 @@ in
           };
 
           staticNetwork = mkOption {
+            description = "Use static IP configuration. If unset, use DHCP.";
             default = null;
             type = types.nullOr (types.submodule {
               options = {
