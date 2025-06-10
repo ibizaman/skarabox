@@ -109,6 +109,7 @@
           nixos-anywhere.inputs.disko.nixosModules.disko
           nixos-facter-modules.nixosModules.facter
           ./modules/disks.nix
+          ./modules/bootssh.nix
           ./modules/configuration.nix
         ];
       };
