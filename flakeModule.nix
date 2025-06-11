@@ -8,7 +8,7 @@ let
   topLevelConfig = config;
   cfg = config.skarabox;
 
-  inherit (lib) concatMapAttrs concatStringsSep mapAttrsToList mkOption optionalAttrs types;
+  inherit (lib) concatMapAttrs concatStringsSep mapAttrs mapAttrsToList mkOption optionalAttrs types;
 
   readAndTrim = f: lib.strings.trim (builtins.readFile f);
   readAsStr = v: if lib.isPath v then readAndTrim v else v;
@@ -35,7 +35,7 @@ in
         options = {
           pkgs = mkOption {
             type = types.anything;
-            default = null;
+            default = inputs.nixpkgs;
             description = ''
               If given, overrides pkgs in the nixosConfiguration.
 
@@ -493,13 +493,14 @@ in
       } // (concatMapAttrs mkHostPackages cfg.hosts);
 
       apps = {
-        deploy-rs = inputs'.deploy-rs.apps.deploy-rs;
+        inherit (inputs'.deploy-rs.apps) deploy-rs;
+        inherit (inputs'.colmena.apps) colmena;
       };
     };
 
     flake = { pkgs, ... }: let
       mkFlake = name: cfg': {
-        nixosConfigurations.${name} = (if cfg'.pkgs != null then cfg'.pkgs else inputs.nixpkgs).lib.nixosSystem {
+        nixosConfigurations.${name} = cfg'.pkgs.lib.nixosSystem {
           inherit (cfg') system;
           modules = cfg'.modules ++ [
             inputs.skarabox.nixosModules.skarabox
@@ -517,6 +518,7 @@ in
           "${name}-debug-facter-nix-diff" = nixosConfigurationConfig.facter.debug.nix-diff;
         };
 
+        # Used by deploy-rs
         # Debug eval errors with `nix eval --json .#deploy --show-trace`
         deploy.nodes = let
           pkgs' = import inputs.nixpkgs {
@@ -560,8 +562,36 @@ in
               };
             };
           };
+          in
+            concatMapAttrs mkNode cfg.hosts;
+
+        colmenaHive = inputs.colmena.lib.makeHive ({
+          meta.nixpkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
+          meta.nodeNixpkgs = mapAttrs (_: cfg': import cfg'.pkgs { inherit (cfg') system; }) cfg.hosts;
+        } // (let
+          mkNode = name: cfg': let
+            hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;
+          in
+            {
+              deployment = {
+                targetHost = cfg'.ip;
+                targetPort = hostCfg.skarabox.sshPort;
+                targetUser = topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username;
+                sshOptions = [
+                  "-o" "IdentitiesOnly=yes"
+                  "-o" "UserKnownHostsFile=${cfg'.knownHosts}"
+                  "-o" "ConnectTimeout=10"
+                  "-i" "${cfg'.sshPrivateKeyPath}"
+                ];
+              };
+
+              imports = cfg'.modules ++ [
+                inputs.skarabox.nixosModules.skarabox
+              ];
+            };
         in
-          concatMapAttrs mkNode cfg.hosts;
+          mapAttrs mkNode cfg.hosts
+        ));
       };
 
       common = {

@@ -6,11 +6,6 @@
       url = "github:nixos/nixpkgs/nixos-unstable";
     };
 
-    nixos-generators = {
-      url = "github:nix-community/nixos-generators";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     nixos-anywhere = {
       url = "github:nix-community/nixos-anywhere";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -24,10 +19,6 @@
       url = "github:hercules-ci/flake-parts";
     };
 
-    deploy-rs = {
-      url = "github:serokell/deploy-rs";
-    };
-
     nix-flake-tests = {
       url = "github:antifuchs/nix-flake-tests";
     };
@@ -36,10 +27,8 @@
   outputs = inputs@{
     self,
     flake-parts,
-    nixpkgs,
     nixos-anywhere,
     nixos-facter-modules,
-    deploy-rs,
     nix-flake-tests,
     ...
   }: flake-parts.lib.mkFlake { inherit inputs; } {

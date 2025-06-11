@@ -152,9 +152,13 @@ let
     ${nix} run .#myskarabox-ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"
     e "Password has been set."
 
-    e "Deploying."
+    e "Deploying with deploy-rs."
     ${nix} run .#deploy-rs
-    e "Deploying done."
+    e "Deploying with deploy-rs done."
+
+    e "Deploying with colmena."
+    ${nix} run .#colmena apply
+    e "Deploying with colmena done."
 
     e "Checking password for skarabox user is still set."
     ${nix} run .#myskarabox-ssh -- -F none sudo cat /etc/shadow | ${pkgs.gnugrep}/bin/grep "$hashedpwd"

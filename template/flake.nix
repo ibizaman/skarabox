@@ -14,6 +14,7 @@
     nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
     flake-parts.url = "github:hercules-ci/flake-parts";
     deploy-rs.url = "github:serokell/deploy-rs";
+    colmena.url = "github:zhaofengli/colmena";
     sops-nix.url = "github:Mic92/sops-nix";
   };
 
