@@ -3,6 +3,10 @@
 
   cfg = config.skarabox;
 in {
+  imports = [
+    ./hotspot.nix
+  ];
+
   options.skarabox = {
     ip = lib.mkOption {
       description = "Force static IP for beacon instead of using DHCP.";
@@ -56,20 +60,6 @@ in {
 
     boot.loader.systemd-boot.enable = true;
 
-    services.hostapd = {
-      enable = true;
-      radios.skarabox = {
-        band = "2g";
-        networks.skarabox = {
-          ssid = "Skarabox";
-          authentication = {
-            mode = "wpa2-sha256";
-            wpaPassword = "skarabox";
-          };
-        };
-      };
-    };
-
     environment.systemPackages = let
       skarabox-help = pkgs.writeText "skarabox-help" config.services.getty.helpLine;
     in [
@@ -99,6 +89,7 @@ in {
         linkConfig.RequiredForOnline = true;
       };
     };
+    skarabox.hotspot.ip = lib.mkIf (cfg.ip != null) cfg.ip;
 
     services.getty.helpLine = mkForce ''
 
