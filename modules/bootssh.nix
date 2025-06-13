@@ -56,6 +56,12 @@ in
                     description = "Sub-class as it appears in the facter.json report.";
                     default = "Ethernet";
                   };
+                  namePrefix = mkOption {
+                    type = str;
+                    description = "Name prefix as it appears in the facter.json report. Used to distinguish between wifi and ethernet.";
+                    default = "en";
+                    example = "wl";
+                  };
                 };
               })
             ];
@@ -96,15 +102,17 @@ in
       '';
     };
     boot.kernelParams = lib.optionals (cfg.boot.staticNetwork != null && config.facter.report != {}) (let
-        n = cfg.boot.staticNetwork;
+        cfg' = cfg.boot.staticNetwork;
 
-        firstMatchingDevice = subClass: (builtins.head (builtins.filter (n: n.sub_class.name == subClass) config.facter.report.hardware.network_interface)).unix_device_name;
+        fn = n: n.sub_class.name == cfg'.device.subClass && lib.hasPrefix cfg'.device.namePrefix n.unix_device_name;
 
-        deviceName = if isString n.device then n.device else firstMatchingDevice n.device.subClass;
+        firstMatchingDevice = (builtins.head (builtins.filter fn config.facter.report.hardware.network_interface)).unix_device_name;
+
+        deviceName = if isString cfg'.device then cfg'.device else firstMatchingDevice;
       in [
         # https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
         # ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:<dns0-ip>:<dns1-ip>:<ntp0-ip>
-        "ip=${n.ip}::${n.gateway}:${n.netmask}:${config.skarabox.hostname}-initrd:${deviceName}:off:::"
+        "ip=${cfg'.ip}::${cfg'.gateway}:${cfg'.netmask}:${config.skarabox.hostname}-initrd:${deviceName}:off:::"
       ]);
   };
 }
