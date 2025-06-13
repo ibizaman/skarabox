@@ -43,7 +43,7 @@ This flake [template](./template) combines turn-key style:
 - [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
 - Programmatically populate Sops secrets file.
 - Fully pinned inputs.
-- [deploy-rs][] to deploy updates.
+- [deploy-rs][] or [colmena][] to deploy updates.
 - Backed by [tests][] for all disk variants
   and [CI][] to make sure the installation procedure does work!
   Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
@@ -56,6 +56,7 @@ This flake [template](./template) combines turn-key style:
 [flake-parts]: https://flake.parts/
 [sops-nix]: https://github.com/Mic92/sops-nix
 [deploy-rs]: https://github.com/serokell/deploy-rs
+[colmena]: https://github.com/zhaofengli/colmena
 [tests]: ./tests/default.nix
 [CI]: ./.github/workflows/build.yaml
 [recovery]: ./template/README.md#recovery
