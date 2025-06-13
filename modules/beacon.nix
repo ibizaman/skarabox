@@ -4,6 +4,12 @@
   cfg = config.skarabox;
 in {
   options.skarabox = {
+    ip = lib.mkOption {
+      description = "Force static IP for beacon instead of using DHCP.";
+      type = types.nullOr types.str;
+      default = null;
+    };
+
     hostname = lib.mkOption {
       description = "Hostname to give the beacon. Use the same as for the host to simplify installation.";
       type = types.str;
@@ -83,6 +89,17 @@ in {
       pkgs.iotop
     ];
 
+    systemd.network = lib.mkIf (cfg.ip != null) {
+      enable = true;
+      networks."10-lan" = {
+        matchConfig.Name = "en*";
+        address = [
+          "${cfg.ip}/24"
+        ];
+        linkConfig.RequiredForOnline = true;
+      };
+    };
+
     services.getty.helpLine = mkForce ''
 
         /           \\
@@ -116,8 +133,8 @@ in {
       For a wired network connection, just plug in an ethernet cable from your router
       to this server. The connection will be made automatically.
 
-      If you need a wireless connection, configure a network by typing the command
-      "wpa_cli" without the enclosing double quotes.
+      For a wireless connection, if a card is found, a "Skarabox" wifi hotspot will
+      be created automatically. Connect to it from your laptop.
 
       * Step 2.  Identify the disk layout.
 
@@ -130,26 +147,25 @@ in {
 
       With the above setup, in the flake.nix template, set the following options:
 
-          skarabox.disks.rootDisk = "/dev/nvme0n1"
-          skarabox.disks.dataDisk1 = "/dev/sda"
-          skarabox.disks.dataDisk2 = "/dev/sdb"
+          skarabox.disks.rootPool.disk1 = "/dev/nvme0n1"
+          skarabox.disks.dataPool.disk1 = "/dev/sda"
+          skarabox.disks.dataPool.disk2 = "/dev/sdb"
 
-      * Step 3.  Run the installer.
+      * Step 3.  Identify the IP address.
 
-      When running the installer, you will need to enter the password "skarabox123" as
-      well as the IP address of this server. To know the IP address, first follow the
-      step 1 above then type the command "ip -brief a" verbatim, without the enclosing
-      double quotes.
-
-      Try all IP addresses one by one until one works. An IP address looks like so:
+      To run the installer, you first need to know the IP address of this host.
+      Assuming you followed step 1 above, type the command "ip -brief a" verbatim,
+      without the enclosing double quotes. An IP address looks like so:
 
         192.168.1.15
         10.0.2.15
 
-      * Step 4.
+      * Step 4.  Run the installer.
 
-      No step 4. The server will reboot automatically in the new system as soon as the
-      installer ran successfully. Enjoy your NixOS system powered by Skarabox!
+      From your laptop, run the installer. The server will then reboot automatically
+      in the new system as soon as the installer ran successfully.
+
+      Enjoy your NixOS system powered by Skarabox!
     '';
   };
 }
