@@ -290,10 +290,23 @@ All commands are prefixed by the hostname, allowing to handle multiple hosts.
 
 4. Deploy an Update
 
-   Modify the [./configuration.nix](./configuration.nix) file then run:
+   Modify the [./configuration.nix](./configuration.nix) file then run one of the following snippets:
 
+   To deploy with [deploy-rs](https://github.com/serokell/deploy-rs):
    ```bash
    $ nix run .#deploy-rs
+   ```
+
+   To deploy with [colmena](https://github.com/zhaofengli/colmena):
+   ```bash
+   $ nix run .#colmena apply
+   ```
+
+   Specific options for deploy-rs or colmena can be added by appending
+   a double dash followed by the arguments, like so:
+
+   ```bash
+   $ nix run .#colmena apply -- --on myskarabox
    ```
 
 5. Update dependencies
