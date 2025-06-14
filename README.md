@@ -25,9 +25,10 @@ See [usage][] if you're interested in what the commands to get all this look lik
 
 This flake [template](./template) combines turn-key style:
 
-- Creating a bootable ISO, installable on an USB key.
-- Alternatively, creating a VM based on the bootable ISO
-  to test the installation procedure (like shown in the snippet above).
+- A bootable ISO called beacon, installable on an USB key.
+- A WiFi hotspot with SSID Skarabox available from the beacon.
+- Alternatively, a VM based on the bootable ISO
+  to test the installation procedure.
 - Managing host keys, known hosts and ssh keys
   to provide a secure and seamless SSH experience.
 - [nixos-anywhere][] to install NixOS headlessly.
@@ -41,9 +42,12 @@ This flake [template](./template) combines turn-key style:
 - Handle having multiple hosts managed by one flake
   and programmatically add more with generated secrets with one command.
 - [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
+- [deploy-rs][] or [colmena][] to deploy updates.
+- Statically assigned IP for beacon and WiFi hotspot for
+  easier installation procedure.
+- DHCP or static IP for host.
 - Programmatically populate Sops secrets file.
 - Fully pinned inputs.
-- [deploy-rs][] or [colmena][] to deploy updates.
 - Backed by [tests][] for all disk variants
   and [CI][] to make sure the installation procedure does work!
   Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.

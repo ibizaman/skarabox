@@ -12,6 +12,8 @@
   For a wireless connection, if a card is found, a "Skarabox" wifi hotspot will
   be created automatically. Connect to it from your laptop.
 
+  The IP address for this beacon is ${cfg.ip}.
+
   * Step 2.  Identify the disk layout.
 
   To know what disk existing in the system, type the command "lsblk" without
@@ -42,9 +44,8 @@ in {
 
   options.skarabox = {
     ip = lib.mkOption {
-      description = "Force static IP for beacon instead of using DHCP.";
-      type = types.nullOr types.str;
-      default = null;
+      description = "Static IP for beacon.";
+      type = types.str;
     };
 
     hostname = lib.mkOption {
@@ -112,7 +113,7 @@ in {
       pkgs.iotop
     ];
 
-    systemd.network = lib.mkIf (cfg.ip != null) {
+    systemd.network = {
       enable = true;
       networks."10-lan" = {
         matchConfig.Name = "en*";
@@ -122,7 +123,7 @@ in {
         linkConfig.RequiredForOnline = true;
       };
     };
-    skarabox.hotspot.ip = lib.mkIf (cfg.ip != null) cfg.ip;
+    skarabox.hotspot.ip = cfg.ip;
 
     services.getty.helpLine = mkForce ''
 
@@ -152,6 +153,8 @@ in {
        WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
 
       Run the command `skarabox-help` to print more details.
+
+      The IP address for this beacon is ${cfg.ip}.
     '';
   };
 }

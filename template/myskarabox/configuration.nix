@@ -33,14 +33,12 @@ in
         reservation = "10G";  # Set to 5% of size Hard Drives.
       };
       # For security by obscurity, we choose another ssh port here than the default 22.
-      skarabox.disks.boot = {
+      skarabox.boot = {
         sshPort = ./ssh_boot_port;
-        staticNetwork = null;
       };
       skarabox.sshPort = ./ssh_port;
       skarabox.sshAuthorizedKeyFile = ./ssh.pub;
       skarabox.hostId = ./hostid;
-      skarabox.setupLanWithDHCP = true;  # Set to false to disable the catch-all network configuration from skarabox and instead set your own
 
       # Hardware drivers are figured out using nixos-facter.
       # If it still fails to find the correct driver,
@@ -65,6 +63,14 @@ in
         # https://github.com/Mic92/sops-nix?tab=readme-ov-file#setting-a-users-password
         neededForUsers = true;
       };
+    }
+    # Skarabox network configuration
+    {
+      # Set to { ip = ./ip; gateway = "192.168.1.1"; } to use static IP instead of DHCP configuration.
+      # This will set static IP also during initrd to unlock root partition.
+      skarabox.staticNetwork = null;
+      # Set to true to disable the network configuration from skarabox and instead set your own.
+      skarabox.disableNetworkSetup = false;
     }
     # Your config
     {
