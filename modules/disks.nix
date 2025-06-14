@@ -102,17 +102,6 @@ in
  };
 
  config = {
-    assertions = [
-      {
-        assertion = cfg.boot.staticNetwork == null -> config.boot.initrd.network.udhcpc.enable;
-        message = ''
-          If DHCP is disabled and an IP is not set, the box will not be reachable through the network on boot and you will not be able to enter the passphrase through SSH.
-
-          To fix this error, either set config.boot.initrd.network.udhcpc.enable = true or give an IP to skarabox.disks.boot.staticNetwork.ip.
-        '';
-      }
-    ];
-
     disko.devices = {
       disk = let
         hasRaid = cfg.rootPool.disk2 != null;

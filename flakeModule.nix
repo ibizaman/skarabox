@@ -133,22 +133,7 @@ in
             example = ''
               extraBeaconModules = [
                 {
-                  systemd.network = {
-                    enable = true;
-                    networks."10-lan" = {
-                      matchConfig.Name = "en*";
-                      address = [
-                        "192.168.1.30/24"
-                      ];
-                      routes = [
-                        { Gateway = "192.168.1.1"; }
-                      ];
-                      linkConfig.RequiredForOnline = true;
-                      dns = [
-                        "192.168.1.1"
-                      ];
-                    };
-                  };
+                  environment.systemPackages = [ pkgs.tmux ];
                 }
               ];
             '';
@@ -190,7 +175,7 @@ in
           text = ''
             ssh \
               "${cfg'.ip}" \
-              "${toString hostCfg.skarabox.disks.boot.sshPort}" \
+              "${toString hostCfg.skarabox.boot.sshPort}" \
               root \
               -o UserKnownHostsFile=${cfg'.knownHosts} \
               -o ConnectTimeout=10 \
@@ -246,6 +231,7 @@ in
               beacon-module
               {
                 skarabox.sshPublicKey = cfg'.sshPublicKey;
+                skarabox.ip = "127.0.0.1";
               }
               ({ lib, modulesPath, ... }: {
                 imports = [
@@ -300,7 +286,7 @@ in
           guestport=2222
           hostport=${toString hostCfg.skarabox.sshPort}
           guestbootport=2223
-          hostbootport=${toString hostCfg.skarabox.disks.boot.sshPort}
+          hostbootport=${toString hostCfg.skarabox.boot.sshPort}
 
           ${qemu} \
             -m 2048M \
@@ -337,7 +323,7 @@ in
             text = ''
               ip=${cfg'.ip}
               ssh_port=${toString hostCfg.skarabox.sshPort}
-              ssh_boot_port=${toString hostCfg.skarabox.disks.boot.sshPort}
+              ssh_boot_port=${toString hostCfg.skarabox.boot.sshPort}
               host_key_pub=${cfg'.hostKeyPub}
 
               gen-knownhosts-file \

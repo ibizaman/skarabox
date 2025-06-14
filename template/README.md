@@ -151,7 +151,7 @@ skarabox.hosts = {
   myskarabox = {
     system = "x86_64-linux";
     hostKeyPub = ./myskarabox/host_key.pub;
-    ip = "192.168.1.XX";
+    ip = ./myskarabox/ip;
     sshPublicKey = ./myskarabox/ssh.pub;
     knownHosts = ./myskarabox/known_hosts;
 
@@ -213,13 +213,31 @@ Now, skip to [step B](#b-run-the-installation-process).
 
 _This guide assumes you know how to boot your server on a USB stick._
 
-1. Create the .iso file.
+1. Setup IP and system.
+
+   ```bash
+   $ echo 192.168.1.30 > ./myskarabox/ip
+   $ echo x86_64-linux > ./myskarabox/system
+   ```
+
+   Choose an IP that you can access in your network
+   and the system that matches your server.
+
+   The IP used here will be statically assigned to the beacon
+   and will be used to setup the WiFi hotspot from the beacon,
+   if a WiFi card is enabled.
+   Having a same IP for all makes the installation procedure much easier.
+
+   You can also setup a static IP for the server itself by enabling
+   the `skarabox.staticNetwork` option in your `./myskarabox/configuration.nix` file.
+
+2. Create the .iso file.
 
    ```bash
    $ nix build .#myskarabox-beacon
    ```
 
-2. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
+3. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
 
    ```bash
    $ nix run .#beacon-usbimager
@@ -229,18 +247,19 @@ _This guide assumes you know how to boot your server on a USB stick._
    - Select USB key in row 3.
    - Click write (arrow down) in row 2.
 
-3. Plug the USB stick in the server. Choose to boot on it.
+4. Plug the USB stick in the server. Choose to boot on it.
 
-   You will be logged in automatically with user `nixos`.
+   You will be logged in automatically with the user `skarabox.username`.
 
-4. Note down the IP address and disk layout of the server.
+5. Note down the IP address and disk layout of the server.
    For that, follow the steps that appeared when booting on the USB stick.
    To reprint the steps, run the command `skarabox-help`.
 
-5. Open the [./myskarabox/configuration.nix](./configuration.nix) file and tweak values to match your hardware.
+6. Open the [./myskarabox/configuration.nix](./configuration.nix) file and tweak values to match your hardware.
 
 ### B. (option 3) Install on a Cloud Server
 
+No need for the beacon here.
 As long as you can boot the instance, [nixos-anywhere][] will
 take care of installing NixOS on it. For Hetzner for example,
 you can start in recovery mode.
