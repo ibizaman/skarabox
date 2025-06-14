@@ -17,6 +17,6 @@ jobs:
       - name: Get version
         id: vars
         run: echo "version=v$(cat VERSION)" >> $GITHUB_OUTPUT
-      - uses: rickstaa/action-create-tag@v1.7.2
+      - uses: rickstaa/action-create-tag@v2
         with:
           tag: ${{ steps.vars.outputs.version }}
