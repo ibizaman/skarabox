@@ -8,8 +8,12 @@
 preface.md
 ```
 
-```{=include=} chapters html:into-file=//usage.html
-usage.md
+```{=include=} chapters html:into-file=//installation.html
+installation.md
+```
+
+```{=include=} chapters html:into-file=//normal-operations.html
+normal-operations.md
 ```
 
 ```{=include=} chapters html:into-file=//recovery.html

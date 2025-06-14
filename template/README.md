@@ -8,7 +8,7 @@ or by [joining the Matrix channel][matrix].
 [issue]: https://github.com/ibizaman/skarabox/issues/new
 [matrix]: https://matrix.to/#/#selfhostblocks:matrix.org
 
-Installation procedure can be found
+Installation procedure and more can be found
 [online](https://installer.skarabox.com) for the latest version
 and also offline by running:
 
