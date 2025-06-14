@@ -5,7 +5,8 @@
   - [A. (option 1) Bootstrapping](#a-option-1-bootstrapping)
   - [A. (option 2) Add in Existing Repo](#a-option-2-add-in-existing-repo)
   - [B. (option 1) Test on a VM](#b-option-1-test-on-a-vm)
-  - [B. (option 2) Install on a Real Server](#b-option-2-install-on-a-real-server)
+  - [B. (option 2) Install on an On-Premise Server](#b-option-2-install-on-an-on-premise-server)
+  - [B. (option 3) Install on a Cloud Server](#b-option-3-install-on-a-cloud-server)
   - [C. Run the Installer](#c-run-the-installer)
 - [Normal Operations](#normal-operations)
 - [Options](#options)
@@ -31,22 +32,24 @@ method. If you do have one you want to integrate with Skarabox,
 follow the [Add in Existing Repo][] method.
 
 The installation procedure can be followed on a [VM][],
-to test the installation process, or on a [real server][].
-For the former, this flake template will create a suitable VM to
-test on and for the latter, an ISO file will be produced that you
-can install on a USB stick and boot from on your real server.
+to test the installation process, on an [on-premise server][]
+or on a [cloud instance][].
+For the first option, this flake template will create a suitable VM to
+test on and for the second, an ISO file will be produced that you
+can install on a USB stick and boot from on your on-premise server.
 
 Finally, [run the installer][].
 
 > [!CAUTION]
-> Following the installation procedure on a real server
+> Following the installation procedure on a server
 > WILL ERASE THE CONTENT of any disk on that server.
 > Take the time to remove any disk you care about.
 
 [bootstrapping]: #a-option-1-bootstrapping
 [Add in Existing Repo]: #a-option-2-add-in-existing-repo
 [VM]: #b-option-1-test-on-a-vm
-[Real Server]: #b-option-2-install-on-a-real-server
+[On-Premise Server]: #b-option-2-install-on-an-on-premise-server
+[Cloud Instance]: #b-option-3-install-on-a-cloud-instance
 [Run the Installer]: #c-run-the-installer
 
 ### A. (option 1) Bootstrapping
@@ -185,6 +188,8 @@ To do that, first we tweak the ports
 to more sensible defaults for a VM:
 
 ```bash
+$ echo 127.0.0.1 > ./myskarabox/ip
+$ echo x86_64-linux > ./myskarabox/system
 $ echo 2222 > ./myskarabox/ssh_port
 $ echo 2223 > ./myskarabox/ssh_boot_port
 ```
@@ -195,9 +200,16 @@ Then, start the VM:
 $ nix run .#myskarabox-beacon-vm &
 ```
 
+For info, this VM has 4 hard drives:
+
+- `/dev/nvme0`
+- `/dev/nvme1`
+- `/dev/sda`
+- `/dev/sdb`
+
 Now, skip to [step B](#b-run-the-installation-process).
 
-### B. (option 2) Install on a Real Server
+### B. (option 2) Install on an On-Premise Server
 
 _This guide assumes you know how to boot your server on a USB stick._
 
@@ -226,6 +238,22 @@ _This guide assumes you know how to boot your server on a USB stick._
    To reprint the steps, run the command `skarabox-help`.
 
 5. Open the [./myskarabox/configuration.nix](./configuration.nix) file and tweak values to match your hardware.
+
+### B. (option 3) Install on a Cloud Server
+
+As long as you can boot the instance, [nixos-anywhere][] will
+take care of installing NixOS on it. For Hetzner for example,
+you can start in recovery mode.
+
+Retrieve the IP of the server, then:
+
+```bash
+echo <ip> > myskarabox/ip
+echo x86_64-linux > myskarabox/system
+nix run .#myskarabox-gen-knownhosts-file
+```
+
+[nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 
 ### C. Run the Installer
 
