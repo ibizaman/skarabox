@@ -7,6 +7,7 @@ in
 {
   options.skarabox.disks = {
     rootPool = mkOption {
+      description = "ZFS root pool where the OS is stored.";
       type = with types; submodule {
         options = {
           name = mkOption {
@@ -48,6 +49,7 @@ in
     };
 
     dataPool = mkOption {
+      description = "ZFS pool to store important data.";
       type = with types; submodule {
         options = {
           enable = lib.mkEnableOption "the data pool on other hard drives." // {

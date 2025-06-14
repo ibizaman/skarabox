@@ -30,11 +30,13 @@ in
     };
 
     hosts = mkOption {
+      description = "Hosts managed by Skarabox.";
       default = {};
       type = types.attrsOf (types.submodule ({ name, ... }: {
         options = {
           pkgs = mkOption {
             type = types.anything;
+            defaultText = "inputs.nixpkgs";
             default = inputs.nixpkgs;
             description = ''
               If given, overrides pkgs in the nixosConfiguration.
@@ -477,6 +479,7 @@ in
         inherit beacon-usbimager gen-new-host;
         inherit add-sops-cfg sops sops-add-main-key sops-create-main-key;
         inherit (pkgs) age;
+        inherit (inputs'.skarabox.packages) manualHtml;
       } // (concatMapAttrs mkHostPackages cfg.hosts);
 
       apps = {

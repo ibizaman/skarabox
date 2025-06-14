@@ -22,6 +22,11 @@
     nix-flake-tests = {
       url = "github:antifuchs/nix-flake-tests";
     };
+
+    nmdsrc = {
+      url = "git+https://git.sr.ht/~rycee/nmd";
+      flake = false;
+    };
   };
 
   outputs = inputs@{
@@ -62,6 +67,23 @@
 
         gen-new-host = import ./lib/gen-new-host.nix {
           inherit add-sops-cfg pkgs;
+        };
+
+        manualHtml = pkgs.callPackage ./docs {
+          inherit (inputs) nmdsrc;
+          skaraboxModules = [
+            ./modules/bootssh.nix
+            ./modules/configuration.nix
+            ./modules/disks.nix
+            ./modules/hotspot.nix
+          ];
+          beaconModules = [
+            ./modules/beacon.nix
+          ];
+          flakeModuleModules = [
+            ./flakeModule.nix
+          ];
+          release = builtins.readFile ./VERSION;
         };
       };
 

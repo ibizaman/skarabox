@@ -1,20 +1,19 @@
-# SkaraboxOS
+# Skarabox
 
 [![build](https://github.com/ibizaman/skarabox/actions/workflows/build.yaml/badge.svg)](https://github.com/ibizaman/skarabox/actions/workflows/build.yaml)
 
-SkaraboxOS aims to be the fastest way to install NixOS on a server
+Skarabox aims to be the fastest way to install NixOS on a server
 with all batteries included.
 
 <!--toc:start-->
 - [Content](#content)
-- [Usage](#usage)
+- [Usage in Brief](#usage-in-brief)
 - [Provided operations:](#provided-operations)
+- [Architecture](#architecture)
 - [Why?](#why)
 - [Hardware Requirements](#hardware-requirements)
-- [Architecture](#architecture)
-- [Roadmap](#roadmap)
 - [Contribute](#contribute)
-- [Links](#links)
+- [Funding](#funding)
 <!--toc:end-->
 
 ## Content
@@ -63,7 +62,7 @@ This flake [template](./template) combines turn-key style:
 [colmena]: https://github.com/zhaofengli/colmena
 [tests]: ./tests/default.nix
 [CI]: ./.github/workflows/build.yaml
-[recovery]: ./template/README.md#recovery
+[recovery]: https://installer.skarabox.com/recovery.html
 
 This repository does not invent any of those wonderful tools.
 It merely provides an opinionated way to make them all fit together.
@@ -71,7 +70,7 @@ By being more opinionated, it gets you set up faster.
 
 Services can then be installed by using NixOS options directly
 or through [Self Host Blocks][].
-The latter, similarly to SkaraboxOS, provides an opinionated way to configure services in a seamless way.
+The latter, similarly to Skarabox, provides an opinionated way to configure services in a seamless way.
 
 [Self Host Blocks]: https://github.com/ibizaman/selfhostblocks
 
@@ -85,7 +84,7 @@ The latter, similarly to SkaraboxOS, provides an opinionated way to configure se
 I used Skarabox successfully on my own on-premise x86 server
 and on Hetzner dedicated ARM and x86 hosts.
 
-For more details, head over to [template/README.md](./template/README.md).
+For more details, head over to [the manual](https://installer.skarabox.com).
 
 ## Provided operations:
 
@@ -108,12 +107,16 @@ nix run .#sops ./myskarabox/secrets.yaml
 nix run .#myskarabox-ssh sudo reboot
 ```
 
+## Architecture
+
+All choices made are explained in the [Architecture](https://installer.skarabox.com/architecture.html) document.
+
 ## Why?
 
 Because the landscape of installing NixOS could be better
 and this repository is an attempt at that.
 
-By the way, the name SkaraboxOS comes from the scarab (the animal),
+By the way, the name Skarabox comes from the scarab (the animal),
 box (for the server) and OS (for Operating System).
 Scarab is spelled with a _k_ because it's kool.
 A scarab is a _very_ [strong][] animal representing well what this repository's intention.
@@ -122,7 +125,7 @@ A scarab is a _very_ [strong][] animal representing well what this repository's 
 
 ## Hardware Requirements
 
-SkaraboxOS is currently tailored for NAS users, not necessarily homelab users.
+Skarabox is currently tailored for NAS users, not necessarily homelab users.
 It expects a particular hardware layout:
 
 - 1 or 2 SSD or NVMe drive for the OS.
@@ -133,12 +136,6 @@ It expects a particular hardware layout:
 
 > [!WARNING]
 > The disks will be formatted and completely wiped out of data.
-
-## Architecture
-
-The [Architecture][] document covers how all pieces fit together.
-
-[Architecture]: ./docs/architecture.md
 
 ## Contribute
 

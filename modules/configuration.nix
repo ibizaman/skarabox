@@ -75,6 +75,7 @@ in
             or the string defined in `.device` option.
             '';
             readOnly = true;
+            internal = true;
             default = let
               cfg' = cfg.staticNetwork;
 

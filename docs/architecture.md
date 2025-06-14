@@ -1,25 +1,9 @@
-# Architecture
+# Architecture {#architecture}
 
 So you want to know more about how all pieces fit together in Skarabox?
 That's great. You're at the right place.
 
-<!--toc:start-->
-- [Hardware](#hardware)
-- [ZFS root pool encryption](#zfs-root-pool-encryption)
-- [ZFS data pool encryption](#zfs-data-pool-encryption)
-- [Remote decryption of root pool on boot](#remote-decryption-of-root-pool-on-boot)
-- [Static IP](#static-ip)
-- [SSH Access](#ssh-access)
-- [Erase your darlings](#erase-your-darlings)
-- [Host Key](#host-key)
-- [SOPS](#sops)
-- [hostid](#hostid)
-- [Wifi hotspot on beacon](#wifi-hotspot-on-beacon)
-- [ZFS settings](#zfs-settings)
-- [Principles](#principles)
-<!--toc:end-->
-
-## Hardware
+## Hardware {#hardware}
 
 In essence, we let [nixos-facter][] figure out what's needed.
 
@@ -44,13 +28,13 @@ boot.supportedFilesystems = [ "zfs" ];
 [nixos-facter]: https://github.com/nix-community/nixos-facter
 [zfs.nix]: https://github.com/NixOS/nixpkgs/blob/nixos-24.11/nixos/modules/tasks/filesystems/zfs.nix
 
-## ZFS root pool encryption
+## ZFS root pool encryption {#zfs-root-pool-encryption}
 
 We want to encrypt the root pool with a passphrase
 that is _not_ stored on the host.
 We will need to enter it on every boot.
 
-The configuration lives in [./modules/disks.nix](../modules/disks.nix),
+The configuration lives in [modules/disks.nix](@REPO@/modules/disks.nix),
 under `disko.devices.zpool` and uses [disko][].
 
 [disko]: https://github.com/nix-community/disko
@@ -106,7 +90,7 @@ Now, on every boot, a prompt will appear asking us for the passphrase.
 We will see in a [later section](#remote-decryption-of-root-pool-on-boot)
 how to decrypt the root pool remotely.
 
-## ZFS data pool encryption
+## ZFS data pool encryption {#zfs-data-pool-encryption}
 
 For the data pool, the idea is the same as for the [root pool](#zfs-root-pool-encryption).
 The difference is that we will store the passphrase
@@ -164,7 +148,7 @@ process by adding the following argument to the
 --disk-encryption-keys /tmp/data_passphrase <location of passphrase file>
 ```
 
-## Remote decryption of root pool on boot
+## Remote decryption of root pool on boot {#remote-decryption-of-root-pool-on-boot}
 
 With the [config above](#zfs-root-pool-encryption),
 a prompt will appear during initrd
@@ -176,7 +160,7 @@ So here, we want to run an ssh server in initrd
 which allows us to unlock the root pool
 and continue the boot process.
 
-The relevant config is in [./modules/disks.nix](../modules/disks.nix):
+The relevant config is in [modules/disks.nix](@REPO@/modules/disks.nix):
 
 ```nix
 boot.initrd.network = {
@@ -202,7 +186,7 @@ We enable `boot.initrd.network` and the `.ssh` options.
 We set the port to 2222 by default.
 We add an ssh public key so we can connect as the root user.
 
-This ssh public key is generated as part of the [initialization](../lib/gen-initial.nix)
+This ssh public key is generated as part of the [initialization](@REPO@/lib/gen-initial.nix)
 process in `./<hostname>/ssh.pub` and the private key in `./<hostname>/ssh`.
 We also add that file to `.gitignore` to ensure
 we don't store the private file in the repo.
@@ -226,7 +210,7 @@ If there is no DHCP server on the network, this setup will
 fail because no IP will be assigned to the host. In those
 cases, a [static IP](#static-ip) is required.
 
-## Static IP
+## Static IP {#static-ip}
 
 In case there is no DHCP server available, or if you intend
 the server itself to be the DHCP server, no IP address
@@ -342,7 +326,7 @@ it to the `ip` the server is accessible from.
 This static IP is also used on the beacon to setup
 the [WiFi hotspot](#Wifi-hotspot-on-beacon).
 
-## SSH Access
+## SSH Access {#ssh-access}
 
 Here, we enable SSH access to the host after it has booted.
 We want a password-less connection
@@ -380,7 +364,7 @@ boot.initrd.network = {
 
 For the firmware, we use nixos-facter to figure it out.
 
-## Erase your darlings
+## Erase your darlings {#erase-your-darlings}
 
 The idea here is to explicitly list which directories one wants
 to save. The rest will be lost on reboots.
@@ -428,7 +412,7 @@ disko.devices.zpool.${cfg.rootPool}.datasets."local/nix" = {
 };
 ```
 
-## Host Key
+## Host Key {#host-key}
 
 By default, upon starting, the sshd systemd service
 will generate some host keys under `/etc/ssh` if that
@@ -502,7 +486,7 @@ services.openssh = {
 };
 ```
 
-## SOPS
+## SOPS {#sops}
 
 To store the secrets, we use [sops-nix][] which stores the secrets
 encrypted in the repository, here in a `./<hostname>/secrets.yaml` file.
@@ -527,7 +511,7 @@ The user's SOPS private key is generated in [gen-initial.nix][] with:
 age-keygen -o sops.key
 ```
 
-[gen-initial.nix]: ../lib/gen-initial.nix
+[gen-initial.nix]: @REPO@/lib/gen-initial.nix
 
 and get the associated SOPS public key with:
 
@@ -582,7 +566,7 @@ Similarly, we can decrypt one value with the `decrypt --extract` [option][extrac
 [set]: https://github.com/getsops/sops?tab=readme-ov-file#set-a-sub-part-in-a-document-tree
 [extract]: https://github.com/getsops/sops?tab=readme-ov-file#45extract-a-sub-part-of-a-document-tree
 
-## hostid
+## hostid {#hostid}
 
 The `hostid` must be unique and not change during the lifetime of the server.
 It is only used by ZFS which refuses to import the pools if the `hostid` changes.
@@ -599,7 +583,7 @@ And its configuration is trivial:
 networking.hostId = ./<hostname>/hostid;
 ```
 
-## Wifi hotspot on beacon
+## Wifi hotspot on beacon {#Wifi-hotspot-on-beacon}
 
 It is essential for the user to be able to connect to the beacon,
 whatever the network configuration. In cases where they
@@ -609,7 +593,7 @@ is convenient. This is why the beacon always tries to create a
 WiFi hotspot upon booting, if a wireless card is available.
 
 The configuration to do this is long to just copy-paste here
-so please head to the [../modules/hotspot.nix](../modules/hotspot.nix)
+so please head to the [modules/hotspot.nix](@REPO@/modules/hotspot.nix)
 file.
 
 In essence, a systemd service is used to create a hotspot
@@ -624,12 +608,12 @@ or by a udev rule reacting to a new pluggable one.
 
 [linux-wifi-hotspot]: https://github.com/lakinduakash/linux-wifi-hotspot
 
-## Deployment
+## Deployment {#deployment}
 
 Deploying can be done through deploy-rs or colmena. Both are
 supported and more can be added if users want it.
 
-## ZFS settings
+## ZFS settings {#zfs-settings}
 
 I wrote a [blog post][] about these.
 I'm not an expert on ZFS,
@@ -638,7 +622,7 @@ and this is what came out of it.
 
 [blog post]: https://blog.tiserbox.com/posts/2024-02-09-zfs-on-nix-os.html
 
-## Principles
+## Principles {#principles}
 
 I'm trying to follow these principles as I implement features.
 I find they tend to lead to a polished experience
