@@ -2,6 +2,39 @@
   inherit (lib) mkForce types;
 
   cfg = config.skarabox;
+
+  helptext = ''
+  * Step 1.  Enable network access to this server.
+
+  For a wired network connection, just plug in an ethernet cable from your router
+  to this server. The connection will be made automatically.
+
+  For a wireless connection, if a card is found, a "Skarabox" wifi hotspot will
+  be created automatically. Connect to it from your laptop.
+
+  * Step 2.  Identify the disk layout.
+
+  To know what disk existing in the system, type the command "lsblk" without
+  the double quotes. This will show lines like so:
+
+  NAME             TYPE
+  /dev/nvme0n1     disk             This is an NVMe drive
+  /dev/sda         disk             This is an SSD or HDD drive
+  /dev/sdb         disK             This is an SSD or HDD drive
+
+  With the above setup, in the flake.nix template, set the following options:
+
+      skarabox.disks.rootPool.disk1 = "/dev/nvme0n1"
+      skarabox.disks.dataPool.disk1 = "/dev/sda"
+      skarabox.disks.dataPool.disk2 = "/dev/sdb"
+
+  * Step 3.  Run the installer.
+
+  From your laptop, run the installer. The server will then reboot automatically
+  in the new system as soon as the installer ran successfully.
+
+  Enjoy your NixOS system powered by Skarabox!
+  '';
 in {
   imports = [
     ./hotspot.nix
@@ -61,9 +94,9 @@ in {
     boot.loader.systemd-boot.enable = true;
 
     environment.systemPackages = let
-      skarabox-help = pkgs.writeText "skarabox-help" config.services.getty.helpLine;
+      skarabox-help = pkgs.writeText "skarabox-help" helptext;
     in [
-      (pkgs.writeShellScriptBin "skarabox" ''
+      (pkgs.writeShellScriptBin "skarabox-help" ''
        cat ${skarabox-help}
        '')
       pkgs.nixos-facter
@@ -101,7 +134,7 @@ in {
         .'|   |   |'.   Congratulations!
         v'|   |   |'v
           |   |   |     Nothing is installed yet on this server. To abort, just
-         .\\   |   /.    close this server and remove the USB stick.
+         .\\   |   /.    shutdown this server and remove the USB stick.
         (_.'._^_.'._)
          \\\\       //    To complete the installation of Skarabox on this server, you
           \\'-   -'/     must follow the steps below to run the Skarabox installer.
@@ -118,45 +151,7 @@ in {
        *                                                                           *
        WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
 
-
-      * Step 1.  Enable network access to this server.
-
-      For a wired network connection, just plug in an ethernet cable from your router
-      to this server. The connection will be made automatically.
-
-      For a wireless connection, if a card is found, a "Skarabox" wifi hotspot will
-      be created automatically. Connect to it from your laptop.
-
-      * Step 2.  Identify the disk layout.
-
-      To know what disk existing in the system, type the command "fdisk -l" without
-      the double quotes. This will show lines like so:
-
-      Disk /dev/nvme0n1       This is an NVMe drive
-      Disk /dev/sda           This is an SSD or HDD drive
-      Disk /dev/sdb           This is an SSD or HDD drive
-
-      With the above setup, in the flake.nix template, set the following options:
-
-          skarabox.disks.rootPool.disk1 = "/dev/nvme0n1"
-          skarabox.disks.dataPool.disk1 = "/dev/sda"
-          skarabox.disks.dataPool.disk2 = "/dev/sdb"
-
-      * Step 3.  Identify the IP address.
-
-      To run the installer, you first need to know the IP address of this host.
-      Assuming you followed step 1 above, type the command "ip -brief a" verbatim,
-      without the enclosing double quotes. An IP address looks like so:
-
-        192.168.1.15
-        10.0.2.15
-
-      * Step 4.  Run the installer.
-
-      From your laptop, run the installer. The server will then reboot automatically
-      in the new system as soon as the installer ran successfully.
-
-      Enjoy your NixOS system powered by Skarabox!
+      Run the command `skarabox-help` to print more details.
     '';
   };
 }
