@@ -32,13 +32,13 @@ This flake [template](./template) combines turn-key style:
 - Managing host keys, known hosts and ssh keys
   to provide a secure and seamless SSH experience.
 - [nixos-anywhere][] to install NixOS headlessly.
-- [disko][] to format the drives using native ZFS encryption
+- [disko][] to format the drives using native ZFS encryption.
 - Remote root pool decryption through ssh.
 - Disk mirroring: 1 or 2 disks in raid1 using ZFS mirroring for the OS,
   boot partition is then mirrored using grub mirrored devices
   and 0 or 2 disks in raid1 using ZFS mirroring for the data disks.
 - [nixos-facter][] to handle hardware configuration.
-- [flake-parts][] to make the resulting `flake.nix` small.
+- [flake-parts][] to make the user-facing `flake.nix` small.
 - Handle having multiple hosts managed by one flake
   and programmatically add more with generated secrets with one command.
 - [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
@@ -52,7 +52,7 @@ This flake [template](./template) combines turn-key style:
   and [CI][] to make sure the installation procedure does work!
   Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
 - Supporting `x86_64-linux` and `aarch64-linux` platform.
-- Some pretty extensive [recovery][] instructions. (Tests yet to be written)
+- Some pretty extensive [recovery][] instructions.
 
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 [disko]: https://github.com/nix-community/disko
@@ -96,7 +96,7 @@ nix run .#myskarabox-unlock
 # SSH in:
 nix run .#myskarabox-ssh
 
-# Deploy changes if any:
+# Deploy changes:
 nix run .#deploy-rs
 # or
 nix run .#colmena
@@ -140,14 +140,6 @@ The [Architecture][] document covers how all pieces fit together.
 
 [Architecture]: ./docs/architecture.md
 
-## Roadmap
-
-All ideas are noted in [issues][]
-and prioritized issues can be found in the [milestones][].
-
-[issues]: https://github.com/ibizaman/skarabox/issues
-[milestones]: https://github.com/ibizaman/skarabox/milestones
-
 ## Contribute
 
 Contributions are very welcomed, help is wanted in all those areas:
@@ -171,6 +163,7 @@ The prioritized issues are those belonging to the [next milestone][milestone].
 Those issues are not set in stone and I'd be very happy to solve
 an issue an user has before scratching my own itch.
 
+[issues]: https://github.com/ibizaman/skarabox/issues
 [milestone]: https://github.com/ibizaman/skarabox/milestones
 
 ## Funding

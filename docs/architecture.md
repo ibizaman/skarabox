@@ -8,11 +8,13 @@ That's great. You're at the right place.
 - [ZFS root pool encryption](#zfs-root-pool-encryption)
 - [ZFS data pool encryption](#zfs-data-pool-encryption)
 - [Remote decryption of root pool on boot](#remote-decryption-of-root-pool-on-boot)
+- [Static IP](#static-ip)
 - [SSH Access](#ssh-access)
 - [Erase your darlings](#erase-your-darlings)
 - [Host Key](#host-key)
 - [SOPS](#sops)
 - [hostid](#hostid)
+- [Wifi hotspot on beacon](#wifi-hotspot-on-beacon)
 - [ZFS settings](#zfs-settings)
 - [Principles](#principles)
 <!--toc:end-->
@@ -219,6 +221,126 @@ and fails to ask for an IP and no error message is shown,
 this probably means that the driver for the hardware has failed
 loading or that nixos-facter has failed to detect the hardware.
 See [Hardware](#hardware) for how to fix this.
+
+If there is no DHCP server on the network, this setup will
+fail because no IP will be assigned to the host. In those
+cases, a [static IP](#static-ip) is required.
+
+## Static IP
+
+In case there is no DHCP server available, or if you intend
+the server itself to be the DHCP server, no IP address
+will be assigned and you won't be able to access to neither
+the beacon or the server.
+
+In those cases, assigning a static IP is necessary. Skarabox
+exposes the `skarabox.staticNetwork` submodule option for that.
+If set to null, DHCP is used on the server:
+
+```nix
+systemd.network = {
+  enable = true;
+  networks."10-lan" = {
+    matchConfig.Name = "en*";
+    networkConfig.DHCP = "ipv4";
+    linkConfig.RequiredForOnline = true;
+  };
+};
+```
+
+and at boot:
+
+```nix
+boot.initrd.network.udhcpc.enable = true;
+```
+
+On the server, we can use a catch-all `"en*"` setting to
+match all Ethernet connections, which is a nice default.
+At boot, `udhcpc` does that too automatically.
+
+If the `skarabox.staticNetwork` is set to for example:
+
+```nix
+skarabox.staticNetwork = {
+  ip = "192.168.1.30";
+  gateway = "192.168.1.1";
+};
+```
+
+then the server's network is assigned those values:
+
+```nix
+systemd.network = {
+  enable = true;
+  networks."10-lan" = {
+    matchConfig.Name = "en*";
+    address = [
+      "${cfg.staticNetwork.ip}/24"
+    ];
+    routes = [
+      { Gateway = cfg.staticNetwork.gateway; }
+    ];
+    linkConfig.RequiredForOnline = true;
+  };
+};
+```
+
+Here also we can use the catch-all `"en*"` setting.
+
+At boot, we disabled `udhcpc`
+and need to set the `boot.kernelParams` option too:
+
+```nix
+boot.initrd.network.udhcpc.enable = false;
+
+boot.kernelParams = let
+  cfg' = config.skarabox.staticNetwork;
+in [
+  "ip=${cfg'.ip}::${cfg'.gateway}:255.255.255.0:${config.skarabox.hostname}-initrd:${cfg'.deviceName}:off:::"
+];
+```
+
+A big difference here is we cannot use a catch-all setting for all Ethernet devices.
+So instead we must know which interface name to bind to.
+To avoid doing that, we'll use the `facter.json` report to extract
+the interface name we want to bind to:
+
+```nix
+skarabox.staticNetwork.deviceName = let
+  cfg' = cfg.staticNetwork;
+
+  fn = n: n.sub_class.name == "Ethernet" && lib.hasPrefix cfg'.device.namePrefix n.unix_device_name;
+
+  firstMatchingDevice = (builtins.head (builtins.filter fn config.facter.report.hardware.network_interface)).unix_device_name;
+in
+  if isString cfg'.device then cfg'.device else firstMatchingDevice;
+```
+
+The option `device.namePrefix` is used to distinguish between
+Ethernet and Wireless interfaces.
+
+On the beacon, we always use a static IP address to make sure
+it will match with the one the server will have. This way,
+we only have ever one IP to deal with during the installation process:
+
+```nix
+systemd.network = {
+  enable = true;
+  networks."10-lan" = {
+    matchConfig.Name = "en*";
+    address = [
+      "${ip}/24"
+    ];
+    linkConfig.RequiredForOnline = true;
+  };
+};
+```
+
+The `ip` comes from the flake module where we set
+it to the `ip` the server is accessible from.
+
+This static IP is also used on the beacon to setup
+the [WiFi hotspot](#Wifi-hotspot-on-beacon).
 
 ## SSH Access
 
@@ -477,11 +599,42 @@ And its configuration is trivial:
 networking.hostId = ./<hostname>/hostid;
 ```
 
+## Wifi hotspot on beacon
+
+It is essential for the user to be able to connect to the beacon,
+whatever the network configuration. In cases where they
+cannot use an Ethernet connection, using WiFi is the alternative.
+Even if an Ethernet connection is available, using the hotspot
+is convenient. This is why the beacon always tries to create a
+WiFi hotspot upon booting, if a wireless card is available.
+
+The configuration to do this is long to just copy-paste here
+so please head to the [../modules/hotspot.nix](../modules/hotspot.nix)
+file.
+
+In essence, a systemd service is used to create a hotspot
+using [linux-wifi-hotspot][]. This hotspot will use the IP
+set from the flake module, which means the IP of the beacon
+from the WiFi hotspot is the same as the one the server
+will have later, allowing us to only deal with one IP!
+
+That systemd service is triggered either on boot, if the
+wireless interface is already installed on the server,
+or by a udev rule reacting to a new pluggable one.
+
+[linux-wifi-hotspot]: https://github.com/lakinduakash/linux-wifi-hotspot
+
+## Deployment
+
+Deploying can be done through deploy-rs or colmena. Both are
+supported and more can be added if users want it.
+
 ## ZFS settings
 
 I wrote a [blog post][] about these.
 I'm not an expert on ZFS,
-I mostly did some extensive research.
+I mostly did some extensive research
+and this is what came out of it.
 
 [blog post]: https://blog.tiserbox.com/posts/2024-02-09-zfs-on-nix-os.html
 

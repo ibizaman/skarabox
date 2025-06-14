@@ -175,7 +175,8 @@ skarabox.hosts = {
 
    `nix run .#gen-new-host myskarabox`.
 
-   Tweak `./myskarabox/configuration.nix`.
+   Tweak `./myskarabox/configuration.nix` to change for example the username.
+   The username will also be used as the user in the beacon.
 
 ### B. (option 1) Test on a VM
 
@@ -271,6 +272,8 @@ echo <ip> > myskarabox/ip
 echo x86_64-linux > myskarabox/system
 nix run .#myskarabox-gen-knownhosts-file
 ```
+
+Replace the system with the correct one for your instance.
 
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 
