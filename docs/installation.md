@@ -1,7 +1,5 @@
 <!-- Read these docs at https://installer.skarabox.com -->
-# Usage {#usage}
-
-## Installation Procedure {#installation-procedure}
+# Installation {#installation}
 
 If you don't have an existing repository, choose the [bootstrapping][]
 method. If you do have one you want to integrate with Skarabox,
@@ -16,10 +14,11 @@ can install on a USB stick and boot from on your on-premise server.
 
 Finally, [run the installer][].
 
-> [!CAUTION]
-> Following the installation procedure on a server
-> WILL ERASE THE CONTENT of any disk on that server.
-> Take the time to remove any disk you care about.
+::: {.warning}
+Following the installation procedure on a server
+WILL ERASE THE CONTENT of any disk on that server.
+Take the time to remove any disk you care about.
+:::
 
 [bootstrapping]: #bootstrapping
 [Add in Existing Repo]: #existing-repo
@@ -28,32 +27,33 @@ Finally, [run the installer][].
 [Cloud Instance]: #cloud
 [Run the Installer]: #run-installer
 
-### A. (option 1) Bootstrapping {#bootstrapping}
+## A. (option 1) Bootstrapping {#bootstrapping}
 
 Create a directory and download the template.
 
 ```bash
 $ mkdir myskarabox
 $ cd myskarabox
-$ nix run github:ibizaman/skarabox#init
+$ nix run github:ibizaman/skarabox?ref=@VERSION@#init
 ```
 
 This last command will also generate the needed secrets
 and ask for the password you want for the admin user
 for a host named `myskarabox` whose files are located
-under the [myskarabox](./myskarabox) folder.
+under the [myskarabox](@REPO@/template/myskarabox) folder.
 
 All the files at the root of this new repository
 are common to all hosts.
 
-It will finally ask you to fill out two files: [./ip](./ip) and [./system](./system)
-and afterwards generate [./known_hosts](./known_hosts) with:
+It will finally ask you to fill out two files: [./ip](@REPO@/template/myskarabox/ip)
+and [./system](@REPO@/template/myskarabox/system)
+and afterwards generate [./known_hosts](@REPO@/template/myskarabox/known_hosts) with:
 
 ```bash
 nix run .#myskarabox-gen-knownhosts-file
 ```
 
-### A. (option 2) Add in Existing Repo {#existing-repo}
+## A. (option 2) Add in Existing Repo {#existing-repo}
 
 Add inputs:
 
@@ -151,12 +151,15 @@ skarabox.hosts = {
 
    `nix run .#gen-new-host myskarabox`.
 
-   Tweak `./myskarabox/configuration.nix` to change for example the username.
+   Tweak [./myskarabox/configuration.nix][]
+   to change for example the username.
    The username will also be used as the user in the beacon.
 
-### B. (option 1) Test on a VM {#vm}
+   [./myskarabox/configuration.nix]: @REPO@/template/myskarabox/configuration.nix
 
-Assuming the [./configuration.nix](./myskarabox/configuration.nix) file is left untouched,
+## B. (option 1) Test on a VM {#vm}
+
+Assuming the [./myskarabox/configuration.nix][] file is left untouched,
 you can now test the installation process on a VM.
 This VM has 3 hard drives, one for the OS
 and two in raid for the data.
@@ -186,7 +189,7 @@ For info, this VM has 4 hard drives:
 
 Now, skip to [step B](#run-installer).
 
-### B. (option 2) Install on an On-Premise Server {#on-premise}
+## B. (option 2) Install on an On-Premise Server {#on-premise}
 
 _This guide assumes you know how to boot your server on a USB stick._
 
@@ -206,7 +209,7 @@ _This guide assumes you know how to boot your server on a USB stick._
    Having a same IP for all makes the installation procedure much easier.
 
    You can also setup a static IP for the server itself by enabling
-   the `skarabox.staticNetwork` option in your `./myskarabox/configuration.nix` file.
+   the `skarabox.staticNetwork` option in your [./myskarabox/configuration.nix][] file.
 
 2. Create the .iso file.
 
@@ -232,9 +235,9 @@ _This guide assumes you know how to boot your server on a USB stick._
    For that, follow the steps that appeared when booting on the USB stick.
    To reprint the steps, run the command `skarabox-help`.
 
-6. Open the [./myskarabox/configuration.nix](./configuration.nix) file and tweak values to match your hardware.
+6. Open the [./myskarabox/configuration.nix][] file and tweak values to match your hardware.
 
-### B. (option 3) Install on a Cloud Server {#cloud}
+## B. (option 3) Install on a Cloud Server {#cloud}
 
 No need for the beacon here.
 As long as you can boot the instance, [nixos-anywhere][] will
@@ -253,7 +256,7 @@ Replace the system with the correct one for your instance.
 
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 
-### C. Run the Installer {#run-installer}
+## C. Run the Installer {#run-installer}
 
 Create a `./myskarabox/facter.json` file containing
 the hardware specification of the host (or the VM) with:
@@ -281,103 +284,6 @@ $ nix run .#myskarabox-install-on-beacon
 The server will reboot into NixOS on its own.
 Upon booting, the root partition will need to be decrypted
 as outlined in the next section.
-
-## Normal Operations {#normal-operations}
-
-All commands are prefixed by the hostname, allowing to handle multiple hosts.
-
-1. Decrypt `root` pool after boot
-
-   ```bash
-   $ nix run .#myskarabox-unlock
-   ```
-
-   The connection will then disconnect automatically with:
-
-   ```
-   Connection to <ip> closed.
-   ```
-
-   This is normal behavior.
-
-2. SSH in
-
-   ```bash
-   $ nix run .#myskarabox-ssh
-   ```
-
-3. Reboot
-
-   ```bash
-   $ nix run .#myskarabox-ssh sudo reboot
-   ```
-
-   You will then be required to decrypt the hard drives upon reboot as explained above.
-
-4. Deploy an Update
-
-   Modify the [./configuration.nix](./configuration.nix) file then run one of the following snippets:
-
-   To deploy with [deploy-rs](https://github.com/serokell/deploy-rs):
-   ```bash
-   $ nix run .#deploy-rs
-   ```
-
-   To deploy with [colmena](https://github.com/zhaofengli/colmena):
-   ```bash
-   $ nix run .#colmena apply
-   ```
-
-   Specific options for deploy-rs or colmena can be added by appending
-   a double dash followed by the arguments, like so:
-
-   ```bash
-   $ nix run .#colmena apply -- --on myskarabox
-   ```
-
-5. Update dependencies
-
-   ```bash
-   $ nix flake update
-   $ nix run .#deploy-rs
-   ```
-
-6. Edit secrets
-
-   ```bash
-   $ nix run .#sops ./myskarabox/secrets.yaml
-   ```
-
-7. Add other hosts
-
-   ```bash
-   $ nix run .#gen-new-host otherhost.
-   ```
-
-   and copy needed config in `./flake.nix`.
-
-8. Rotate host key
-
-   ```bash
-   $ ssh-keygen -f ./myskarabox/host_key
-   $ nix run .#add-sops-cfg -- -o .sops.yaml alias myskarabox $(ssh-to-age -i ./myskarabox/host_key.pub)
-   $ nix run .#deploy-rs
-   $ nix run .#baryum-gen-knownhosts-file
-   ```
-
-## Options {#options}
-  
-All options can be found in the [options appendix](options.html).
-
-## Tag Updates {#usage-tag}
-
-To pin Skarabox to a release/tag, run the following snippet:
-
-```nix
-nix flake update --override-input skarabox github:ibizaman/skarabox/@VERSION@ skarabox
-```
-
-Updating Skarabox to a new version can be done the same way.
 
 ## Post Installation Checklist {#checklist}
 

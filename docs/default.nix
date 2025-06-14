@@ -121,7 +121,12 @@ in stdenv.mkDerivation {
         '@VERSION@' \
         ${builtins.readFile ../VERSION}
 
-    substituteInPlace ./usage.md \
+    substituteInPlace ./installation.md \
+      --replace \
+        '@VERSION@' \
+        ${builtins.readFile ../VERSION}
+
+    substituteInPlace ./normal-operations.md \
       --replace \
         '@VERSION@' \
         ${builtins.readFile ../VERSION}
