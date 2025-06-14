@@ -442,7 +442,7 @@ in
 
             text = ''
               root_passphrase="$(sops decrypt --extract "${cfg'.secretsRootPassphrasePath}" "${cfg'.secretsFilePath}")"
-              printf '%s' "$root_passphrase" | boot-ssh "$@"
+              printf '%s' "$root_passphrase" | boot-ssh -T "$@"
             '';
           };
         in {

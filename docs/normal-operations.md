@@ -8,12 +8,7 @@ All commands are prefixed by the hostname, allowing to handle multiple hosts.
    $ nix run .#myskarabox-unlock
    ```
 
-   The connection will then disconnect automatically with:
-
-   ```
-   Connection to <ip> closed.
-   ```
-
+   The connection will then disconnect automatically with no message.
    This is normal behavior.
 
 ## SSH in {#ssh}
