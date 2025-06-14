@@ -51,19 +51,14 @@ in
             Device for which to configure the IP address for.
 
             Either pass the device name directly if you know it, like "ens3".
-            Or configure the `subClass` option to get the first device name
-            matching that sub-class from the facter.json report.
+            Or configure the `deviceName` option to get the first device name
+            matching that prefix from the facter.json report.
             '';
-            default = { subClass = "Ethernet"; };
+            default = { namePrefix = "en"; };
             type = with types; oneOf [
               str
               (submodule {
                 options = {
-                  subClass = mkOption {
-                    type = str;
-                    description = "Sub-class as it appears in the facter.json report.";
-                    default = "Ethernet";
-                  };
                   namePrefix = mkOption {
                     type = str;
                     description = "Name prefix as it appears in the facter.json report. Used to distinguish between wifi and ethernet.";
@@ -83,7 +78,7 @@ in
             default = let
               cfg' = cfg.staticNetwork;
 
-              fn = n: n.sub_class.name == cfg'.device.subClass && lib.hasPrefix cfg'.device.namePrefix n.unix_device_name;
+              fn = n: n.sub_class.name == "Ethernet" && lib.hasPrefix cfg'.device.namePrefix n.unix_device_name;
 
               firstMatchingDevice = (builtins.head (builtins.filter fn config.facter.report.hardware.network_interface)).unix_device_name;
             in
