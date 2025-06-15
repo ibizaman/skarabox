@@ -16,63 +16,107 @@ with all batteries included.
 - [Funding](#funding)
 <!--toc:end-->
 
-## Content
+## Usage
 
-See [usage][] if you're interested in what the commands to get all this look like.
+Skarabox is a flake template which combines three main features
+which all work together to provide a seamless NixOS install experience.
 
-[usage]: #usage
+Skarabox uses a lot of existing wonderful tools.
+It merely provides an opinionated way to make them all fit together.
+By being more opinionated, it gets you set up faster.
 
-This flake [template](./template) combines turn-key style:
+After the installation is done, services can be installed
+using NixOS options directly or through [Self Host Blocks][].
+The latter, similarly to Skarabox, provides
+an opinionated way to configure services in a seamless way.
 
-- A bootable ISO called beacon, installable on an USB key.
-- A WiFi hotspot with SSID Skarabox available from the beacon.
-- Alternatively, a VM based on the bootable ISO
-  to test the installation procedure.
-- Managing host keys, known hosts and ssh keys
-  to provide a secure and seamless SSH experience.
+[Self Host Blocks]: https://github.com/ibizaman/selfhostblocks
+
+### Beacon
+
+To install NixOS on you server, you must be able to first
+boot on it. For a cloud install, that's usually easy but
+for an on-premise server, you must create a bootable USB key.
+That's the goal of the beacon which generates an ISO file
+that's writable on an USB key.
+
+On top of just booting up, Skarabox' beacon:
+- Assigns a static IP to the beacon which matches the server's IP.
+- Creates a WiFi hotspot with SSID "Skarabox".
+
+To test the installation, Skarabox provides a VM beacon
+that runs on your laptop and which contains 2 OS drive and 2 data drive,
+mimicking the supported disk layout by Skarabox.
+
+### Flake Module
+
+The flake module is used with [flake-parts][] to manage one or more servers
+under the [skarabox.hosts option][Flake module options]
+and provide commands and packages for each of those.
+
+For example, the `nix run .#gen-new-host <newhost>` command is used to create
+the directory structure to manage a new host, including new random secrets.
+
+The flake module:
+
+- Assigns the same values, like IP address, to the [beacon options][] and the [NixOS module options][].
+- Creates random host key and ssh key to access the server.
+  The host key is used then to populate a known hosts file.
+- Create main [SOPS][sops-nix] key.
+- Create one `secrets.yaml` SOPS file per host, encrypted by main SOPS key
+  and by the corresponding host key.
+- Uses fully pinned inputs to avoid incompatible dependency versions.
+
+[flake-parts]: https://flake.parts
+[beacon options]: https://installer.skarabox.com/options.html#beacon-options
+[NixOS module options]: https://installer.skarabox.com/options.html#skarabox-options
+[Flake module options]: https://installer.skarabox.com/options.html#flake-module-options
+
+### NixOS Module
+
+The NixOS module provides features useful during installation
+and also afterwards:
+
 - [nixos-anywhere][] to install NixOS headlessly.
 - [disko][] to format the drives using native ZFS encryption.
 - Remote root pool decryption through ssh.
 - Disk mirroring: 1 or 2 disks in raid1 using ZFS mirroring for the OS,
   boot partition is then mirrored using grub mirrored devices
   and 0 or 2 disks in raid1 using ZFS mirroring for the data disks.
-- [nixos-facter][] to handle hardware configuration.
-- [flake-parts][] to make the user-facing `flake.nix` small.
-- Handle having multiple hosts managed by one flake
-  and programmatically add more with generated secrets with one command.
-- [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
-- [deploy-rs][] or [colmena][] to deploy updates.
-- Statically assigned IP for beacon and WiFi hotspot for
-  easier installation procedure.
-- DHCP or static IP for host.
-- Programmatically populate Sops secrets file.
-- Fully pinned inputs.
 - Backed by [tests][] for all disk variants
   and [CI][] to make sure the installation procedure does work!
-  Why don't you run them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
-- Supporting `x86_64-linux` and `aarch64-linux` platform.
-- Some pretty extensive [recovery][] instructions.
+  Why don't you try them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
+- [nixos-facter][] to handle hardware configuration.
+- [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
+- Use [deploy-rs][] or [colmena][] to deploy updates.
+- Configures DHCP or static IP for host.
+- Supports `x86_64-linux` and `aarch64-linux` platform.
 
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 [disko]: https://github.com/nix-community/disko
 [nixos-facter]: https://github.com/nix-community/nixos-facter
-[flake-parts]: https://flake.parts/
 [sops-nix]: https://github.com/Mic92/sops-nix
 [deploy-rs]: https://github.com/serokell/deploy-rs
 [colmena]: https://github.com/zhaofengli/colmena
 [tests]: ./tests/default.nix
 [CI]: ./.github/workflows/build.yaml
+
+## Current State
+
+The code is pretty robust, especially thanks to the tests.
+I used Skarabox successfully on my own on-premise x86 server
+and on Hetzner dedicated ARM and x86 hosts.
+
+## Manual
+
+The manual can be found [online][manual]
+It includes some pretty extensive [recovery][] instructions
+and an [architecture][] document explaining the inner workings
+of Skarabox.
+
+[manual]: https://installer.skarabox.com
 [recovery]: https://installer.skarabox.com/recovery.html
-
-This repository does not invent any of those wonderful tools.
-It merely provides an opinionated way to make them all fit together.
-By being more opinionated, it gets you set up faster.
-
-Services can then be installed by using NixOS options directly
-or through [Self Host Blocks][].
-The latter, similarly to Skarabox, provides an opinionated way to configure services in a seamless way.
-
-[Self Host Blocks]: https://github.com/ibizaman/selfhostblocks
+[architecture]: https://installer.skarabox.com/architecture.html
 
 ## Usage in Brief
 
@@ -81,14 +125,9 @@ The latter, similarly to Skarabox, provides an opinionated way to configure serv
    or even on a cloud instance.
 3. Install on target host.
 
-I used Skarabox successfully on my own on-premise x86 server
-and on Hetzner dedicated ARM and x86 hosts.
+Afterwards, commands are provided for common operations:
 
-For more details, head over to [the manual](https://installer.skarabox.com).
-
-## Provided operations:
-
-```
+```bash
 # Decrypt root partition:
 nix run .#myskarabox-unlock
 
@@ -106,10 +145,6 @@ nix run .#sops ./myskarabox/secrets.yaml
 # Reboot:
 nix run .#myskarabox-ssh sudo reboot
 ```
-
-## Architecture
-
-All choices made are explained in the [Architecture](https://installer.skarabox.com/architecture.html) document.
 
 ## Why?
 
@@ -137,7 +172,7 @@ It expects a particular hardware layout:
 > [!WARNING]
 > The disks will be formatted and completely wiped out of data.
 
-## Contribute
+## Contributing
 
 Contributions are very welcomed, help is wanted in all those areas:
 
