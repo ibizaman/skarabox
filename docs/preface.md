@@ -10,6 +10,8 @@ Feel free to join the dedicated Matrix room
 [matrix.org#selfhostblocks](https://matrix.to/#/#selfhostblocks:matrix.org).
 :::
 
+## Introduction {#introduction}
+
 Skarabox is a flake template which combines three main features
 which all work together to provide a seamless NixOS install experience.
 
