@@ -6,17 +6,20 @@ Skarabox aims to be the fastest way to install NixOS on a server
 with all batteries included.
 
 <!--toc:start-->
-- [Content](#content)
+- [Introduction](#introduction)
+  - [Beacon](#beacon)
+  - [Flake Module](#flake-module)
+  - [NixOS Module](#nixos-module)
+- [Current State](#current-state)
+- [Manual](#manual)
 - [Usage in Brief](#usage-in-brief)
-- [Provided operations:](#provided-operations)
-- [Architecture](#architecture)
 - [Why?](#why)
 - [Hardware Requirements](#hardware-requirements)
-- [Contribute](#contribute)
+- [Contributing](#contributing)
 - [Funding](#funding)
 <!--toc:end-->
 
-## Usage
+## Introduction
 
 Skarabox is a flake template which combines three main features
 which all work together to provide a seamless NixOS install experience.
