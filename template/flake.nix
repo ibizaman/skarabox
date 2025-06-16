@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    selfhostblocks.url = "github:ibizaman/selfhostblocks";
     skarabox.url = "github:ibizaman/skarabox";
 
     nixos-generators.url = "github:nix-community/nixos-generators";
@@ -18,18 +19,20 @@
     sops-nix.url = "github:Mic92/sops-nix";
   };
 
-  outputs = inputs@{ self, skarabox, sops-nix, nixpkgs, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs@{ self, nixpkgs, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } ({ config, ... }: {
     systems = [
       "x86_64-linux"
       "aarch64-linux"
     ];
 
     imports = [
-      skarabox.flakeModules.default
+      inputs.skarabox.flakeModules.default
     ];
 
     skarabox.hosts = {
       myskarabox = {
+        # Comment this line to use nixpkgs as the input instead of SelfHostBlocks.
+        pkgs = inputs.selfhostblocks.lib.${config.skarabox.hosts.myskarabox.system}.patchedNixpkgs;
         system = ./myskarabox/system;
         hostKeyPub = ./myskarabox/host_key.pub;
         ip = ./myskarabox/ip;
@@ -37,7 +40,7 @@
         knownHosts = ./myskarabox/known_hosts;
 
         modules = [
-          sops-nix.nixosModules.default
+          inputs.sops-nix.nixosModules.default
           self.nixosModules.myskarabox
         ];
         extraBeaconModules = [
@@ -64,5 +67,5 @@
         };
       };
     };
-  };
+  });
 }
