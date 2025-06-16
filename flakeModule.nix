@@ -488,7 +488,7 @@ in
       };
     };
 
-    flake = { pkgs, ... }: let
+    flake = { ... }: let
       mkFlake = name: cfg': {
         nixosConfigurations.${name} = cfg'.pkgs.lib.nixosSystem {
           inherit (cfg') system;

@@ -28,13 +28,6 @@ Skarabox uses a lot of existing wonderful tools.
 It merely provides an opinionated way to make them all fit together.
 By being more opinionated, it gets you set up faster.
 
-After the installation is done, services can be installed
-using NixOS options directly or through [Self Host Blocks][].
-The latter, similarly to Skarabox, provides
-an opinionated way to configure services in a seamless way.
-
-[Self Host Blocks]: https://github.com/ibizaman/selfhostblocks
-
 ### Beacon
 
 To install NixOS on you server, you must be able to first
@@ -94,6 +87,8 @@ and also afterwards:
 - Use [deploy-rs][] or [colmena][] to deploy updates.
 - Configures DHCP or static IP for host.
 - Supports `x86_64-linux` and `aarch64-linux` platform.
+- Integration with [Self Host Blocks][] which, similarly to Skarabox,
+  provides an opinionated way to configure services in a seamless way.
 
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 [disko]: https://github.com/nix-community/disko
@@ -103,6 +98,7 @@ and also afterwards:
 [colmena]: https://github.com/zhaofengli/colmena
 [tests]: ./tests/default.nix
 [CI]: ./.github/workflows/build.yaml
+[Self Host Blocks]: https://github.com/ibizaman/selfhostblocks
 
 ## Current State
 
