@@ -46,14 +46,17 @@ All the files at the root of this new repository
 are common to all hosts.
 
 It will finally ask you to fill out two files: [./ip](@REPO@/template/myskarabox/ip)
-and [./system](@REPO@/template/myskarabox/system)
-and afterwards generate [./known_hosts](@REPO@/template/myskarabox/known_hosts) with:
-
-```bash
-nix run .#myskarabox-gen-knownhosts-file
-```
+and [./system](@REPO@/template/myskarabox/system):
+and afterwards generate [./known_hosts](@REPO@/template/myskarabox/known_hosts). This will be done in Step B.
 
 ## A. (option 2) Add in Existing Repo {#existing-repo}
+
+::: {.info}
+For a concrete example, look at the commit history of
+[this repo](https://github.com/ibizaman/nix-starter-configs-skarabox)
+which shows how to add a host managed by Skarabox
+to a repository using [nix-starter-configs](https://github.com/Misterio77/nix-starter-configs/).
+:::
 
 Add inputs:
 
@@ -80,64 +83,65 @@ Transform the outputs in a flake-parts module like outlined [in the official tut
 [tutorial]: https://flake.parts/getting-started.html#existing-flake
 
 In short:
+
 1. Add `mkFlake` around the outputs attrset:
 
-```nix
-outputs = inputs@{ self, skarabox, sops-nix, nixpkgs, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } (let
-in {
-});
-```
+   ```nix
+   outputs = inputs@{ self, skarabox, sops-nix, nixpkgs, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } (let
+   in {
+   });
+   ```
 
 2. Add the `systems` you want to handle:
 
-```nix
-systems = [
-  "x86_64-linux"
-  "aarch64-linux"
-];
-```
+   ```nix
+   systems = [
+     "x86_64-linux"
+     "aarch64-linux"
+   ];
+   ```
 
 3. Import Skarabox' flake module:
 
-```nix
-imports = [
-  skarabox.flakeModules.default
-];
-```
+   ```nix
+   imports = [
+     skarabox.flakeModules.default
+   ];
+   ```
 
 4. Add NixOS module importing your configuration.
 
-```nix
-flake = {
-  nixosModules = {
-    myskarabox = {
-      imports = [
-        ./myskarabox/configuration.nix
-      ];
-    };
-  };
-};
-```
+   ```nix
+   flake = {
+     nixosModules = {
+       myskarabox = {
+         imports = [
+           ./myskarabox/configuration.nix
+         ];
+       };
+     };
+   };
+   ```
 
 5. Add a Skarabox managed host, here called `myskarabox`
    that uses the above NixOS module:
 
-```nix
-skarabox.hosts = {
-  myskarabox = {
-    system = "x86_64-linux";
-    hostKeyPub = ./myskarabox/host_key.pub;
-    ip = ./myskarabox/ip;
-    sshPublicKey = ./myskarabox/ssh.pub;
-    knownHosts = ./myskarabox/known_hosts;
+   ```nix
+   skarabox.hosts = {
+     myskarabox = {
+       system = "x86_64-linux";
+       hostKeyPub = ./myskarabox/host_key.pub;
+       ip = ./myskarabox/ip;
+       sshPublicKey = ./myskarabox/ssh.pub;
+       knownHosts = ./myskarabox/known_hosts;
 
-    modules = [
-      sops-nix.nixosModules.default
-      self.nixosModules.myskarabox
-    ];
-  };
-};
-```
+       modules = [
+         sops-nix.nixosModules.default
+         self.nixosModules.myskarabox
+       ];
+     };
+   };
+   ```
 
 6. Create Sops main key `sops.key` if needed:
 
@@ -157,6 +161,8 @@ skarabox.hosts = {
 
    [./myskarabox/configuration.nix]: @REPO@/template/myskarabox/configuration.nix
 
+   Now, pick one of the Step B underneath.
+
 ## B. (option 1) Test on a VM {#vm}
 
 Assuming the [./myskarabox/configuration.nix][] file is left untouched,
@@ -174,6 +180,12 @@ $ echo 2222 > ./myskarabox/ssh_port
 $ echo 2223 > ./myskarabox/ssh_boot_port
 ```
 
+Generate the known hosts file:
+
+```bash
+nix run .#myskarabox-gen-knownhosts-file
+```
+
 Then, start the VM:
 
 ```bash
@@ -187,7 +199,7 @@ For info, this VM has 4 hard drives:
 - `/dev/sda`
 - `/dev/sdb`
 
-Now, skip to [step B](#run-installer).
+Now, skip to [step C](#run-installer).
 
 ## B. (option 2) Install on an On-Premise Server {#on-premise}
 
@@ -198,6 +210,7 @@ _This guide assumes you know how to boot your server on a USB stick._
    ```bash
    $ echo 192.168.1.30 > ./myskarabox/ip
    $ echo x86_64-linux > ./myskarabox/system
+   $ nix run .#myskarabox-gen-knownhosts-file
    ```
 
    Choose an IP that you can access in your network
