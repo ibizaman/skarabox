@@ -98,6 +98,9 @@ In short:
    systems = [
      "x86_64-linux"
      "aarch64-linux"
+      # Darwin systems are supported but not as hosts to deploy to.
+      "x86_64-darwin"
+      "aarch64-darwin"
    ];
    ```
 
