@@ -135,7 +135,7 @@ In short:
        system = "x86_64-linux";
        hostKeyPub = ./myskarabox/host_key.pub;
        ip = ./myskarabox/ip;
-       sshPublicKey = ./myskarabox/ssh.pub;
+       sshAuthorizedKey = ./myskarabox/ssh.pub;
        knownHosts = ./myskarabox/known_hosts;
 
        modules = [
