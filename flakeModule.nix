@@ -51,7 +51,8 @@ in
           };
           hostKeyPub = mkOption {
             description = "SSH public file used as the host key.";
-            type = types.path;
+            type = with types; oneOf [ str path ];
+            apply = readAsStr;
             example = lib.literalExpression "./${name}/host_key.pub";
           };
           ip = mkOption {
@@ -69,9 +70,10 @@ in
             type = types.str;
             default = "${name}/ssh";
           };
-          sshPublicKey = mkOption {
+          sshAuthorizedKey = mkOption {
             description = "SSH public file used to ssh into the host.";
-            type = types.path;
+            type = with types; oneOf [ str path ];
+            apply = readAsStr;
           };
           secretsFilePath = mkOption {
             description = ''
@@ -200,7 +202,7 @@ in
             {
               skarabox.username = hostCfg.skarabox.username;
               skarabox.hostname = "${hostCfg.skarabox.hostname}-beacon";
-              skarabox.sshPublicKey = cfg'.sshPublicKey;
+              skarabox.sshAuthorizedKey = cfg'.sshAuthorizedKey;
               skarabox.ip = cfg'.ip;
             }
           ];
@@ -232,7 +234,7 @@ in
             modules = [
               beacon-module
               {
-                skarabox.sshPublicKey = cfg'.sshPublicKey;
+                skarabox.sshAuthorizedKey = cfg'.sshAuthorizedKey;
                 skarabox.ip = "127.0.0.1";
               }
               ({ lib, modulesPath, ... }: {
@@ -326,10 +328,10 @@ in
               ip=${cfg'.ip}
               ssh_port=${toString hostCfg.skarabox.sshPort}
               ssh_boot_port=${toString hostCfg.skarabox.boot.sshPort}
-              host_key_pub=${cfg'.hostKeyPub}
+              host_key_pub="${cfg'.hostKeyPub}"
 
               gen-knownhosts-file \
-                $host_key_pub "$ip" $ssh_port $ssh_boot_port \
+                "$host_key_pub" "$ip" $ssh_port $ssh_boot_port \
                 > ${cfg'.knownHostsPath}
             '';
           };

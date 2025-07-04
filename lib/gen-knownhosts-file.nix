@@ -7,7 +7,11 @@
 #
 # One line will be generated per port given.
 pkgs.writeShellScriptBin "gen-knownhosts-file" ''
-  pub=$(cat $1 | ${pkgs.coreutils}/bin/cut -d' ' -f-2)
+  if [ -f "$1" ]; then
+    pub=$(cat "$1" | ${pkgs.coreutils}/bin/cut -d' ' -f-2)
+  else
+    pub=$(echo "$1" | ${pkgs.coreutils}/bin/cut -d' ' -f-2)
+  fi
   shift
   ip=$1
   shift

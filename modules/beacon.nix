@@ -37,6 +37,9 @@
 
   Enjoy your NixOS system powered by Skarabox!
   '';
+
+  readAndTrim = f: lib.strings.trim (builtins.readFile f);
+  readAsStr = v: if lib.isPath v then readAndTrim v else v;
 in {
   imports = [
     ./hotspot.nix
@@ -60,9 +63,10 @@ in {
       default = "skarabox";
     };
 
-    sshPublicKey = lib.mkOption {
+    sshAuthorizedKey = lib.mkOption {
+      type = with types; oneOf [ str path ];
       description = "Public key to connect to the beacon. Use the same as for the host to simplify installation.";
-      type = types.path;
+      apply = readAsStr;
     };
   };
 
@@ -71,7 +75,7 @@ in {
 
     # Also allow root to connect for nixos-anywhere.
     users.users.root = {
-      openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
+      openssh.authorizedKeys.keys = [ cfg.sshAuthorizedKey ];
     };
     # Override user set in profiles/installation-device.nix
     users.users.${cfg.username} = {
@@ -80,7 +84,7 @@ in {
       # Allow the graphical user to login without password
       initialHashedPassword = "";
       # Set shared ssh key
-      openssh.authorizedKeys.keyFiles = [ cfg.sshPublicKey ];
+      openssh.authorizedKeys.keys = [ cfg.sshAuthorizedKey ];
     };
     # Automatically log in at the virtual consoles.
     services.getty.autologinUser = lib.mkForce cfg.username;
