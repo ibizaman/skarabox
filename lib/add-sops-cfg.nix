@@ -4,7 +4,7 @@
 pkgs.writers.writePython3Bin "add-sops-cfg"
   {
     libraries = [
-      pkgs.python312Packages.ruamel-yaml
+      pkgs.python313Packages.ruamel-yaml
     ];
   }
   ''
