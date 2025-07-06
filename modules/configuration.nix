@@ -128,12 +128,12 @@ in
       apply = readAsInt;
     };
 
-    sshAuthorizedKeyFile = mkOption {
-      type = types.path;
+    sshAuthorizedKey = mkOption {
+      type = with types; oneOf [ str path ];
       description = ''
         Public SSH key used to connect on boot to decrypt the root pool.
       '';
-      example = "./ssh.pub";
+      apply = readAsStr;
     };
   };
 
@@ -201,7 +201,7 @@ in
       isNormalUser = true;
       extraGroups = [ "wheel" ];
       inherit (cfg) hashedPasswordFile;
-      openssh.authorizedKeys.keyFiles = [ cfg.sshAuthorizedKeyFile ];
+      openssh.authorizedKeys.keys = [ cfg.sshAuthorizedKey ];
     };
 
     security.sudo.extraRules = [
