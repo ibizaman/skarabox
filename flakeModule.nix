@@ -66,8 +66,8 @@ in
             apply = readAsStr;
           };
           sshPrivateKeyPath = mkOption {
-            description = "Path from the top of the repo to the ssh private file used to ssh into the host.";
-            type = types.str;
+            description = "Path from the top of the repo to the ssh private file used to ssh into the host. Set to null if you use an ssh agent.";
+            type = types.nullOr types.str;
             default = "${name}/ssh";
           };
           sshAuthorizedKey = mkOption {
@@ -183,7 +183,7 @@ in
               root \
               -o UserKnownHostsFile=${cfg'.knownHosts} \
               -o ConnectTimeout=10 \
-              -i ${cfg'.sshPrivateKeyPath} \
+              ${if cfg'.sshPrivateKeyPath != null then "-i ${cfg'.sshPrivateKeyPath}" else ""} \
               "$*"
           '';
         };
@@ -392,7 +392,7 @@ in
                 -p $ssh_port \
                 -f "$flake" \
                 -k ${cfg'.hostKeyPath} \
-                -a "--ssh-option ConnectTimeout=10 -i ${cfg'.sshPrivateKeyPath} ${concatStringsSep " " diskEncryptionOptions} $*"
+                -a "--ssh-option ConnectTimeout=10 ${if cfg'.sshPrivateKeyPath != null then "-i ${cfg'.sshPrivateKeyPath}" else ""} ${concatStringsSep " " diskEncryptionOptions} $*"
             '';
           };
 
@@ -417,7 +417,7 @@ in
                 ${topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username} \
                 -o UserKnownHostsFile=${cfg'.knownHosts} \
                 -o ConnectTimeout=10 \
-                -i ${cfg'.sshPrivateKeyPath} \
+                ${if cfg'.sshPrivateKeyPath != null then "-i ${cfg'.sshPrivateKeyPath}" else ""} \
                 "$@"
             '';
           };
@@ -543,9 +543,8 @@ in
                 "-o" "IdentitiesOnly=yes"
                 "-o" "UserKnownHostsFile=${cfg'.knownHosts}"
                 "-o" "ConnectTimeout=10"
-                "-i" "${cfg'.sshPrivateKeyPath}"
                 "-p" (toString hostCfg.skarabox.sshPort)
-              ];
+              ] ++ lib.optionals (cfg'.sshPrivateKeyPath != null) [ "-i" cfg'.sshPrivateKeyPath ];
               profiles = {
                 system = {
                   user = "root";
@@ -573,8 +572,7 @@ in
                   "-o" "IdentitiesOnly=yes"
                   "-o" "UserKnownHostsFile=${cfg'.knownHosts}"
                   "-o" "ConnectTimeout=10"
-                  "-i" "${cfg'.sshPrivateKeyPath}"
-                ];
+                ] ++ lib.optionals (cfg'.sshPrivateKeyPath != null) [ "-i" cfg'.sshPrivateKeyPath ];
               };
 
               imports = cfg'.modules ++ [
