@@ -7,11 +7,12 @@ pkgs.writeShellApplication {
 
   runtimeInputs  = [
     add-sops-cfg
-    pkgs.ssh-to-age
+    pkgs.gnused
     pkgs.mkpasswd
     pkgs.openssh
     pkgs.openssl
     pkgs.sops
+    pkgs.ssh-to-age
     pkgs.util-linux
   ];
 
