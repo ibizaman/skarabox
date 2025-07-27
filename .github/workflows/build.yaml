@@ -97,7 +97,10 @@ jobs:
     if: '!cancelled()'
     steps:
       - run: |
-          if ! [[ ${{ needs.tests.result }} == "success" ]] && ! [[ ${{ needs.tests-matrix.result }} == "success" || ${{ needs.tests-matrix.result }} == "skipped" ]]; then
+          if ! [[ ${{ needs.tests.result }} == "success" || ${{ needs.tests-matrix.result }} == "skipped" ]]; then
+            exit 1
+          fi
+          if ! [[ ${{ needs.tests-matrix.result }} == "success" || ${{ needs.tests-matrix.result }} == "skipped" ]]; then
             exit 1
           fi
           exit 0
