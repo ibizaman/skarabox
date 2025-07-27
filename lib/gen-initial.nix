@@ -128,6 +128,8 @@ USAGE
     e "Now, we will generate the secrets for myskarabox."
 
     rm -rf myskarabox
+    # We force yes because if we came to here, we said yes earlier.
+    args+=(-y)
     gen-new-host "''${args[@]}" myskarabox
   '';
 
