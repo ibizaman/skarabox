@@ -34,7 +34,7 @@ in
       default = {};
       type = types.attrsOf (types.submodule ({ name, ... }: {
         options = {
-          pkgs = mkOption {
+          nixpkgs = mkOption {
             type = types.anything;
             defaultText = "inputs.nixpkgs";
             default = inputs.nixpkgs;
@@ -490,9 +490,9 @@ in
       };
     };
 
-    flake = { ... }: let
+    flake = { lib, ... }: let
       mkFlake = name: cfg': {
-        nixosConfigurations.${name} = cfg'.pkgs.lib.nixosSystem {
+        nixosConfigurations.${name} = cfg'.nixpkgs.lib.nixosSystem {
           inherit (cfg') system;
           modules = cfg'.modules ++ [
             inputs.skarabox.nixosModules.skarabox
@@ -558,7 +558,7 @@ in
 
         colmenaHive = inputs.colmena.lib.makeHive ({
           meta.nixpkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
-          meta.nodeNixpkgs = mapAttrs (_: cfg': import cfg'.pkgs { inherit (cfg') system; }) cfg.hosts;
+          meta.nodeNixpkgs = mapAttrs (_: cfg': import cfg'.nixpkgs { inherit (cfg') system; }) cfg.hosts;
         } // (let
           mkNode = name: cfg': let
             hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;
