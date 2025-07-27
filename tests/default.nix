@@ -91,6 +91,7 @@ let
 
     e "Generating hardware config."
     ${nix} run .#myskarabox-get-facter > ./myskarabox/facter.json
+    ${pkgs.jq}/bin/jq < ./myskarabox/facter.json
     git add ./myskarabox/facter.json
     git commit -m 'generate hardware config'
     e "Generation succeeded."
@@ -275,6 +276,7 @@ in
 
     e "Generating hardware config."
     ${nix} run .#myskarabox-get-facter > ./myskarabox/facter.json
+    ${pkgs.jq}/bin/jq < ./myskarabox/facter.json
     git add ./myskarabox/facter.json
     git commit -m 'generate hardware config'
     e "Generation succeeded."
