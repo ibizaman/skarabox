@@ -79,9 +79,9 @@ in
             default = let
               cfg' = cfg.staticNetwork;
 
-              fn = n: n.sub_class.name == "Ethernet" && lib.hasPrefix cfg'.device.namePrefix n.unix_device_name;
+              network_interfaces = config.facter.report.hardware.network_interface;
 
-              firstMatchingDevice = (builtins.head (builtins.filter fn config.facter.report.hardware.network_interface)).unix_device_name;
+              firstMatchingDevice = builtins.head (builtins.filter (lib.hasPrefix "en") (lib.flatten (map (x: x.unix_device_names) network_interfaces)));
             in
               if isString cfg'.device then cfg'.device else firstMatchingDevice;
           };
