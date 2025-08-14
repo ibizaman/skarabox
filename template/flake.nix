@@ -35,8 +35,7 @@
     skarabox.hosts = {
       myskarabox = {
         # Comment this line to use nixpkgs as the input instead of SelfHostBlocks.
-        # Note: I'm not fully convinced this line is correct and gets the patch applied.
-        nixpkgs = inputs.selfhostblocks.lib.${config.skarabox.hosts.myskarabox.system}.patchedNixpkgs.src;
+        nixpkgs = inputs.selfhostblocks.lib.${config.skarabox.hosts.myskarabox.system}.patchedNixpkgs;
         system = ./myskarabox/system;
         hostKeyPub = ./myskarabox/host_key.pub;
         ip = ./myskarabox/ip;
