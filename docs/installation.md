@@ -339,4 +339,6 @@ but instead of using the IP address, use the domain name in `./ip`.
 
 ### Add Services {#checklist-services}
 
-I do recommend using the sibling project [Self Host Blocks](https://github.com/ibizaman/selfhostblocks) to setup services like Vaultwarden, Nextcloud and others.
+I do recommend using the sibling project [SelfHostBlocks](https://github.com/ibizaman/selfhostblocks) to setup services like Vaultwarden, Nextcloud and others.
+
+The flake template is wired to use SelfHostBlocks already.
