@@ -30,6 +30,10 @@
 
     imports = [
       inputs.skarabox.flakeModules.default
+      # Only one of deploy-rs or colmena is required to deploy.
+      # You can comment the one you don't use and remove the corresponding input.
+      inputs.skarabox.flakeModules.deploy-rs
+      inputs.skarabox.flakeModules.colmena
     ];
 
     skarabox.hosts = {

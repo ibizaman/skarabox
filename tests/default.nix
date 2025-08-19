@@ -154,11 +154,15 @@ let
     e "Password has been set."
 
     e "Deploying with deploy-rs."
+    sed -i 's/inputs.skarabox.flakeModules.colmena/# inputs.skarabox.flakeModules.colmena/' ./flake.nix
     ${nix} run .#deploy-rs
+    sed -i 's/# inputs.skarabox.flakeModules.colmena/inputs.skarabox.flakeModules.colmena/' ./flake.nix
     e "Deploying with deploy-rs done."
 
     e "Deploying with colmena."
+    sed -i 's/inputs.skarabox.flakeModules.deploy-rs/# inputs.skarabox.flakeModules.deploy-rs/' ./flake.nix
     ${nix} run .#colmena apply
+    sed -i 's/# inputs.skarabox.flakeModules.deploy-rs/inputs.skarabox.flakeModules.deploy-rs/' ./flake.nix
     e "Deploying with colmena done."
 
     e "Checking password for skarabox user is still set."

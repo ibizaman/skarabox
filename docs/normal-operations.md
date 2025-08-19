@@ -29,12 +29,16 @@ All commands are prefixed by the hostname, allowing to handle multiple hosts.
 
    Modify the [./configuration.nix](@REPO@/template/myskarabox/configuration.nix) file then run one of the following snippets:
 
-   To deploy with [deploy-rs](https://github.com/serokell/deploy-rs):
+   To deploy with [deploy-rs](https://github.com/serokell/deploy-rs),
+   first import the flake module `skarabox.flakeModules.deploy-rs` as shown in the template [flake.nix][] then:
    ```bash
    $ nix run .#deploy-rs
    ```
 
-   To deploy with [colmena](https://github.com/zhaofengli/colmena):
+   [flake.nix]: @REPO@/template/flake.nix
+
+   To deploy with [colmena](https://github.com/zhaofengli/colmena),
+   first import the flake module `skarabox.flakeModules.colmena` as shown in the template [flake.nix][] then:
    ```bash
    $ nix run .#colmena apply
    ```

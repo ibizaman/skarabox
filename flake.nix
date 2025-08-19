@@ -84,7 +84,9 @@
             ./modules/beacon.nix
           ];
           flakeModuleModules = [
-            ./flakeModule.nix
+            ./flakeModules/default.nix
+            ./flakeModules/colmena.nix
+            ./flakeModules/deploy-rs.nix
           ];
           release = builtins.readFile ./VERSION;
         };
@@ -107,7 +109,9 @@
     flake = {
       skaraboxInputs = inputs;
 
-      flakeModules.default = ./flakeModule.nix;
+      flakeModules.default = ./flakeModules/default.nix;
+      flakeModules.colmena = ./flakeModules/colmena.nix;
+      flakeModules.deploy-rs = ./flakeModules/deploy-rs.nix;
 
       templates = {
         skarabox = {
