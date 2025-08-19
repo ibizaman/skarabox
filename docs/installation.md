@@ -58,103 +58,21 @@ which shows how to add a host managed by Skarabox
 to a repository using [nix-starter-configs](https://github.com/Misterio77/nix-starter-configs/).
 :::
 
-Add inputs:
+1. Transform the outputs in a flake-parts module like outlined [in the official tutorial][tutorial].
+   In short, make your `flake.nix` look like the [template][] one.
 
-```nix
-inputs = {
-  nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-  skarabox.url = "github:ibizaman/skarabox";
+   [tutorial]: https://flake.parts/getting-started.html#existing-flake
+   [template]: @REPO@/template/flake.nix
 
-  nixos-generators.url = "github:nix-community/nixos-generators";
-  nixos-generators.inputs.nixpkgs.follows = "nixpkgs";
-
-  nixos-anywhere.url = "github:nix-community/nixos-anywhere";
-  nixos-anywhere.inputs.nixpkgs.follows = "nixpkgs";
-
-  nixos-facter-modules.url = "github:numtide/nixos-facter-modules";
-  flake-parts.url = "github:hercules-ci/flake-parts";
-  deploy-rs.url = "github:serokell/deploy-rs";
-  sops-nix.url = "github:Mic92/sops-nix";
-};
-```
-
-Transform the outputs in a flake-parts module like outlined [in the official tutorial][tutorial].
-
-[tutorial]: https://flake.parts/getting-started.html#existing-flake
-
-In short:
-
-1. Add `mkFlake` around the outputs attrset:
-
-   ```nix
-   outputs = inputs@{ self, skarabox, sops-nix, nixpkgs, flake-parts, ... }: flake-parts.lib.mkFlake { inherit inputs; } (let
-   in {
-   });
-   ```
-
-2. Add the `systems` you want to handle:
-
-   ```nix
-   systems = [
-     "x86_64-linux"
-     "aarch64-linux"
-      # Darwin systems are supported but not as hosts to deploy to.
-      "x86_64-darwin"
-      "aarch64-darwin"
-   ];
-   ```
-
-3. Import Skarabox' flake module:
-
-   ```nix
-   imports = [
-     skarabox.flakeModules.default
-   ];
-   ```
-
-4. Add NixOS module importing your configuration.
-
-   ```nix
-   flake = {
-     nixosModules = {
-       myskarabox = {
-         imports = [
-           ./myskarabox/configuration.nix
-         ];
-       };
-     };
-   };
-   ```
-
-5. Add a Skarabox managed host, here called `myskarabox`
-   that uses the above NixOS module:
-
-   ```nix
-   skarabox.hosts = {
-     myskarabox = {
-       system = "x86_64-linux";
-       hostKeyPub = ./myskarabox/host_key.pub;
-       ip = ./myskarabox/ip;
-       sshAuthorizedKey = ./myskarabox/ssh.pub;
-       knownHosts = ./myskarabox/known_hosts;
-
-       modules = [
-         sops-nix.nixosModules.default
-         self.nixosModules.myskarabox
-       ];
-     };
-   };
-   ```
-
-6. Create Sops main key `sops.key` if needed:
+2. Create Sops main key `sops.key` if needed:
 
    `nix run .#sops-create-main-key`.
 
-7. Add Sops main key to Sops config `.sops.yaml`:
+3. Add Sops main key to Sops config `.sops.yaml`:
 
    `nix run .#sops-add-main-key`.
 
-8. Create config for host `myskarabox` in folder `./myskarabox`:
+4. Create config for host `myskarabox` in folder `./myskarabox`:
 
    `nix run .#gen-new-host myskarabox`.
 

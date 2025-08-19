@@ -15,7 +15,7 @@ let
 
   beacon-module = { config, lib, modulesPath, ... }: {
     imports = [
-      ./modules/beacon.nix
+      ../modules/beacon.nix
       (modulesPath + "/profiles/minimal.nix")
     ];
   };
@@ -173,7 +173,7 @@ in
           name = "boot-ssh";
 
           runtimeInputs = [
-            (import ./lib/ssh.nix {
+            (import ../lib/ssh.nix {
               inherit pkgs;
             })
           ];
@@ -321,7 +321,7 @@ in
             name = "gen-knownhosts-file";
 
             runtimeInputs = [
-              (import ./lib/gen-knownhosts-file.nix {
+              (import ../lib/gen-knownhosts-file.nix {
                 inherit pkgs;
               })
             ];
@@ -351,7 +351,7 @@ in
           install-on-beacon = pkgs.writeShellApplication {
             name = "install-on-beacon";
             runtimeInputs = [
-              (import ./lib/install-on-beacon.nix {
+              (import ../lib/install-on-beacon.nix {
                 inherit pkgs;
                 inherit (inputs.nixos-anywhere.packages.${system}) nixos-anywhere;
               })
@@ -407,7 +407,7 @@ in
             name = "ssh";
 
             runtimeInputs = [
-              (import ./lib/ssh.nix {
+              (import ../lib/ssh.nix {
                 inherit pkgs;
               })
             ];
@@ -464,19 +464,19 @@ in
       packages = let
         beacon-usbimager = pkgs.usbimager;
 
-        add-sops-cfg = import ./lib/add-sops-cfg.nix {
+        add-sops-cfg = import ../lib/add-sops-cfg.nix {
           inherit pkgs;
         };
 
-        sops-create-main-key = import ./lib/sops-create-main-key.nix {
+        sops-create-main-key = import ../lib/sops-create-main-key.nix {
           inherit pkgs;
         };
 
-        sops-add-main-key = import ./lib/sops-add-main-key.nix {
+        sops-add-main-key = import ../lib/sops-add-main-key.nix {
           inherit pkgs add-sops-cfg;
         };
 
-        gen-new-host = import ./lib/gen-new-host.nix {
+        gen-new-host = import ../lib/gen-new-host.nix {
           inherit add-sops-cfg pkgs;
         };
       in {
@@ -485,11 +485,6 @@ in
         inherit (pkgs) age;
         inherit (inputs'.skarabox.packages) manualHtml;
       } // (concatMapAttrs mkHostPackages cfg.hosts);
-
-      apps = {
-        inherit (inputs'.deploy-rs.apps) deploy-rs;
-        inherit (inputs'.colmena.apps) colmena;
-      };
     };
 
     flake = flakeInputs: let
@@ -533,86 +528,10 @@ in
           "${name}-debug-facter-nvd" = nixosConfigurationConfig.facter.debug.nvd;
           "${name}-debug-facter-nix-diff" = nixosConfigurationConfig.facter.debug.nix-diff;
         };
-
-        # Used by deploy-rs
-        # Debug eval errors with `nix eval --json .#deploy --show-trace`
-        deploy.nodes = let
-          pkgs' = import inputs.nixpkgs {
-            inherit (cfg') system;
-          };
-          # Use deploy-rs from nixpkgs to take advantage of the binary cache.
-          # https://github.com/serokell/deploy-rs?tab=readme-ov-file#overall-usage
-          deployPkgs = import inputs.nixpkgs {
-            inherit (cfg') system;
-            overlays = [
-              inputs.deploy-rs.overlays.default
-              (self: super: {
-                deploy-rs = {
-                  inherit (pkgs') deploy-rs;
-                  lib = super.deploy-rs.lib;
-                };
-              })
-            ];
-          };
-
-          mkNode = name: cfg': let
-            hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;
-          in {
-            ${name} = {
-              hostname = cfg'.ip;
-              sshUser = topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username;
-              # What out, adding --ssh-opts on the command line will override these args.
-              # For example, running `nix run .#deploy-rs -- -s --ssh-opts -v` will result in only the -v flag.
-              sshOpts = [
-                "-o" "IdentitiesOnly=yes"
-                "-o" "UserKnownHostsFile=${cfg'.knownHosts}"
-                "-o" "ConnectTimeout=10"
-                "-p" (toString hostCfg.skarabox.sshPort)
-              ] ++ lib.optionals (cfg'.sshPrivateKeyPath != null) [ "-i" cfg'.sshPrivateKeyPath ];
-              profiles = {
-                system = {
-                  user = "root";
-                  path = deployPkgs.deploy-rs.lib.activate.nixos topLevelConfig.flake.nixosConfigurations.${name};
-                };
-              };
-            };
-          };
-          in
-            concatMapAttrs mkNode cfg.hosts;
-
-        colmenaHive = inputs.colmena.lib.makeHive ({
-          meta.nixpkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
-          meta.nodeNixpkgs = mapAttrs (_: cfg': import cfg'.nixpkgs { inherit (cfg') system; }) cfg.hosts;
-        } // (let
-          mkNode = name: cfg': let
-            hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;
-          in
-            {
-              deployment = {
-                targetHost = cfg'.ip;
-                targetPort = hostCfg.skarabox.sshPort;
-                targetUser = topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username;
-                sshOptions = [
-                  "-o" "IdentitiesOnly=yes"
-                  "-o" "UserKnownHostsFile=${cfg'.knownHosts}"
-                  "-o" "ConnectTimeout=10"
-                ] ++ lib.optionals (cfg'.sshPrivateKeyPath != null) [ "-i" cfg'.sshPrivateKeyPath ];
-              };
-
-              imports = cfg'.modules ++ [
-                inputs.skarabox.nixosModules.skarabox
-              ];
-            };
-        in
-          mapAttrs mkNode cfg.hosts
-        ));
       };
 
       common = {
         nixosModules.beacon = beacon-module;
-
-        # From https://github.com/serokell/deploy-rs?tab=readme-ov-file#overall-usage
-        checks = builtins.mapAttrs (system: deployLib: deployLib.deployChecks topLevelConfig.flake.deploy) inputs.deploy-rs.lib;
       };
     in
       common // (concatMapAttrs mkFlake cfg.hosts);
