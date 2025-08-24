@@ -19,6 +19,8 @@ let
       (modulesPath + "/profiles/minimal.nix")
     ];
   };
+
+  skaraboxLib = import ../lib/functions.nix;
 in
 {
   options.skarabox = {
@@ -488,34 +490,12 @@ in
     };
 
     flake = flakeInputs: let
-      mkFlake = name: cfg': let
-        # nixosSystem is found in nixpkgs/flake.nix and we must
-        # copy it here to be able to use the full patched nixpkgs.
-        # Otherwise, we can override pkgs which is a good first step
-        # but we can't access the patched lib/ or nixos/modules/ this way.
-        nixosSystem =
-          args:
-          import "${cfg'.nixpkgs}/nixos/lib/eval-config.nix" (
-            {
-              lib = import "${cfg'.nixpkgs}/lib";
-              system = null;
-              modules = args.modules ++ [
-                ({ config, pkgs, lib, ... }:
-                  {
-                    config.nixpkgs.flake.source = "${cfg'.nixpkgs}";
-                  }
-                )
-              ];
-            }
-            // builtins.removeAttrs args [ "modules" ]
-          );
-      in {
-        nixosConfigurations.${name} = nixosSystem {
+      mkFlake = name: cfg': {
+        nixosConfigurations.${name} = skaraboxLib.nixosSystem cfg'.nixpkgs {
           inherit (cfg') system;
           modules = cfg'.modules ++ [
             inputs.skarabox.nixosModules.skarabox
             {
-              nixpkgs.flake.source = cfg'.nixpkgs.outPath;
               nixpkgs.hostPlatform = cfg'.system;
             }
           ];
