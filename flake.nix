@@ -107,6 +107,8 @@
     };
 
     flake = {
+      lib = import ./lib/functions.nix;
+
       skaraboxInputs = inputs;
 
       flakeModules.default = ./flakeModules/default.nix;
