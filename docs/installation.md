@@ -259,4 +259,4 @@ but instead of using the IP address, use the domain name in `./ip`.
 
 I do recommend using the sibling project [SelfHostBlocks](https://github.com/ibizaman/selfhostblocks) to setup services like Vaultwarden, Nextcloud and others.
 
-The flake template is wired to use SelfHostBlocks already.
+The [flake template][template] is wired to use SelfHostBlocks already.
