@@ -65,8 +65,6 @@ All commands are prefixed by the hostname, allowing to handle multiple hosts.
    $ nix flake update skarabox
    ```
 
-   [flake.nix]: @REPO@/template/flake.nix
-
 ## Edit secrets {#edit-secrets}
 
    ```bash
