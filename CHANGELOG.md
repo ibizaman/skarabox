@@ -16,6 +16,10 @@ Template:
 
 # Upcoming Release
 
+## Other Changes
+
+- `known_hosts` file is generated also with the host's ip without the port.
+
 # v1.1.0
 
 ## New Features
