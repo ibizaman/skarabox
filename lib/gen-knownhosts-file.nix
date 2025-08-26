@@ -16,6 +16,7 @@ pkgs.writeShellScriptBin "gen-knownhosts-file" ''
   ip=$1
   shift
 
+  echo "$ip $pub"
   for port in "$@"; do
     echo "[$ip]:$port $pub"
   done
