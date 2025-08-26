@@ -16,6 +16,10 @@ Template:
 
 # Upcoming Release
 
+## Breaking Changes
+
+- New required option `hostKeyFile` used to keep the host key of the host updated.
+
 ## Other Changes
 
 - `known_hosts` file is generated also with the host's ip without the port.
