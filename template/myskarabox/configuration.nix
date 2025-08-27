@@ -38,6 +38,7 @@ in
       };
       skarabox.sshPort = ./ssh_port;
       skarabox.sshAuthorizedKey = ./ssh.pub;
+      skarabox.hostKeyFile = config.sops.secrets."myskarabox/hostKey".path;
       skarabox.hostId = ./hostid;
 
       # Hardware drivers are figured out using nixos-facter.
@@ -58,6 +59,7 @@ in
         sshKeyPaths = [ "/boot/host_key" ];
       };
 
+      sops.secrets."myskarabox/hostKey" = {};
       sops.secrets."myskarabox/user/hashedPassword" = {
         # Keep this option true or the user will not be able to log in.
         # https://github.com/Mic92/sops-nix?tab=readme-ov-file#setting-a-users-password

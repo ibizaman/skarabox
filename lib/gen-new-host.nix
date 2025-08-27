@@ -136,6 +136,11 @@ USAGE
     echo "tmp_secret: a" > "$secrets"
     sops encrypt -i "$secrets"
 
+    e "Adding host key in $secrets under $hostname/hostKey"
+    sops set "$secrets" \
+      "['$hostname']['hostKey']" \
+      "\"$host_key\""
+
     e "Generating initial password for user in $secrets under $hostname/user/hashedPassword"
     sops set "$secrets" \
       "['$hostname']['user']['hashedPassword']" \

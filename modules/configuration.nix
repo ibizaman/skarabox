@@ -119,6 +119,11 @@ in
       apply = readAsStr;
     };
 
+    hostKeyFile = mkOption {
+      description = "File which contains the private host key of the host.";
+      type = types.str;
+    };
+
     sshPort = mkOption {
       type = with types; oneOf [ int str path ];
       default = 22;
@@ -232,6 +237,10 @@ in
         HostKey /boot/host_key
       '';
     };
+    # This keeps the host key available under /boot/host_key up to date.
+    systemd.services.openssh.preStart = ''
+      cp ${cfg.hostKeyFile} /boot/host_key
+    '';
 
     system.stateVersion = "23.11";
   };
