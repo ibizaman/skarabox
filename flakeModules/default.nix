@@ -231,88 +231,95 @@ in
         #                     (default: 2223)
         #
         beacon-vm = let
-          iso = inputs.nixos-generators.nixosGenerate {
-            inherit system;
-            format = "install-iso";
-
-            modules = [
-              beacon-module
-              {
-                skarabox.sshAuthorizedKey = cfg'.sshAuthorizedKey;
-                skarabox.ip = "127.0.0.1";
-              }
-              ({ lib, modulesPath, ... }: {
-                imports = [
-                  # This profile adds virtio drivers needed in the guest
-                  # to be able to share the /nix/store folder.
-                  (modulesPath + "/profiles/qemu-guest.nix")
-                ];
-
-                config.services.openssh.ports = lib.mkForce [ 2222 ];
-
-                # Since this is the VM and we will mount the hosts' nix store,
-                # we do not need to create a squashfs file.
-                config.isoImage.storeContents = lib.mkForce [];
-
-                # Share the host's nix store instead of the one created for the ISO.
-                # config.lib.isoFileSystems is defined in nixos/modules/installer/cd-dvd/iso-image.nix
-                config.lib.isoFileSystems = {
-                  "/nix/.ro-store" = lib.mkForce {
-                    device = "nix-store";
-                    fsType = "9p";
-                    neededForBoot = true;
-                    options = [
-                      "trans=virtio"
-                      "version=9p2000.L"
-                      "msize=16384"
-                      "x-systemd.requires=modprobe@9pnet_virtio.service"
-                      "cache=loose"
-                    ];
-                  };
-                };
-              })
-            ];
-          };
-          nixos-qemu = pkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
-          qemu = nixos-qemu.qemuBinary pkgs.qemu;
           # About bootindex. On first boot, the nvme* drives cannot boot
           # so we will instead boot on the cdrom. After a successful installation,
           # we will be able to boot on the nvme* drives instead.
-        in (pkgs.writeShellScriptBin "beacon-vm" ''
-          diskRoot1=.skarabox-tmp/diskRoot1.qcow2
-          diskRoot2=.skarabox-tmp/diskRoot2.qcow2
-          diskData1=.skarabox-tmp/diskData1.qcow2
-          diskData2=.skarabox-tmp/diskData2.qcow2
+          script = targetSystem: (let
+            targetPkgs = import inputs.nixpkgs { system = targetSystem; };
 
-          mkdir -p .skarabox-tmp
-          for d in $diskRoot1 $diskRoot2 $diskData1 $diskData2; do
-            [ ! -f $d ] && ${pkgs.qemu}/bin/qemu-img create -f qcow2 $d 20G
-          done
+            iso = inputs.nixos-generators.nixosGenerate {
+              system = targetSystem;
+              format = "install-iso";
 
-          set -x
+              modules = [
+                beacon-module
+                {
+                  skarabox.sshAuthorizedKey = cfg'.sshAuthorizedKey;
+                  skarabox.ip = "127.0.0.1";
+                }
+                ({ lib, modulesPath, ... }: {
+                  imports = [
+                    # This profile adds virtio drivers needed in the guest
+                    # to be able to share the /nix/store folder.
+                    (modulesPath + "/profiles/qemu-guest.nix")
+                  ];
 
-          guestport=2222
-          hostport=${toString hostCfg.skarabox.sshPort}
-          guestbootport=2223
-          hostbootport=${toString hostCfg.skarabox.boot.sshPort}
+                  config.services.openssh.ports = lib.mkForce [ 2222 ];
 
-          ${qemu} \
-            -m 2048M \
-            -device virtio-rng-pci \
-            -net nic -net user,hostfwd=tcp::''${hostport}-:''${guestport},hostfwd=tcp::''${hostbootport}-:''${guestbootport} \
-            --virtfs local,path=/nix/store,security_model=none,mount_tag=nix-store \
-            --drive if=pflash,format=raw,unit=0,readonly=on,file=${pkgs.OVMF.firmware} \
-            --drive media=cdrom,format=raw,readonly=on,file=${iso}/iso/beacon.iso \
-            --drive format=qcow2,file=$diskRoot1,if=none,id=diskRoot1 \
-            --device nvme,drive=diskRoot1,serial=nvme0,bootindex=1 \
-            --drive format=qcow2,file=$diskRoot2,if=none,id=diskRoot2 \
-            --device nvme,drive=diskRoot2,serial=nvme1,bootindex=2 \
-            --drive id=diskData1,format=qcow2,if=none,file=$diskData1 \
-            --device ide-hd,drive=diskData1,serial=sda \
-            --drive id=diskData2,format=qcow2,if=none,file=$diskData2 \
-            --device ide-hd,drive=diskData2,serial=sdb \
-            $@
-          '');
+                  # Since this is the VM and we will mount the hosts' nix store,
+                  # we do not need to create a squashfs file.
+                  config.isoImage.storeContents = lib.mkForce [];
+
+                  # Share the host's nix store instead of the one created for the ISO.
+                  # config.lib.isoFileSystems is defined in nixos/modules/installer/cd-dvd/iso-image.nix
+                  config.lib.isoFileSystems = {
+                    "/nix/.ro-store" = lib.mkForce {
+                      device = "nix-store";
+                      fsType = "9p";
+                      neededForBoot = true;
+                      options = [
+                        "trans=virtio"
+                        "version=9p2000.L"
+                        "msize=16384"
+                        "x-systemd.requires=modprobe@9pnet_virtio.service"
+                        "cache=loose"
+                      ];
+                    };
+                  };
+                })
+              ];
+            };
+            nixos-qemu = targetPkgs.callPackage "${pkgs.path}/nixos/lib/qemu-common.nix" {};
+            qemu = nixos-qemu.qemuBinary pkgs.qemu;
+          in pkgs.writeShellScriptBin "beacon-vm" ''
+            diskRoot1=.skarabox-tmp/diskRoot1.qcow2
+            diskRoot2=.skarabox-tmp/diskRoot2.qcow2
+            diskData1=.skarabox-tmp/diskData1.qcow2
+            diskData2=.skarabox-tmp/diskData2.qcow2
+
+            mkdir -p .skarabox-tmp
+            for d in $diskRoot1 $diskRoot2 $diskData1 $diskData2; do
+              [ ! -f $d ] && ${pkgs.qemu}/bin/qemu-img create -f qcow2 $d 20G
+            done
+
+            set -x
+
+            guestport=2222
+            hostport=${toString hostCfg.skarabox.sshPort}
+            guestbootport=2223
+            hostbootport=${toString hostCfg.skarabox.boot.sshPort}
+
+            ${qemu} \
+              -m 2048M \
+              -device virtio-rng-pci \
+              -net nic -net user,hostfwd=tcp::''${hostport}-:''${guestport},hostfwd=tcp::''${hostbootport}-:''${guestbootport} \
+              --virtfs local,path=/nix/store,security_model=none,mount_tag=nix-store \
+              --drive if=pflash,format=raw,unit=0,readonly=on,file=${targetPkgs.OVMF.firmware} \
+              --drive media=cdrom,format=raw,readonly=on,file=${iso}/iso/beacon.iso \
+              --drive format=qcow2,file=$diskRoot1,if=none,id=diskRoot1 \
+              --device nvme,drive=diskRoot1,serial=nvme0,bootindex=1 \
+              --drive format=qcow2,file=$diskRoot2,if=none,id=diskRoot2 \
+              --device nvme,drive=diskRoot2,serial=nvme1,bootindex=2 \
+              --drive id=diskData1,format=qcow2,if=none,file=$diskData1 \
+              --device ide-hd,drive=diskData1,serial=sda \
+              --drive id=diskData2,format=qcow2,if=none,file=$diskData2 \
+              --device ide-hd,drive=diskData2,serial=sdb \
+              $@
+            '');
+          in
+            script (if system == "x86_64-darwin" then "x86_64-linux"
+                    else if system == "aarch64-darwin" then "aarch64-linux"
+                    else system);
 
           # Generate knownhosts file.
           #
