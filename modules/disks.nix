@@ -312,9 +312,13 @@ in
 
     # Follows https://grahamc.com/blog/erase-your-darlings/
     # https://github.com/NixOS/nixpkgs/pull/346247/files
-    boot.initrd.postResumeCommands = lib.mkAfter ''
+    boot.initrd.postResumeCommands = lib.mkAfter (''
       zfs rollback -r ${cfg.rootPool.name}/local/root@blank
-    '';
+    '' + lib.optionalString (cfg.rootPool.disk2 != null) ''
+      if [ ! -f /boot-backup/host_key ]; then
+        cp /boot/host_key /boot-backup/host_key
+      fi
+    '');
 
     # Setup Grub to support UEFI.
     # nodev is for UEFI.
