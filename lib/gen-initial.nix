@@ -26,15 +26,17 @@ pkgs.writeShellApplication {
     set -e
     set -o pipefail
 
+    name=myskarabox
     yes=0
     path=
     verbose=
 
     usage () {
       cat <<USAGE
-Usage: $0 [-h] [-y] [-s] [-v] [-p PATH]
+Usage: $0 [-h] [-n] [-y] [-s] [-v] [-p PATH]
 
   -h:        Shows this usage
+  -n:        Name of host, defaults to "myskarabox".
   -y:        Answer yes to all questions
   -s:        Take user password from stdin. Only useful
              in scripts.
@@ -47,11 +49,14 @@ USAGE
     }
 
     args=()
-    while getopts ":hysp:v" o; do
+    while getopts ":hnysp:v" o; do
       case "''${o}" in
         h)
           usage
           exit 0
+          ;;
+        n)
+          name=''${OPTARG}
           ;;
         y)
           args+=(-y)
@@ -130,7 +135,7 @@ USAGE
     rm -rf myskarabox
     # We force yes because if we came to here, we said yes earlier.
     args+=(-y)
-    gen-new-host "''${args[@]}" myskarabox
+    gen-new-host "''${args[@]}" "$name"
   '';
 
 }

@@ -34,7 +34,7 @@ Create a directory and download the template.
 ```bash
 $ mkdir myskarabox
 $ cd myskarabox
-$ nix run github:ibizaman/skarabox?ref=@VERSION@#init
+$ nix run github:ibizaman/skarabox?ref=@VERSION@#init -- -n myskarabox
 ```
 
 This last command will also generate the needed secrets
