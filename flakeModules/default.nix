@@ -8,7 +8,7 @@ let
   topLevelConfig = config;
   cfg = config.skarabox;
 
-  inherit (lib) concatMapAttrs concatStringsSep mapAttrs mapAttrsToList mkOption optionalAttrs types;
+  inherit (lib) concatMapAttrs concatStringsSep mapAttrsToList mkOption optionalAttrs types;
 
   readAndTrim = f: lib.strings.trim (builtins.readFile f);
   readAsStr = v: if lib.isPath v then readAndTrim v else v;
@@ -470,29 +470,11 @@ in
           "${name}-unlock" = unlock;
         };
     in {
-      packages = let
+      packages = {
         beacon-usbimager = pkgs.usbimager;
-
-        add-sops-cfg = import ../lib/add-sops-cfg.nix {
-          inherit pkgs;
-        };
-
-        sops-create-main-key = import ../lib/sops-create-main-key.nix {
-          inherit pkgs;
-        };
-
-        sops-add-main-key = import ../lib/sops-add-main-key.nix {
-          inherit pkgs add-sops-cfg;
-        };
-
-        gen-new-host = import ../lib/gen-new-host.nix {
-          inherit add-sops-cfg pkgs;
-        };
-      in {
-        inherit beacon-usbimager gen-new-host;
-        inherit add-sops-cfg sops sops-add-main-key sops-create-main-key;
+        inherit sops;
         inherit (pkgs) age;
-        inherit (inputs'.skarabox.packages) manualHtml;
+        inherit (inputs'.skarabox.packages) gen-new-host manualHtml add-sops-cfg sops-add-main-key sops-create-main-key;
       } // (concatMapAttrs mkHostPackages cfg.hosts);
     };
 
