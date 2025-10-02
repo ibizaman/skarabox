@@ -49,7 +49,7 @@ USAGE
     }
 
     args=()
-    while getopts ":hnysp:v" o; do
+    while getopts ":hn:ysp:v" o; do
       case "''${o}" in
         h)
           usage

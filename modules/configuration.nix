@@ -112,11 +112,10 @@ in
     };
 
     hostId = mkOption {
-      type = with types; oneOf [ str path ];
+      type = types.str;
       description = ''
         8 characters unique identifier for this server. Generate with `uuidgen | head -c 8`.
       '';
-      apply = readAsStr;
     };
 
     sshPort = mkOption {

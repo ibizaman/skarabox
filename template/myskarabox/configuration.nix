@@ -38,7 +38,7 @@ in
       };
       skarabox.sshPort = ./ssh_port;
       skarabox.sshAuthorizedKey = ./ssh.pub;
-      skarabox.hostId = ./hostid;
+      skarabox.hostId = null;
 
       # Hardware drivers are figured out using nixos-facter.
       # If it still fails to find the correct driver,
