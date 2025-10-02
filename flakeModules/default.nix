@@ -474,7 +474,7 @@ in
         beacon-usbimager = pkgs.usbimager;
         inherit sops;
         inherit (pkgs) age;
-        inherit (inputs'.skarabox.packages) gen-new-host manualHtml add-sops-cfg sops-add-main-key sops-create-main-key;
+        inherit (inputs'.skarabox.packages) gen-hostId gen-new-host manualHtml add-sops-cfg sops-add-main-key sops-create-main-key;
       } // (concatMapAttrs mkHostPackages cfg.hosts);
     };
 

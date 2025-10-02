@@ -58,7 +58,7 @@
     cd $tmpdir
 
     group "Initialising template"
-    echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s -p ${../.}
+    echo skarabox1234 | ${nix} run ${../.}#init -- -n myskarabox -v -y -s -p ${../.}
     echo 2223 > ./myskarabox/ssh_boot_port
     echo 2222 > ./myskarabox/ssh_port
     echo 127.0.0.1 > ./myskarabox/ip

@@ -1,6 +1,8 @@
 {
   pkgs,
+  lib,
   add-sops-cfg,
+  gen-hostId,
 }:
 pkgs.writeShellApplication {
   name = "gen-new-host";
@@ -105,9 +107,10 @@ USAGE
 
     mkdir -p "$hostname"
 
-    e "Generating $hostname/configuration.nix"
-    cp ${../template/myskarabox/configuration.nix} "$hostname/configuration.nix"
-    sed -i "s/myskarabox/$hostname/" "$hostname/configuration.nix"
+    configuration="$hostname/configuration.nix"
+    e "Generating $configuration"
+    cp ${../template/myskarabox/configuration.nix} "$configuration"
+    sed -i "s/myskarabox/$hostname/" "$configuration"
 
     host_key="./$hostname/host_key"
     host_key_pub="$host_key.pub"
@@ -118,9 +121,8 @@ USAGE
     e "Generating ssh key in $ssh_key and $ssh_key.pub..."
     ssh-keygen -t ed25519 -N "" -f "$ssh_key" && chmod 600 "$ssh_key"
 
-    hostid="./$hostname/hostid"
-    e "Generating hostid in $hostid..."
-    uuidgen | head -c 8 > "$hostid"
+    e "Generating hostid..."
+    sed -i "s/\(skarabox.hostId =\) null;/\1 \"$(${lib.getExe gen-hostId})\";/" "$configuration"
 
     sops_cfg="./.sops.yaml"
     secrets="$hostname/secrets.yaml"

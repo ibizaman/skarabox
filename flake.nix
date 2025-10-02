@@ -69,7 +69,20 @@
         };
 
         gen-new-host = import ./lib/gen-new-host.nix {
-          inherit add-sops-cfg pkgs;
+          inherit add-sops-cfg pkgs gen-hostId;
+          inherit (pkgs) lib;
+        };
+
+        gen-hostId = pkgs.writeShellApplication {
+          name = "gen-hostId";
+
+          runtimeInputs = [
+            pkgs.util-linux
+          ];
+
+          text = ''
+          uuidgen | head -c 8
+        '';
         };
 
         manualHtml = pkgs.callPackage ./docs {
