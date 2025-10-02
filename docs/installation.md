@@ -97,8 +97,6 @@ to more sensible defaults for a VM:
 ```bash
 $ echo 127.0.0.1 > ./myskarabox/ip
 $ echo x86_64-linux > ./myskarabox/system
-$ echo 2222 > ./myskarabox/ssh_port
-$ echo 2223 > ./myskarabox/ssh_boot_port
 ```
 
 Generate the known hosts file:
@@ -247,8 +245,8 @@ Usually, connecting to it is done by entering one of the following IP addresses 
 - Enable port redirection for ports to the server IP:
   - 80 to 80.
   - 443 to 443.
-  - A random port to 22 to be able to ssh into your server from abroad.
-  - A random port to 2222 to be able to start the server from abroad.
+  - A random port to `skarabox.sshPort` (default 2222) to be able to ssh into your server from abroad.
+  - A random port to `skarabox.sshBootPort` 2223 to be able to start the server from abroad.
 
 To check if this setup works,
 you can connect to another network (like using the tethered connection from your phone or connecting to another WiFi network)

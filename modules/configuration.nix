@@ -119,12 +119,11 @@ in
     };
 
     sshPort = mkOption {
-      type = with types; oneOf [ int str path ];
-      default = 22;
+      type = types.int;
+      default = 2222;
       description = ''
         Port the SSH daemon listens to.
       '';
-      apply = readAsInt;
     };
 
     sshAuthorizedKey = mkOption {

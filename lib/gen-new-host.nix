@@ -157,7 +157,7 @@ USAGE
       "['tmp_secret']"
 
     e "You will need to fill out the ./$hostname/ip and ./$hostname/system file and generate ./$hostname/known_hosts."
-    e "Optionally, adjust the ./$hostname/ssh_port and ./$hostname/ssh_boot_port if you want to."
+    e "Optionally, adjust the 'skarabox.sshPort' and 'skarabox.boot.sshPort' in options in '$configuration' if you want to."
     e "Follow the ./README.md for more information and to continue the installation."
   '';
 

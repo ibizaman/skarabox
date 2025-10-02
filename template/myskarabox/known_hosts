@@ -1,7 +1,8 @@
 <generate me>
 
 First, generate ./host_key and fill out ./ip.
-Also, tweak ./ssh_port and ./ssh_boot_port if the default values do not suit you.
+
+Optionally, adjust the 'skarabox.sshPort' and 'skarabox.boot.sshPort' in options in './configuration.nix' if you want to.
 Then, use this command:
 
 nix run .#gen-knownhosts-file

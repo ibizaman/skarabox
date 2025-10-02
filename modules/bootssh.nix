@@ -2,22 +2,14 @@
 let
   cfg = config.skarabox.boot;
 
-  inherit (lib) mkOption optionals toInt types;
-
-  readAndTrim = f: lib.strings.trim (builtins.readFile f);
-  readAsStr = v: if lib.isPath v then readAndTrim v else v;
-  readAsInt = v: let
-    vStr = readAsStr v;
-  in
-    if lib.isString vStr then toInt vStr else vStr;
+  inherit (lib) mkOption optionals types;
 in
 {
   options.skarabox.boot = {
     sshPort = mkOption {
-      type = with types; oneOf [ int str path ];
+      type = types.int;
       description = "Port the SSH daemon used to decrypt the root partition listens to.";
-      default = 2222;
-      apply = readAsInt;
+      default = 2223;
     };
   };
 
