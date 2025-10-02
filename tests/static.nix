@@ -77,7 +77,7 @@
     sed -i 's-staticNetwork = null-staticNetwork = { ip="10.0.2.15"; gateway="10.0.2.255"; }-' ./myskarabox/configuration.nix
 
     group "Nix flake show"
-    nix flake show
+    ${nix} flake show
     endgroup "Done nix flake show"
 
     e "Starting beacon VM."
