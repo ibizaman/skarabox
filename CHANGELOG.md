@@ -16,6 +16,12 @@ Template:
 
 # Upcoming Release
 
+## Breaking Changes
+
+- Remove `hostId` file and directly set the value in the host's `configuration.nix` file.
+- Remove `ssh_port` and `ssh_boot_port` files and directly set the value in the host's `configuration.nix` file.
+- Remove `ip` and `system` files and directly set the value in the host's `flake.nix` file.
+
 ## Other Changes
 
 - `known_hosts` file is generated also with the host's ip without the port.

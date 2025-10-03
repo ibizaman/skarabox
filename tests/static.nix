@@ -59,8 +59,8 @@
 
     group "Initialising template"
     echo skarabox1234 | ${nix} run ${../.}#init -- -n myskarabox -v -y -s -p ${../.}
-    echo 127.0.0.1 > ./myskarabox/ip
-    echo ${system} > ./myskarabox/system
+    sed -i "s/\(ip =\) \"192.168.1.30\"/\1 \"127.0.0.1\"/" "flake.nix"
+    sed -i "s/\(system =\) \"x86_64-linux\"/\1 \"${system}\"/" "flake.nix"
     ${nix} run .#myskarabox-gen-knownhosts-file
     # Using a git repo here allows to only copy in the nix store non temporary files.
     # In particular, we avoid copying the disk*.qcow2 files.

@@ -64,7 +64,7 @@ in
     }
     # Skarabox network configuration
     {
-      # Set to { ip = ./ip; gateway = "192.168.1.1"; } to use static IP instead of DHCP configuration.
+      # Set to for example { ip = "192.168.1.30"; gateway = "192.168.1.1"; } to use static IP instead of DHCP configuration.
       # This will set static IP also during initrd to unlock root partition.
       skarabox.staticNetwork = null;
       # Set to true to disable the network configuration from skarabox and instead set your own.

@@ -65,9 +65,8 @@ in
 
               Can be the IP or hostname directly or a file containing the value.
             '';
-            type = with types; oneOf [ str path ];
+            type = types.str;
             default = "127.0.0.1";
-            apply = readAsStr;
           };
           sshPrivateKeyPath = mkOption {
             description = "Path from the top of the repo to the ssh private file used to ssh into the host. Set to null if you use an ssh agent.";
