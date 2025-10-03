@@ -156,7 +156,7 @@ USAGE
     sops unset "$secrets" \
       "['tmp_secret']"
 
-    e "You will need to fill out the ./$hostname/ip and ./$hostname/system file and generate ./$hostname/known_hosts."
+    e "You will need to set the 'skarabox.hosts.<name>.ip' and 'skarabox.hosts.<name>.system' options in 'flake.nix' then generate ./$hostname/known_hosts."
     e "Optionally, adjust the 'skarabox.sshPort' and 'skarabox.boot.sshPort' in options in '$configuration' if you want to."
     e "Follow the ./README.md for more information and to continue the installation."
   '';

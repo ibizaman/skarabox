@@ -45,9 +45,8 @@ under the [myskarabox](@REPO@/template/myskarabox) folder.
 All the files at the root of this new repository
 are common to all hosts.
 
-It will finally ask you to fill out two files: [./ip](@REPO@/template/myskarabox/ip)
-and [./system](@REPO@/template/myskarabox/system):
-and afterwards generate [./known_hosts](@REPO@/template/myskarabox/known_hosts). This will be done in Step B.
+It will finally ask you to fill out two options: `skarabox.hosts.<name>.ip` and `skarabox.hosts.<name>.system`
+then afterwards generate [./known_hosts](@REPO@/template/myskarabox/known_hosts). This will be done in Step B.
 
 ## A. (option 2) Add in Existing Repo {#existing-repo}
 
@@ -91,12 +90,14 @@ you can now test the installation process on a VM.
 This VM has 3 hard drives, one for the OS
 and two in raid for the data.
 
-To do that, first we tweak the ports
+To do that, first we tweak some options
 to more sensible defaults for a VM:
 
 ```bash
-$ echo 127.0.0.1 > ./myskarabox/ip
-$ echo x86_64-linux > ./myskarabox/system
+skarabox.hosts.<name> = {
+  system = "x86_64-linux";
+  ip = "192.168.1.30";
+};
 ```
 
 Generate the known hosts file:
@@ -176,7 +177,7 @@ As long as you can boot the instance, [nixos-anywhere][] will
 take care of installing NixOS on it. For Hetzner for example,
 you can start in recovery mode.
 
-Retrieve the IP of the server, then:
+Retrieve the IP of the server, then update the values
 
 ```bash
 echo <ip> > myskarabox/ip
@@ -251,7 +252,7 @@ Usually, connecting to it is done by entering one of the following IP addresses 
 To check if this setup works,
 you can connect to another network (like using the tethered connection from your phone or connecting to another WiFi network)
 and then ssh into your server like above,
-but instead of using the IP address, use the domain name in `./ip`.
+but instead of using the IP address, use the domain name in `skarabox.hosts.<name>.ip`.
 
 ### Add Services {#checklist-services}
 
