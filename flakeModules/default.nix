@@ -375,16 +375,16 @@ in
                 })
                 // cfg'.extraSecretsPassphrasesPath;
 
-              diskEncryptionOptions = let
-                mkOption = name: path: ''--disk-encryption-keys /tmp/${name} "<(echo "''$${name}")" '';
+              diskEncryptionTmpFiles = let
+                mkTmpFile = name: path: ''
+                  secret_file_${name}="$(mktemp -u)"
+                  mkfifo -m 600 "$secret_file_${name}"
+                  trap 'rm -f "$secret_file_${name}"' EXIT
+                  # Write secret to FIFO in background - it will block until read
+                  sops decrypt --extract "${path}" "${cfg'.secretsFilePath}" > "$secret_file_${name}" &
+                '';
               in
-                mapAttrsToList mkOption secrets;
-
-              diskEncryptionVars = let
-                mkVar = name: path: ''${name}="$(sops decrypt --extract "${path}" "${cfg'.secretsFilePath}")"'';
-
-              in
-                mapAttrsToList mkVar secrets;
+                mapAttrsToList mkTmpFile secrets;
             in ''
               ip=${toString cfg'.ip}
               ssh_port=${toString hostCfg.skarabox.sshPort}
@@ -393,17 +393,28 @@ in
               export SOPS_AGE_KEY_FILE="${cfg.sopsKeyPath}"
 
               ''
-            + concatStringsSep "\n" diskEncryptionVars
-            + ''
+            + concatStringsSep "\n" diskEncryptionTmpFiles
+            + (let
+                # Build the extra arguments list properly
+                extraArgs = []
+                  ++ [ "--ssh-option" "ConnectTimeout=10" ]
+                  ++ (lib.optionals (cfg'.sshPrivateKeyPath != null) [ "-i" cfg'.sshPrivateKeyPath ])
+                  ++ [ "--disk-encryption-keys" "/tmp/host_key" cfg'.hostKeyPath ]
+                  ++ (lib.flatten (mapAttrsToList (name: path: [ "--disk-encryption-keys" "/tmp/${name}" "\$secret_file_${name}" ]) secrets));
+                
+                # Convert to a bash array declaration
+                argsString = concatStringsSep " " (map (arg: ''"${arg}"'') extraArgs);
+              in ''
 
               install-on-beacon \
-                -i $ip \
+                -i "$ip" \
                 -u ${hostCfg.skarabox.username} \
-                -p $ssh_port \
+                -p "$ssh_port" \
                 -f "$flake" \
-                -k ${cfg'.hostKeyPath} \
-                -a "--ssh-option ConnectTimeout=10 ${if cfg'.sshPrivateKeyPath != null then "-i ${cfg'.sshPrivateKeyPath}" else ""} ${concatStringsSep " " diskEncryptionOptions} $*"
-            '';
+                -- \
+                ${argsString} \
+                "$@"
+            '');
           };
 
           # nix run .#ssh [<command> ...]
