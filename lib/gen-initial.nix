@@ -130,7 +130,7 @@ USAGE
     e "Creating initial SOPS config in $sops_cfg..."
     rm $sops_cfg && sops-add-main-key $sops_key $sops_cfg
 
-    e "Now, we will generate the secrets for myskarabox."
+    e "Now, we will generate the secrets for $name."
 
     rm -rf myskarabox
     # We force yes because if we came to here, we said yes earlier.
