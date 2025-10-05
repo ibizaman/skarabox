@@ -489,8 +489,9 @@ in
     };
 
     flake = flakeInputs: let
-      mkFlake = name: cfg': {
-        nixosConfigurations.${name} = skaraboxLib.nixosSystem cfg'.nixpkgs {
+      # First, build all nixosConfigurations
+      allNixosConfigurations = concatMapAttrs (name: cfg': {
+        ${name} = skaraboxLib.nixosSystem cfg'.nixpkgs {
           inherit (cfg') system;
           modules = cfg'.modules ++ [
             inputs.skarabox.nixosModules.skarabox
@@ -499,20 +500,26 @@ in
             }
           ];
         };
+      }) cfg.hosts;
 
-        packages.${cfg'.system} = let
-          nixosConfigurationConfig = topLevelConfig.flake.nixosConfigurations.${name}.config;
-        in {
-          ${name} = nixosConfigurationConfig.system.build.toplevel;
-          "${name}-debug-facter-nvd" = nixosConfigurationConfig.facter.debug.nvd;
-          "${name}-debug-facter-nix-diff" = nixosConfigurationConfig.facter.debug.nix-diff;
-        };
-      };
+      # Build packages lazily by grouping hosts by system, then creating packages per host.
+      # Using groupBy + mapAttrs + listToAttrs maintains laziness: only accessed packages
+      # trigger evaluation of their host. Each host's packages reference nixosConfigurations
+      # directly, so they remain lazy thunks until accessed.
+      hostsBySystem = lib.groupBy (name: cfg.hosts.${name}.system) (lib.attrNames cfg.hosts);
+      
+      allPackages = lib.mapAttrs (system: hostNames:
+        lib.listToAttrs (lib.concatMap (name: [
+          { name = name; value = allNixosConfigurations.${name}.config.system.build.toplevel; }
+          { name = "${name}-debug-facter-nvd"; value = allNixosConfigurations.${name}.config.facter.debug.nvd; }
+          { name = "${name}-debug-facter-nix-diff"; value = allNixosConfigurations.${name}.config.facter.debug.nix-diff; }
+        ]) hostNames)
+      ) hostsBySystem;
 
-      common = {
-        nixosModules.beacon = beacon-module;
-      };
-    in
-      common // (concatMapAttrs mkFlake cfg.hosts);
+    in {
+      nixosModules.beacon = beacon-module;
+      nixosConfigurations = allNixosConfigurations;
+      packages = allPackages;
+    };
   };
 }
