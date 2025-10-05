@@ -22,6 +22,10 @@ Template:
 - Remove `ssh_port` and `ssh_boot_port` files and directly set the value in the host's `configuration.nix` file.
 - Remove `ip` and `system` files and directly set the value in the host's `flake.nix` file.
 
+## Fixes
+
+- Fix multiple hosts overwriting each other in flake outputs.
+
 ## Other Changes
 
 - `known_hosts` file is generated also with the host's ip without the port.
