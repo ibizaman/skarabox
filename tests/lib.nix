@@ -192,4 +192,65 @@ in
       cmd = "alias a OTHERSOPSKEY";
     };
   };
+
+  testMultiHostSameArch = let
+    # Create minimal test flake using the actual skarabox flakeModule
+    dummy = pkgs.writeText "dummy" "";
+    testFlake = import ../flakeModules/default.nix {
+      inherit (pkgs) lib;
+      config = {
+        skarabox.hosts = {
+          server1 = {
+            system = "aarch64-linux";
+            hostKeyPub = dummy;
+            sshAuthorizedKey = dummy;
+            knownHosts = dummy;
+          };
+          server2 = {
+            system = "aarch64-linux";
+            hostKeyPub = dummy;
+            sshAuthorizedKey = dummy;
+            knownHosts = dummy;
+          };
+          server3 = {
+            system = "x86_64-linux";
+            hostKeyPub = dummy;
+            sshAuthorizedKey = dummy;
+            knownHosts = dummy;
+          };
+        };
+      };
+      inputs = {
+        skarabox.nixosModules.skarabox = {};
+      };
+    };
+
+    # Get the flake outputs
+    flakeOutputs = testFlake.config.flake {};
+
+    # Check nixosConfigurations (all three should be present)
+    configNames = builtins.sort builtins.lessThan (builtins.attrNames flakeOutputs.nixosConfigurations);
+
+    # Check packages for aarch64-linux (both aarch64 hosts should appear)
+    # Filter to just the base host packages (not the -debug-* variants)
+    aarch64Packages = builtins.sort builtins.lessThan
+      (builtins.filter (name: !(pkgs.lib.hasInfix "-debug-" name))
+        (builtins.attrNames (flakeOutputs.packages."aarch64-linux" or {})));
+
+    # Check packages for x86_64-linux (the x86_64 host should appear)
+    x86Packages = builtins.sort builtins.lessThan
+      (builtins.filter (name: !(pkgs.lib.hasInfix "-debug-" name))
+        (builtins.attrNames (flakeOutputs.packages."x86_64-linux" or {})));
+  in {
+    expected = {
+      configs = [ "server1" "server2" "server3" ];
+      aarch64Packages = [ "server1" "server2" ];
+      x86Packages = [ "server3" ];
+    };
+    expr = {
+      configs = configNames;
+      aarch64Packages = aarch64Packages;
+      x86Packages = x86Packages;
+    };
+  };
 }
