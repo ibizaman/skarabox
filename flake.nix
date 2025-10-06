@@ -69,7 +69,7 @@
         };
 
         gen-new-host = import ./lib/gen-new-host.nix {
-          inherit add-sops-cfg pkgs gen-hostId;
+          inherit pkgs add-sops-cfg gen-hostId;
           inherit (pkgs) lib;
         };
 
