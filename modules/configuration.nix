@@ -133,9 +133,24 @@ in
       '';
       apply = readAsStr;
     };
+
+    useSeparatedKeys = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Enable separated-key architecture with distinct boot and runtime SSH keys.
+        When disabled, uses single-key architecture (less secure, for backward compatibility).
+      '';
+    };
   };
 
-  config = {
+  config = let
+    # Standard path for runtime host key in separated-key mode
+    runtimeKeyPath = "/persist/etc/ssh/ssh_host_ed25519_key";
+    
+    # Auto-detect separated-key mode: check if SOPS uses the standard runtime key path
+    isSeparatedMode = cfg.useSeparatedKeys || builtins.elem runtimeKeyPath (config.sops.age.sshKeyPaths or []);
+  in {
     assertions = [
       {
         assertion = cfg.staticNetwork == null -> config.boot.initrd.network.udhcpc.enable;
@@ -143,6 +158,30 @@ in
           If DHCP is disabled and an IP is not set, the box will not be reachable through the network on boot and you will not be able to enter the passphrase through SSH.
 
           To fix this error, either set config.boot.initrd.network.udhcpc.enable = true or give an IP to skarabox.staticNetwork.ip.
+        '';
+      }
+      {
+        assertion = !isSeparatedMode || builtins.elem runtimeKeyPath (config.sops.age.sshKeyPaths or []);
+        message = ''
+          Skarabox separated-key mode requires runtime key at standard location.
+
+          Expected: ${runtimeKeyPath}
+          Found in sops.age.sshKeyPaths: ${lib.concatStringsSep ", " (config.sops.age.sshKeyPaths or ["(none configured)"])}
+
+          Please configure:
+            sops.age.sshKeyPaths = ["${runtimeKeyPath}"];
+        '';
+      }
+      {
+        assertion = config.services.openssh.hostKeys == [];
+        message = ''
+          Skarabox manages SSH host keys explicitly.
+          Do not override services.openssh.hostKeys.
+
+          Current value: ${builtins.toJSON config.services.openssh.hostKeys}
+          Expected: []
+
+          Skarabox configures the host key via extraConfig.
         '';
       }
     ];
@@ -226,10 +265,30 @@ in
       };
       ports = [ cfg.sshPort ];
       hostKeys = lib.mkForce [];
-      extraConfig = ''
-        HostKey /boot/host_key
-      '';
+      extraConfig = lib.mkAfter (
+        if isSeparatedMode
+        then ''
+          HostKey ${runtimeKeyPath}
+        ''
+        else ''
+          HostKey /boot/host_key
+        ''
+      );
     };
+
+    systemd.tmpfiles.rules = lib.optionals isSeparatedMode [
+      # Ensure directory exists before SSH tries to use the runtime key
+      "d /persist/etc/ssh 0755 root root -"
+    ];
+
+    warnings = lib.optionals (!isSeparatedMode) [
+      ''
+        Skarabox: Using single-key architecture (vulnerable to physical access)
+
+        All secrets can be decrypted by anyone with physical access to /boot partition.
+        Consider migrating to separated-key mode for better security.
+      ''
+    ];
 
     system.stateVersion = "23.11";
   };
