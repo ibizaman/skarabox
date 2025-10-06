@@ -491,6 +491,22 @@ in
               printf '%s' "$root_passphrase" | boot-ssh -T "$@"
             '';
           };
+
+          enable-key-separation = import ../lib/enable-key-separation.nix {
+            inherit pkgs name;
+            cfg = cfg';
+            add-sops-cfg = import ../lib/add-sops-cfg.nix { inherit pkgs; };
+          };
+
+          install-runtime-key = import ../lib/install-runtime-key.nix {
+            inherit pkgs ssh name;
+            cfg = cfg';
+          };
+
+          rotate-boot-key = import ../lib/rotate-boot-key.nix {
+            inherit pkgs ssh name;
+            cfg = cfg';
+          };
         in {
           "${name}-boot-ssh" = boot-ssh;
           "${name}-sops" = sops;
@@ -501,6 +517,9 @@ in
           "${name}-ssh" = ssh;
           "${name}-get-facter" = get-facter;
           "${name}-unlock" = unlock;
+          "${name}-enable-key-separation" = enable-key-separation;
+          "${name}-install-runtime-key" = install-runtime-key;
+          "${name}-rotate-boot-key" = rotate-boot-key;
         };
     in {
       packages = {
