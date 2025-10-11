@@ -11,6 +11,22 @@ let
   inherit (lib) concatMapAttrs;
 in
 {
+  # We must defined the option otherwise if the deploy.nodes option gets defined multiple times,
+  # nix won't know how to merge it.
+  # This can happen when using skarabox's deploy-rs module with custom defined hosts.
+  options.flake.deploy = lib.mkOption {
+    type = lib.types.submodule {
+      options = {
+        nodes = lib.mkOption {
+          # We don't do strict typing here, we let deploy-rs deal with it.
+          # If we want better typing, we should upstream this in flake-parts directly.
+          type = lib.types.attrsOf lib.types.anything;
+          default = {};
+        };
+      };
+    };
+  };
+
   config = {
     perSystem = { self', inputs', config, pkgs, system, ... }: {
       apps = {
