@@ -16,8 +16,12 @@ pkgs.writeShellScriptBin "gen-knownhosts-file" ''
   ip=$1
   shift
 
-  echo "$ip $pub"
   for port in "$@"; do
-    echo "[$ip]:$port $pub"
+    if [ "$port" = "22" ]; then
+      # Port 22 is the default, so omit the port specification
+      echo "$ip $pub"
+    else
+      echo "[$ip]:$port $pub"
+    fi
   done
 ''

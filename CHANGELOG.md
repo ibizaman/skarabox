@@ -16,11 +16,18 @@ Template:
 
 # Upcoming Release
 
+## New Features
+
+- Add separated-key architecture so that SOPS secrets, including ZFS passphrase, are protected at rest from physical access.
+- Add migration tools for existing hosts: `enable-key-separation`, `install-runtime-key`, and `rotate-boot-key`.
+- Add `runtimeHostKeyPath` and `runtimeHostKeyPub` configuration options for separated-key mode.
+
 ## Breaking Changes
 
 - Remove `hostId` file and directly set the value in the host's `configuration.nix` file.
 - Remove `ssh_port` and `ssh_boot_port` files and directly set the value in the host's `configuration.nix` file.
 - Remove `ip` and `system` files and directly set the value in the host's `flake.nix` file.
+- `gen-new-host` now creates separated-key hosts by default. Use `--single-key` flag for legacy single-key mode (existing single-key hosts remain functional).
 
 ## Fixes
 

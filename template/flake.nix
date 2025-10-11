@@ -42,6 +42,9 @@
         nixpkgs = inputs.selfhostblocks.lib.${config.skarabox.hosts.myskarabox.system}.patchedNixpkgs;
         system = "x86_64-linux";
         hostKeyPub = ./myskarabox/host_key.pub;
+        runtimeHostKeyPub = ./myskarabox/runtime_host_key.pub;
+        # Single-key mode: Remove runtimeHostKeyPub above for single key at /boot/host_key
+
         ip = "192.168.1.30";
         sshAuthorizedKey = ./myskarabox/ssh.pub;
         knownHosts = ./myskarabox/known_hosts;

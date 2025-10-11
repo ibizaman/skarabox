@@ -53,7 +53,8 @@ in
 
       sops.defaultSopsFile = ./secrets.yaml;
       sops.age = {
-        sshKeyPaths = [ "/boot/host_key" ];
+        # Separated-key mode: SOPS uses secure runtime key
+        sshKeyPaths = ["/persist/etc/ssh/ssh_host_ed25519_key"];
       };
 
       sops.secrets."myskarabox/user/hashedPassword" = {
