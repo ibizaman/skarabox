@@ -12,4 +12,5 @@ in
   };
 }
 // (import ./variants.nix { inherit system nix; inherit (pkgs) gnugrep jq writeShellScriptBin; })
+// (import ./upgrades.nix { inherit system nix; inherit (pkgs) gnugrep jq writeShellScriptBin; })
 // (import ./static.nix { inherit system nix; inherit (pkgs) jq writeShellScriptBin; })
