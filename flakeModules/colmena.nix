@@ -22,7 +22,7 @@ in
       mkFlake = name: cfg': {
         colmenaHive = inputs.colmena.lib.makeHive ({
           meta.nixpkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
-          meta.nodeNixpkgs = mapAttrs (_: cfg': import cfg'.nixpkgs { inherit (cfg') system; }) cfg.hosts;
+          meta.nodeNixpkgs = mapAttrs (_: cfg': import (if cfg'.nixpkgs != null then cfg'.nixpkgs else inputs.nixpkgs)  { inherit (cfg') system; }) cfg.hosts;
         } // (let
           mkNode = name: cfg': let
             hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;

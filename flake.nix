@@ -36,7 +36,12 @@
     nixos-facter-modules,
     nix-flake-tests,
     ...
-  }: flake-parts.lib.mkFlake { inherit inputs; } {
+  }: let
+    skaraboxLib = import ./lib/functions.nix { inherit (inputs) nixpkgs; };
+  in flake-parts.lib.mkFlake {
+    inherit inputs;
+    specialArgs = { inherit skaraboxLib; };
+  } {
     systems = [
       "x86_64-linux"
       "aarch64-linux"
@@ -50,7 +55,7 @@
         # Usage:
         #  init [-h] [-y] [-s] [-v] [-p PATH]
         #
-        # print help:
+        # printasdf help:
         #  init -h
         init = import ./lib/gen-initial.nix {
           inherit pkgs gen-new-host sops-create-main-key sops-add-main-key;
@@ -120,7 +125,7 @@
     };
 
     flake = {
-      lib = import ./lib/functions.nix;
+      lib = skaraboxLib;
 
       skaraboxInputs = inputs;
 
