@@ -6,6 +6,7 @@ let
     name,
     rootDisk2,
     dataPool,
+    legacyNixpkgs ? false,
   }: writeShellScriptBin name ''
     set -e
 
@@ -34,6 +35,7 @@ let
     tmpdir=
     rootDisk2=${toBashBool rootDisk2}
     dataPool=${toBashBool dataPool}
+    legacyNixpkgs=${toBashBool legacyNixpkgs}
 
     while getopts "gp:" o; do
       case "''${o}" in
@@ -69,7 +71,10 @@ let
     echo skarabox1234 | ${nix} run ${../.}#init -- -n myskarabox -v -y -s -p ${../.}
     sed -i "s/\(ip =\) \"192.168.1.30\"/\1 \"127.0.0.1\"/" "flake.nix"
     sed -i "s/\(system =\) \"x86_64-linux\"/\1 \"${system}\"/" "flake.nix"
-    ${nix} run .#myskarabox-gen-knownhosts-file
+    if [ "$legacyNixpkgs" = true ]; then
+      sed -i "s/\(pkgs =\) .*;$/\1 null;/" "flake.nix"
+    fi
+    ${nix} run .#myskarabox-gen-knownhosts-file --show-trace
     # Using a git repo here allows to only copy in the nix store non temporary files.
     # In particular, we avoid copying the disk*.qcow2 files.
     git init
@@ -214,5 +219,12 @@ in
     name = "twoOStwoData";
     rootDisk2 = true;
     dataPool = true;
+  };
+
+  legacyNixpkgs = templateTest {
+    name = "legacyNixpkgs";
+    rootDisk2 = false;
+    dataPool = false;
+    legacyNixpkgs = true;
   };
 }
