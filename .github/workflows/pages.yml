@@ -31,7 +31,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Install nix
+      - name: Install Nix
         uses: cachix/install-nix-action@v31
 
       - name: Setup Caching
