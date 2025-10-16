@@ -20,7 +20,7 @@ let
     ];
   };
 
-  skaraboxLib = import ../lib/functions.nix;
+  skaraboxLib = import ../lib/functions.nix { inherit (inputs) nixpkgs; };
 in
 {
   options.skarabox = {
@@ -37,15 +37,29 @@ in
       type = types.attrsOf (types.submodule ({ name, ... }: {
         options = {
           nixpkgs = mkOption {
-            type = types.anything;
+            # No evaluation or merging is wanted here, thus the raw type.
+            type = types.raw;
             defaultText = "inputs.nixpkgs";
-            default = inputs.nixpkgs;
+            default = null;
             description = ''
-              If given, overrides nixpkgs in the nixosConfiguration, including `lib` and `nixos/modules/`.
+              If given, overrides nixpkgs in the nixosConfiguration, including `nixos/modules/`.
 
-              By default, uses the default nixpkgs input.
+              By default, uses the nixpkgs input.
 
               This option allows to patch nixpkgs following https://wiki.nixos.org/wiki/Nixpkgs/Patching_Nixpkgs
+            '';
+          };
+          pkgs = mkOption {
+            # No evaluation or merging is wanted here, thus the raw type.
+            type = types.raw;
+            defaultText = "inputs.nixpkgs.legacyPackages.\${system}";
+            default = null;
+            description = ''
+              If given, overrides xpkgs in the nixosConfiguration, including `lib`.
+
+              By default, uses the pkgs from the nixpkgs input.
+
+              This option allows to patch pkgs and functions in pkgs.lib.
             '';
           };
           hostKeyPath = mkOption {
@@ -490,8 +504,13 @@ in
 
     flake = flakeInputs: let
       # First, build all nixosConfigurations
-      allNixosConfigurations = concatMapAttrs (name: cfg': {
-        ${name} = skaraboxLib.nixosSystem cfg'.nixpkgs {
+      allNixosConfigurations = concatMapAttrs (name: cfg': let
+        pkgs' = if cfg'.pkgs != null then cfg'.pkgs else inputs.nixpkgs.legacyPackages.${cfg'.system};
+      in {
+        ${name} = skaraboxLib.nixosSystem {
+          inherit (pkgs') lib;
+          nixpkgs' = if cfg'.nixpkgs != null then cfg'.nixpkgs else inputs.nixpkgs;
+
           inherit (cfg') system;
           modules = cfg'.modules ++ [
             inputs.skarabox.nixosModules.skarabox
