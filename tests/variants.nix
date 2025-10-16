@@ -174,13 +174,13 @@ let
     #
     # group "Deploying with deploy-rs."
     # sed -i 's/inputs.skarabox.flakeModules.colmena/# inputs.skarabox.flakeModules.colmena/' ./flake.nix
-    # ${nix} run .#deploy-rs
+    # ${nix} run .#deploy-rs -- --debug-logs --temp-path .tmp
     # sed -i 's/# inputs.skarabox.flakeModules.colmena/inputs.skarabox.flakeModules.colmena/' ./flake.nix
     # endgroup "Deploying with deploy-rs done."
 
     group "Deploying with colmena."
     sed -i 's/inputs.skarabox.flakeModules.deploy-rs/# inputs.skarabox.flakeModules.deploy-rs/' ./flake.nix
-    ${nix} run .#colmena apply
+    ${nix} run .#colmena apply --show-trace
     sed -i 's/# inputs.skarabox.flakeModules.deploy-rs/inputs.skarabox.flakeModules.deploy-rs/' ./flake.nix
     endgroup "Deploying with colmena done."
 
