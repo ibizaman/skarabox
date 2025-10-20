@@ -170,13 +170,11 @@ let
     ${nix} run .#myskarabox-ssh -- -F none sudo cat /etc/shadow | ${gnugrep}/bin/grep "$hashedpwd"
     endgroup "Password has been set."
 
-    # This fails on Github actions and I don't know why.
-    #
-    # group "Deploying with deploy-rs."
-    # sed -i 's/inputs.skarabox.flakeModules.colmena/# inputs.skarabox.flakeModules.colmena/' ./flake.nix
-    # ${nix} run .#deploy-rs -- --debug-logs --temp-path .tmp
-    # sed -i 's/# inputs.skarabox.flakeModules.colmena/inputs.skarabox.flakeModules.colmena/' ./flake.nix
-    # endgroup "Deploying with deploy-rs done."
+    group "Deploying with deploy-rs."
+    sed -i 's/inputs.skarabox.flakeModules.colmena/# inputs.skarabox.flakeModules.colmena/' ./flake.nix
+    ${nix} run .#deploy-rs -- --debug-logs --temp-path .tmp
+    sed -i 's/# inputs.skarabox.flakeModules.colmena/inputs.skarabox.flakeModules.colmena/' ./flake.nix
+    endgroup "Deploying with deploy-rs done."
 
     group "Deploying with colmena."
     sed -i 's/inputs.skarabox.flakeModules.deploy-rs/# inputs.skarabox.flakeModules.deploy-rs/' ./flake.nix
