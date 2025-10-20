@@ -16,15 +16,39 @@ Template:
 
 # Upcoming Release
 
+# v1.2.0
+
+## New Features
+
+- Allow to customize starting hostname instead of hardcoded `myskarabox`.
+
 ## Breaking Changes
 
 - Remove `hostId` file and directly set the value in the host's `configuration.nix` file.
 - Remove `ssh_port` and `ssh_boot_port` files and directly set the value in the host's `configuration.nix` file.
 - Remove `ip` and `system` files and directly set the value in the host's `flake.nix` file.
+- Added `skarabox.hosts.<name>.pkgs` option to allow overriding `pkgs.lib`.
+
+  ```diff
+    skarabox.hosts = {
+      myskarabox = {
+          nixpkgs = inputs.selfhostblocks.lib.${system}.patchedNixpkgs;
+  +       pkgs = inputs.selfhostblocks.lib.${system}.pkgs;
+      };
+    };
+  ```
+
+- Removed `system` from `nixosModules` flake output.
+
+  ```diff
+  - inputs.selfhostblocks.nixosModules.${system}.default
+  + inputs.selfhostblocks.nixosModules.default
+  ```
 
 ## Fixes
 
 - Fix multiple hosts overwriting each other in flake outputs.
+- Beacon script can be run a darwin guests.
 
 ## Other Changes
 
