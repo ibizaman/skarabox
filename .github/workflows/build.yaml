@@ -67,6 +67,7 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     needs: [ "tests-matrix" ]
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
