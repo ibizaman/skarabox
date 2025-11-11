@@ -22,7 +22,7 @@ with all batteries included.
 ## Introduction
 
 Skarabox is a flake template which combines three main features
-which all work together to provide a seamless NixOS install experience.
+which all work together to provide a seamless NixOS installation experience.
 
 Skarabox uses a lot of existing wonderful tools.
 It merely provides an opinionated way to make them all fit together.
@@ -79,7 +79,8 @@ and also afterwards:
 - Disk mirroring: 1 or 2 disks in raid1 using ZFS mirroring for the OS,
   boot partition is then mirrored using grub mirrored devices
   and 0 or 2 disks in raid1 using ZFS mirroring for the data disks.
-- Backed by [tests][] for all disk variants
+- Seamless upgrade or downgrade from 1 to 2 OS disks and from 0 to 2 for the data disks.
+- Backed by [tests][] for all disk variants and upgrade paths.
   and [CI][] to make sure the installation procedure does work!
   Why don't you try them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
 - [nixos-facter][] to handle hardware configuration.
