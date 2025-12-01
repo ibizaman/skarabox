@@ -1,6 +1,7 @@
 # Normal Operations {#normal-operations}
 
 All commands are prefixed by the hostname, allowing to handle multiple hosts.
+Here we assume the hostname is `myskarabox`.
 
 ## Decrypt `root` pool after boot {#decrypt-root}
 

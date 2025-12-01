@@ -41,6 +41,10 @@ Template:
     };
   ```
 
+## Other Changes
+
+- Some rewrite of the manual.
+
 # v1.2.0
 
 ## New Features
