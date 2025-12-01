@@ -1,5 +1,5 @@
 <!-- Read these docs at https://installer.skarabox.com -->
-# Preface {#preface}
+# Introduction {#introduction}
 
 ::: {.note}
 Skarabox is hosted on [GitHub](https://github.com/ibizaman/skarabox).
@@ -10,8 +10,6 @@ Feel free to join the dedicated Matrix room
 [matrix.org#selfhostblocks](https://matrix.to/#/#selfhostblocks:matrix.org).
 :::
 
-## Introduction {#introduction}
-
 Skarabox is a flake template which combines three main features
 which all work together to provide a seamless NixOS install experience.
 
@@ -19,47 +17,7 @@ Skarabox uses a lot of existing wonderful tools.
 It merely provides an opinionated way to make them all fit together.
 By being more opinionated, it gets you set up faster.
 
-### Beacon {#beacon}
-
-To install NixOS on you server, you must be able to first
-boot on it. For a cloud install, that's usually easy but
-for an on-premise server, you must create a bootable USB key.
-That's the goal of the beacon which generates an ISO file
-that's writable on an USB key.
-
-On top of just booting up, Skarabox' beacon:
-- Assigns a static IP to the beacon which matches the server's IP.
-- Creates a WiFi hotspot with SSID "Skarabox".
-
-To test the installation, Skarabox provides a VM beacon
-that runs on your laptop and which contains 2 OS drive and 2 data drive,
-mimicking the supported disk layout by Skarabox.
-
-### Flake Module {#flake-module}
-
-The flake module is used with [flake-parts][] to manage one or more servers
-under the [skarabox.hosts option][Flake module options]
-and provide commands and packages for each of those.
-
-For example, the `nix run .#gen-new-host <newhost>` command is used to create
-the directory structure to manage a new host, including new random secrets.
-
-The flake module:
-
-- Assigns the same values, like IP address, to the [beacon options][] and the [NixOS module options][].
-- Creates random host key and ssh key to access the server.
-  The host key is used then to populate a known hosts file.
-- Create main [SOPS][sops-nix] key.
-- Create one `secrets.yaml` SOPS file per host, encrypted by main SOPS key
-  and by the corresponding host key.
-- Uses fully pinned inputs to avoid incompatible dependency versions.
-
-[flake-parts]: https://flake.parts
-[beacon options]: https://installer.skarabox.com/options.html#beacon-options
-[NixOS module options]: https://installer.skarabox.com/options.html#skarabox-options
-[Flake module options]: https://installer.skarabox.com/options.html#flake-module-options
-
-### NixOS Module {#nixos-module}
+## NixOS Module {#nixos-module}
 
 The NixOS module provides features useful during installation
 and also afterwards:
@@ -75,7 +33,7 @@ and also afterwards:
   Why don't you try them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
 - [nixos-facter][] to handle hardware configuration.
 - [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
-- Use [deploy-rs][] or [colmena][] to deploy updates.
+- Uses [deploy-rs][] or [colmena][] to deploy updates.
 - Configures DHCP or static IP for host.
 - Supports `x86_64-linux` and `aarch64-linux` platform.
 - Supports `x86_64-darwin` and `aarch64-darwin` as long as [cross-compilation][] is enabled.
@@ -92,6 +50,46 @@ and also afterwards:
 [CI]: ./.github/workflows/build.yaml
 [cross-compilation]: https://github.com/cpick/nix-rosetta-builder
 [Self Host Blocks]: https://github.com/ibizaman/selfhostblocks
+
+## Beacon {#beacon}
+
+To install NixOS on you server, you must be able to first
+boot on it. For a cloud install, that's usually easy but
+for an on-premise server, you must create a bootable USB key.
+That's the goal of the beacon which generates an ISO file
+that's writable on an USB key.
+
+On top of just booting up, Skarabox' beacon:
+- Assigns a static IP to the beacon which matches the server's future IP.
+- Optionally creates a WiFi hotspot with SSID "Skarabox".
+
+To test the installation, Skarabox provides a VM beacon
+that runs on your laptop and which contains 2 OS drive and 2 data drive,
+mimicking the supported disk layout by Skarabox.
+
+## Flake Module {#flake-module}
+
+The flake module is used with [flake-parts][] to manage one or more servers
+under the [skarabox.hosts option][Flake module options]
+and provide commands and packages for each of those.
+
+For example, the `nix run .#gen-new-host <newhost>` command is used to create
+the directory structure to manage a new host, including new random secrets.
+
+The flake module:
+
+- Assigns the same values, like IP address, to the [beacon options][] and the [NixOS module options][].
+- Creates random host key and ssh key to access the server.
+  The host key is used then to populate a known hosts file.
+- Create a main [SOPS][sops-nix] key.
+- Create one `secrets.yaml` SOPS file per host, encrypted by the main SOPS key
+  and by the corresponding host key.
+- Uses fully pinned inputs to avoid incompatible dependency versions.
+
+[flake-parts]: https://flake.parts
+[beacon options]: https://installer.skarabox.com/options.html#beacon-options
+[NixOS module options]: https://installer.skarabox.com/options.html#skarabox-options
+[Flake module options]: https://installer.skarabox.com/options.html#flake-module-options
 
 ## Contributing {#contributing}
 

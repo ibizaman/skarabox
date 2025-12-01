@@ -28,6 +28,40 @@ Skarabox uses a lot of existing wonderful tools.
 It merely provides an opinionated way to make them all fit together.
 By being more opinionated, it gets you set up faster.
 
+### NixOS Module
+
+The NixOS module provides features useful during installation
+and also afterwards:
+
+- [nixos-anywhere][] to install NixOS headlessly.
+- [disko][] to format the drives using native ZFS encryption.
+- Remote root pool decryption through ssh.
+- Disk mirroring: 1 or 2 disks in raid1 using ZFS mirroring for the OS,
+  boot partition is then mirrored using grub mirrored devices
+  and 0 or 2 disks in raid1 using ZFS mirroring for the data disks.
+- Backed by [tests][] for all disk variants
+  and [CI][] to make sure the installation procedure does work!
+  Why don't you try them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
+- [nixos-facter][] to handle hardware configuration.
+- [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
+- Uses [deploy-rs][] or [colmena][] to deploy updates.
+- Configures DHCP or static IP for host.
+- Supports `x86_64-linux` and `aarch64-linux` platform.
+- Supports `x86_64-darwin` and `aarch64-darwin` as long as [cross-compilation][] is enabled.
+- Integration with [Self Host Blocks][] which, similarly to Skarabox,
+  provides an opinionated way to configure services in a seamless way.
+
+[nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
+[disko]: https://github.com/nix-community/disko
+[nixos-facter]: https://github.com/nix-community/nixos-facter
+[sops-nix]: https://github.com/Mic92/sops-nix
+[deploy-rs]: https://github.com/serokell/deploy-rs
+[colmena]: https://github.com/zhaofengli/colmena
+[tests]: ./tests/default.nix
+[CI]: ./.github/workflows/build.yaml
+[cross-compilation]: https://github.com/cpick/nix-rosetta-builder
+[Self Host Blocks]: https://github.com/ibizaman/selfhostblocks
+
 ### Beacon
 
 To install NixOS on you server, you must be able to first
@@ -37,8 +71,8 @@ That's the goal of the beacon which generates an ISO file
 that's writable on an USB key.
 
 On top of just booting up, Skarabox' beacon:
-- Assigns a static IP to the beacon which matches the server's IP.
-- Creates a WiFi hotspot with SSID "Skarabox".
+- Assigns a static IP to the beacon which matches the server's future IP.
+- Optionally creates a WiFi hotspot with SSID "Skarabox".
 
 To test the installation, Skarabox provides a VM beacon
 that runs on your laptop and which contains 2 OS drive and 2 data drive,
@@ -58,8 +92,8 @@ The flake module:
 - Assigns the same values, like IP address, to the [beacon options][] and the [NixOS module options][].
 - Creates random host key and ssh key to access the server.
   The host key is used then to populate a known hosts file.
-- Create main [SOPS][sops-nix] key.
-- Create one `secrets.yaml` SOPS file per host, encrypted by main SOPS key
+- Create a main [SOPS][sops-nix] key.
+- Create one `secrets.yaml` SOPS file per host, encrypted by the main SOPS key
   and by the corresponding host key.
 - Uses fully pinned inputs to avoid incompatible dependency versions.
 
@@ -67,40 +101,6 @@ The flake module:
 [beacon options]: https://installer.skarabox.com/options.html#beacon-options
 [NixOS module options]: https://installer.skarabox.com/options.html#skarabox-options
 [Flake module options]: https://installer.skarabox.com/options.html#flake-module-options
-
-### NixOS Module
-
-The NixOS module provides features useful during installation
-and also afterwards:
-
-- [nixos-anywhere][] to install NixOS headlessly.
-- [disko][] to format the drives using native ZFS encryption.
-- Remote root pool decryption through ssh.
-- Disk mirroring: 1 or 2 disks in raid1 using ZFS mirroring for the OS,
-  boot partition is then mirrored using grub mirrored devices
-  and 0 or 2 disks in raid1 using ZFS mirroring for the data disks.
-- Backed by [tests][] for all disk variants
-  and [CI][] to make sure the installation procedure does work!
-  Why don't you try them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
-- [nixos-facter][] to handle hardware configuration.
-- [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
-- Use [deploy-rs][] or [colmena][] to deploy updates.
-- Configures DHCP or static IP for host.
-- Supports `x86_64-linux` and `aarch64-linux` platform.
-- Supports `x86_64-darwin` and `aarch64-darwin` as long as [cross-compilation][] is enabled.
-- Integration with [Self Host Blocks][] which, similarly to Skarabox,
-  provides an opinionated way to configure services in a seamless way.
-
-[nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
-[disko]: https://github.com/nix-community/disko
-[nixos-facter]: https://github.com/nix-community/nixos-facter
-[sops-nix]: https://github.com/Mic92/sops-nix
-[deploy-rs]: https://github.com/serokell/deploy-rs
-[colmena]: https://github.com/zhaofengli/colmena
-[tests]: ./tests/default.nix
-[CI]: ./.github/workflows/build.yaml
-[cross-compilation]: https://github.com/cpick/nix-rosetta-builder
-[Self Host Blocks]: https://github.com/ibizaman/selfhostblocks
 
 ## Current State
 
@@ -122,11 +122,12 @@ of Skarabox.
 ## Usage in Brief
 
 1. Initialize repo either from scratch or in an existing repo.
-2. Start beacon either in a VM for testing or install on an on-premise host
-   or even on a cloud instance.
+2. Either test with the VM beacon or start the beacon on an on-premise host
+   or directly target a cloud instance.
 3. Install on target host.
 
-Afterwards, commands are provided for common operations:
+Afterwards, commands are provided for common operations.
+Assuming the host is called `myskarabox`:
 
 ```bash
 # Decrypt root partition:
@@ -161,7 +162,7 @@ A scarab is a _very_ [strong][] animal representing well what this repository's 
 
 ## Hardware Requirements
 
-Skarabox is currently tailored for NAS users, not necessarily homelab users.
+Skarabox is currently tailored for single hosts using a few hard drives, not necessarily homelab users.
 It expects a particular hardware layout:
 
 - 1 or 2 SSD or NVMe drive for the OS.
