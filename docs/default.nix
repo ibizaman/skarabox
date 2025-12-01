@@ -117,39 +117,39 @@ in stdenv.mkDerivation {
       ${nmdsrc}/static/highlightjs/highlight.load.js
 
     substituteInPlace ./manual.md \
-      --replace \
+      --replace-fail \
         '@VERSION@' \
         ${builtins.readFile ../VERSION}
 
     substituteInPlace ./installation.md \
-      --replace \
+      --replace-fail \
         '@VERSION@' \
         ${builtins.readFile ../VERSION}
 
     substituteInPlace ./normal-operations.md \
-      --replace \
+      --replace-fail \
         '@VERSION@' \
         ${builtins.readFile ../VERSION}
 
     substituteInPlace ./options.md \
-      --replace \
+      --replace-fail \
         '@SKARABOX_OPTIONS_JSON@' \
         ${mkOptionsDocs skaraboxModules}/share/doc/nixos/options.json
 
     substituteInPlace ./options.md \
-      --replace \
+      --replace-fail \
         '@BEACON_OPTIONS_JSON@' \
         ${mkOptionsDocs beaconModules}/share/doc/nixos/options.json
 
     substituteInPlace ./options.md \
-      --replace \
+      --replace-fail \
         '@FLAKE_MODULE_OPTIONS_JSON@' \
         ${mkOptionsDocs flakeModuleModules}/share/doc/nixos/options.json
 
     find . -name "*.md" -print0 | \
       while IFS= read -r -d ''' f; do
         substituteInPlace "''${f}" \
-          --replace \
+          --replace-warn \
             '@REPO@' \
             "${ghRoot}" 2>/dev/null
       done
