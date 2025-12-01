@@ -16,6 +16,8 @@ Template:
 
 # Upcoming Release
 
+# v1.3.0
+
 ## Breaking Changes
 
 - Do not allow to override lib in `nixosSystem` function.
