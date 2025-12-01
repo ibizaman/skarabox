@@ -13,7 +13,7 @@
     import "${nixpkgs'}/nixos/lib/eval-config.nix" (
       {
         system = null;
-        modules = args.modules ++ [
+        modules = (args.modules or []) ++ [
           ({ config, pkgs, lib, ... }:
             {
               nixpkgs.flake.source = nixpkgs.outPath;
