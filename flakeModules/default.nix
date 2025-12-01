@@ -49,19 +49,6 @@ in
               This option allows to patch nixpkgs following https://wiki.nixos.org/wiki/Nixpkgs/Patching_Nixpkgs
             '';
           };
-          pkgs = mkOption {
-            # No evaluation or merging is wanted here, thus the raw type.
-            type = types.raw;
-            defaultText = "inputs.nixpkgs.legacyPackages.\${system}";
-            default = null;
-            description = ''
-              If given, overrides xpkgs in the nixosConfiguration, including `lib`.
-
-              By default, uses the pkgs from the nixpkgs input.
-
-              This option allows to patch pkgs and functions in pkgs.lib.
-            '';
-          };
           hostKeyPath = mkOption {
             description = "Path from the top of the repo to the ssh private file used as the host key.";
             type = types.str;
@@ -505,11 +492,14 @@ in
     flake = flakeInputs: let
       # First, build all nixosConfigurations
       allNixosConfigurations = concatMapAttrs (name: cfg': let
-        pkgs' = if cfg'.pkgs != null then cfg'.pkgs else inputs.nixpkgs.legacyPackages.${cfg'.system};
+        nixpkgs' = if cfg'.nixpkgs != null then cfg'.nixpkgs else inputs.nixpkgs;
+        pkgs' = import nixpkgs' {
+          inherit (cfg') system;
+        };
       in {
         ${name} = skaraboxLib.nixosSystem {
+          inherit nixpkgs';
           inherit (pkgs') lib;
-          nixpkgs' = if cfg'.nixpkgs != null then cfg'.nixpkgs else inputs.nixpkgs;
 
           inherit (cfg') system;
           modules = cfg'.modules ++ [

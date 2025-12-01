@@ -37,17 +37,19 @@
     ];
 
     skarabox.hosts = {
-      myskarabox = {
-        # Comment these two lines to use nixpkgs as the input instead of SelfHostBlocks.
-        nixpkgs = inputs.selfhostblocks.lib.${config.skarabox.hosts.myskarabox.system}.patchedNixpkgs;
-        pkgs = inputs.selfhostblocks.lib.${config.skarabox.hosts.myskarabox.system}.pkgs;
+      myskarabox = let
         system = "x86_64-linux";
+      in {
+        # Comment this line to use inputs.nixpkgs as the input instead of SelfHostBlocks.
+        nixpkgs = inputs.selfhostblocks.lib.${system}.patchedNixpkgs;
+        inherit system;
         hostKeyPub = ./myskarabox/host_key.pub;
         ip = "192.168.1.30";
         sshAuthorizedKey = ./myskarabox/ssh.pub;
         knownHosts = ./myskarabox/known_hosts;
 
         modules = [
+          inputs.selfhostblocks.nixosModules.default
           inputs.sops-nix.nixosModules.default
           self.nixosModules.myskarabox
         ];

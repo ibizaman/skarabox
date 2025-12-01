@@ -72,7 +72,8 @@ let
     sed -i "s/\(ip =\) \"192.168.1.30\"/\1 \"127.0.0.1\"/" "flake.nix"
     sed -i "s/\(system =\) \"x86_64-linux\"/\1 \"${system}\"/" "flake.nix"
     if [ "$legacyNixpkgs" = true ]; then
-      sed -i "s/\(pkgs =\) .*;$/\1 null;/" "flake.nix"
+      sed -i "s/\(nixpkgs =\) .*;$/\1 null;/" "flake.nix"
+      sed -i "/inputs.selfhostblocks.nixosModules.default$/d" "flake.nix"
     fi
     ${nix} run .#myskarabox-gen-knownhosts-file --show-trace
     # Using a git repo here allows to only copy in the nix store non temporary files.

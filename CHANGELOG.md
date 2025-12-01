@@ -16,6 +16,31 @@ Template:
 
 # Upcoming Release
 
+## Breaking Changes
+
+- Do not allow to override lib in `nixosSystem` function.
+  It was a bad idea.
+  This was added to support SelfHostBlocks but now that project
+  sets up a new `shb` variable containing its functions using `_module.args.shb`.
+  The template is updated too.
+
+  ```diff
+    skarabox.hosts = {
+      myskarabox = {
+        nixpkgs = inputs.selfhostblocks.lib.${system}.patchedNixpkgs;
+  -     pkgs = inputs.selfhostblocks.lib.${system}.pkgs;
+
+        modules = [
+  +       {
+  +         nixpkgs.overlays = [
+  +           selfhostblocks.overlays.${system}.default
+  +         ];
+  +       }
+        ];
+      };
+    };
+  ```
+
 # v1.2.0
 
 ## New Features
