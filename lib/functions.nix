@@ -1,12 +1,8 @@
 { nixpkgs }:
 {
-  # nixosSystem is found in nixpkgs/flake.nix and we must
-  # copy it here to be able to use the full patched nixpkgs.
-  # Otherwise, we can override pkgs which is a good first step
-  # but we can't access the patched lib/ or nixos/modules/ this way.
+  # Copy of upstream nixosSystem that allows to override nixpkgs.
   nixosSystem =
     args@{
-      lib ? null,
       nixpkgs' ? nixpkgs,
       ...
     }:
@@ -14,14 +10,13 @@
       {
         system = null;
         modules = (args.modules or []) ++ [
-          ({ config, pkgs, lib, ... }:
+          ({ config, pkgs, ... }:
             {
               nixpkgs.flake.source = nixpkgs.outPath;
             }
           )
         ];
       }
-      // (if lib == null then {} else { inherit lib; })
-      // builtins.removeAttrs args [ "modules" "lib" "nixpkgs'" ]
+      // builtins.removeAttrs args [ "modules" "nixpkgs'" ]
     );
 }
