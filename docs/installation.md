@@ -1,9 +1,8 @@
 <!-- Read these docs at https://installer.skarabox.com -->
 # Installation {#installation}
 
-If you don't have an existing repository, choose the [bootstrapping][]
-method. If you do have one you want to integrate with Skarabox,
-follow the [Add in Existing Repo][] method.
+If you don't have an existing repository, choose the [bootstrapping][] method.
+If you do have one, follow the [Add in Existing Repo][] method.
 
 The installation procedure can be followed on a [VM][],
 to test the installation process, on an [on-premise server][]
@@ -37,20 +36,22 @@ $ cd myskarabox
 $ nix run github:ibizaman/skarabox?ref=@VERSION@#init -- -n myskarabox
 ```
 
-This last command will also generate the needed secrets
-and ask for the password you want for the admin user
-for a host named `myskarabox` whose files are located
+This last command asks for the password you want for the admin user
+and will generate all other secrets.
+The hostname will be `myskarabox` and the files located
 under the [myskarabox](@REPO@/template/myskarabox) folder.
 
 All the files at the root of this new repository
 are common to all hosts.
 
 It will finally ask you to fill out two options: `skarabox.hosts.<name>.ip` and `skarabox.hosts.<name>.system`
-then afterwards generate [./known_hosts](@REPO@/template/myskarabox/known_hosts). This will be done in Step B.
+in  [./configuration.nix](@REPO@/template/myskarabox/configuration.nix)
+then afterwards to generate [./known_hosts](@REPO@/template/myskarabox/known_hosts).
+Detailed instructions will be shown in Step B.
 
 ## A. (option 2) Add in Existing Repo {#existing-repo}
 
-::: {.info}
+::: {.note}
 For a concrete example, look at the commit history of
 [this repo](https://github.com/ibizaman/nix-starter-configs-skarabox)
 which shows how to add a host managed by Skarabox
@@ -63,11 +64,11 @@ to a repository using [nix-starter-configs](https://github.com/Misterio77/nix-st
    [tutorial]: https://flake.parts/getting-started.html#existing-flake
    [template]: @REPO@/template/flake.nix
 
-2. Create Sops main key `sops.key` if needed:
+2. Create Sops main key file named `sops.key`, if you don't have one already:
 
    `nix run .#sops-create-main-key`.
 
-3. Add Sops main key to Sops config `.sops.yaml`:
+3. Add Sops main key to Sops config file `.sops.yaml`:
 
    `nix run .#sops-add-main-key`.
 
@@ -87,11 +88,8 @@ to a repository using [nix-starter-configs](https://github.com/Misterio77/nix-st
 
 Assuming the [./myskarabox/configuration.nix][] file is left untouched,
 you can now test the installation process on a VM.
-This VM has 3 hard drives, one for the OS
-and two in raid for the data.
-
 To do that, first we tweak some options
-to more sensible defaults for a VM:
+for more sensible defaults for a VM:
 
 ```bash
 skarabox.hosts.<name> = {
@@ -123,18 +121,22 @@ Now, skip to [step C](#run-installer).
 
 ## B. (option 2) Install on an On-Premise Server {#on-premise}
 
-_This guide assumes you know how to boot your server on a USB stick._
+_This guide assumes you know how to boot your server on a USB stick.
+Usually this involves opening your computer's BIOS and selecting the USB stick._
 
-1. Setup IP and system.
+1. Setup IP and system in the [flake.nix](@REPO@/template/flake.nix).
 
-   ```bash
-   $ echo 192.168.1.30 > ./myskarabox/ip
-   $ echo x86_64-linux > ./myskarabox/system
-   $ nix run .#myskarabox-gen-knownhosts-file
+   ```nix
+   skarabox.hosts.<name> = {
+     system = "x86_64-linux";
+     ip = "192.168.1.30";
+   }
    ```
 
    Choose an IP that you can access in your network
    and the system that matches your server.
+   It is also possible to use a hostname as long as it can resolve to the correct IP
+   or if you set up your ssh config accordingly.
 
    The IP used here will be statically assigned to the beacon
    and will be used to setup the WiFi hotspot from the beacon,
@@ -143,6 +145,12 @@ _This guide assumes you know how to boot your server on a USB stick._
 
    You can also setup a static IP for the server itself by enabling
    the `skarabox.staticNetwork` option in your [./myskarabox/configuration.nix][] file.
+
+   Then, generate the known host file:
+
+   ```bash
+   $ nix run .#myskarabox-gen-knownhosts-file
+   ```
 
 2. Create the .iso file.
 
@@ -168,7 +176,12 @@ _This guide assumes you know how to boot your server on a USB stick._
    For that, follow the steps that appeared when booting on the USB stick.
    To reprint the steps, run the command `skarabox-help`.
 
-6. Open the [./myskarabox/configuration.nix][] file and tweak values to match your hardware.
+   If a static IP was used, it should be the same as the one chosen above.
+   Otherwise, it could be different.
+   In that case, it's a good time to update the IP set in `skarabox.hosts.<name>.ip`
+   and generate the known hosts file again.
+
+6. Open the various files just to see if everything looks good.
 
 ## B. (option 3) Install on a Cloud Server {#cloud}
 
@@ -177,15 +190,20 @@ As long as you can boot the instance, [nixos-anywhere][] will
 take care of installing NixOS on it. For Hetzner for example,
 you can start in recovery mode.
 
-Retrieve the IP of the server, then update the values
+Retrieve the IP of the server, then update the values:
 
-```bash
-echo <ip> > myskarabox/ip
-echo x86_64-linux > myskarabox/system
-nix run .#myskarabox-gen-knownhosts-file
+```nix
+skarabox.hosts.<name> = {
+  system = "x86_64-linux";
+  ip = "192.168.1.30";
+}
 ```
 
-Replace the system with the correct one for your instance.
+Generate the known hosts file:
+
+```bash
+nix run .#myskarabox-gen-knownhosts-file
+```
 
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 
@@ -216,7 +234,8 @@ $ nix run .#myskarabox-install-on-beacon
 
 The server will reboot into NixOS on its own.
 Upon booting, the root partition will need to be decrypted
-as outlined in the next section.
+as outlined in the [Normal Operations](./normal-operations.html#decrypt-root) section.
+But first, read the next section.
 
 ## Post Installation Checklist {#checklist}
 
@@ -243,15 +262,17 @@ Usually, connecting to it is done by entering one of the following IP addresses 
 - Reduce the DHCP pool to the bounds .100 to .200, inclusive.
   This way, you are left with some space to statically allocate some IPs.
 - Statically assign the IP address of the server.
+  Router usually allow to "pin" a lease.
+  This is not needed if the IP was set statically above.
 - Enable port redirection for ports to the server IP:
   - 80 to 80.
   - 443 to 443.
-  - A random port to `skarabox.sshPort` (default 2222) to be able to ssh into your server from abroad.
-  - A random port to `skarabox.sshBootPort` 2223 to be able to start the server from abroad.
+  - `skarabox.sshPort` to `skarabox.sshPort` (default 2222) to be able to ssh into your server from abroad.
+  - `skarabox.sshBootPort` to `skarabox.sshBootPort` 2223 to be able to start the server from abroad.
 
 To check if this setup works,
 you can connect to another network (like using the tethered connection from your phone or connecting to another WiFi network)
-and then ssh into your server like above,
+and then ssh into your server like shown in the [Normal Operations](./normal-operations.html#ssh) section,
 but instead of using the IP address, use the domain name in `skarabox.hosts.<name>.ip`.
 
 ### Add Services {#checklist-services}
