@@ -68,7 +68,7 @@ let
     cd $tmpdir
 
     group "Initialising template"
-    echo skarabox1234 | ${nix} run ${../.}#init -- -n myskarabox -v -y -s -p ${../.}
+    echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s -p ${../.}
     sed -i "s/\(ip =\) \"192.168.1.30\"/\1 \"127.0.0.1\"/" "flake.nix"
     sed -i "s/\(system =\) \"x86_64-linux\"/\1 \"${system}\"/" "flake.nix"
     if [ "$legacyNixpkgs" = true ]; then

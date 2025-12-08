@@ -33,13 +33,13 @@ Create a directory and download the template.
 ```bash
 $ mkdir myskarabox
 $ cd myskarabox
-$ nix run github:ibizaman/skarabox?ref=@VERSION@#init -- -n myskarabox
+$ nix run github:ibizaman/skarabox?ref=v@VERSION@#init
 ```
 
 This last command asks for the password you want for the admin user
 and will generate all other secrets.
 The hostname will be `myskarabox` and the files located
-under the [myskarabox](@REPO@/template/myskarabox) folder.
+under the [./myskarabox](@REPO@/template/myskarabox) folder.
 
 All the files at the root of this new repository
 are common to all hosts.
@@ -94,7 +94,7 @@ for more sensible defaults for a VM:
 ```bash
 skarabox.hosts.<name> = {
   system = "x86_64-linux";
-  ip = "192.168.1.30";
+  ip = "127.0.0.1";
 };
 ```
 
