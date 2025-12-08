@@ -110,6 +110,7 @@ USAGE
     configuration="$hostname/configuration.nix"
     e "Generating $configuration"
     cp ${../template/myskarabox/configuration.nix} "$configuration"
+    chmod u+w "$configuration"
     sed -i "s/myskarabox/$hostname/" "$configuration"
 
     host_key="./$hostname/host_key"

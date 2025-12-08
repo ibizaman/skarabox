@@ -36,7 +36,6 @@ pkgs.writeShellApplication {
 Usage: $0 [-h] [-n] [-y] [-s] [-v] [-p PATH]
 
   -h:        Shows this usage
-  -n:        Name of host, defaults to "myskarabox".
   -y:        Answer yes to all questions
   -s:        Take user password from stdin. Only useful
              in scripts.
@@ -54,9 +53,6 @@ USAGE
         h)
           usage
           exit 0
-          ;;
-        n)
-          name=''${OPTARG}
           ;;
         y)
           args+=(-y)
@@ -130,8 +126,9 @@ USAGE
     e "Creating initial SOPS config in $sops_cfg..."
     rm $sops_cfg && sops-add-main-key $sops_key $sops_cfg
 
-    e "Now, we will generate the secrets for myskarabox."
+    e "Now, we will generate the secrets for $name."
 
+    # We delete the files coming from the template and generate them instead.
     rm -rf myskarabox
     # We force yes because if we came to here, we said yes earlier.
     args+=(-y)
