@@ -13,13 +13,19 @@ in
       type = types.str;
       default = "192.168.12.1";
     };
+
+    ssid = mkOption {
+      description = "SSID of the hotspot network.";
+      type = types.str;
+      default = "Skarabox";
+    };
   };
   config = {
     systemd.services."${hotspotService}@" = {
       description = "Create AP Service";
       after = [ "network.target" "network-pre.target" ];
       serviceConfig = {
-        ExecStart = "${pkgs.linux-wifi-hotspot}/bin/create_ap --redirect-to-localhost -n -g ${cfg.ip} %I Skarabox";
+        ExecStart = "${pkgs.linux-wifi-hotspot}/bin/create_ap --redirect-to-localhost -n -g ${cfg.ip} %I ${cfg.ssid}";
         KillSignal = "SIGINT";
         Restart = "on-failure";
       };
