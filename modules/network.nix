@@ -80,7 +80,7 @@ in
     };
   };
 
-  config = {
+  config = lib.mkIf (!cfg.disableNetworkSetup) {
     assertions = [
       {
         assertion = cfg.staticNetwork == null -> config.boot.initrd.network.udhcpc.enable;
@@ -92,16 +92,20 @@ in
       }
     ];
 
-    systemd.network = lib.mkIf (!cfg.disableNetworkSetup) (
-      if cfg.staticNetwork == null then {
+    # Removing this line shows a warning that the current configuration
+    # leads to network interfaces managed by both systemd and a custom NixOS script.
+    networking.useNetworkd = true;
+    systemd.network = (
+      {
         enable = true;
+      }
+      // (if cfg.staticNetwork == null then {
         networks."10-lan" = {
           matchConfig.Name = "en*";
           networkConfig.DHCP = "ipv4";
           linkConfig.RequiredForOnline = true;
         };
       } else {
-        enable = true;
         networks."10-lan" = {
           matchConfig.Name = "en*";
           address = [
@@ -112,7 +116,7 @@ in
           ];
           linkConfig.RequiredForOnline = true;
         };
-      });
+      }));
 
   };
 }
