@@ -63,8 +63,6 @@ in
           ip = mkOption {
             description = ''
               IP or hostname used to ssh into the server.
-
-              Can be the IP or hostname directly or a file containing the value.
             '';
             type = types.str;
             default = "127.0.0.1";
