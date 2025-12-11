@@ -6,9 +6,11 @@ let
     name,
     rootDisk2,
     dataPool,
+    sshPort ? 2222,
+    sshBootPort ? 2223,
     legacyNixpkgs ? false,
   }: writeShellScriptBin name ''
-    set -e
+    set -xe
 
     e () {
       echo -e "\e[1;31mSKARABOX-TEMPLATE:\e[0m \e[1;0m$@\e[0m"
@@ -36,6 +38,8 @@ let
     rootDisk2=${toBashBool rootDisk2}
     dataPool=${toBashBool dataPool}
     legacyNixpkgs=${toBashBool legacyNixpkgs}
+    sshPort=${toString sshPort}
+    sshBootPort=${toString sshBootPort}
 
     while getopts "gp:" o; do
       case "''${o}" in
@@ -75,6 +79,10 @@ let
       sed -i "s/\(nixpkgs =\) .*;$/\1 null;/" "flake.nix"
       sed -i "/inputs.selfhostblocks.nixosModules.default$/d" "flake.nix"
     fi
+    sed -i "s/\(skarabox.sshPort =\) 2222/\1 $sshPort/" "./myskarabox/configuration.nix"
+    sed -i "s/\(sshPort =\) 2222/\1 $sshPort/" "./flake.nix"
+    sed -i "s/\(skarabox.boot.sshPort =\) 2223/\1 $sshBootPort/" "./myskarabox/configuration.nix"
+    sed -i "s/\(sshBootPort =\) 2223/\1 $sshBootPort/" "./flake.nix"
     ${nix} run .#myskarabox-gen-knownhosts-file --show-trace
     # Using a git repo here allows to only copy in the nix store non temporary files.
     # In particular, we avoid copying the disk*.qcow2 files.
@@ -208,18 +216,22 @@ in
     name = "oneOStwoData";
     rootDisk2 = false;
     dataPool = true;
+    sshPort = 3222;
   };
 
   twoOSnoData = templateTest {
     name = "twoOSnoData";
     rootDisk2 = true;
     dataPool = false;
+    sshBootPort = 3223;
   };
 
   twoOStwoData = templateTest {
     name = "twoOStwoData";
     rootDisk2 = true;
     dataPool = true;
+    sshPort = 3222;
+    sshBootPort = 3223;
   };
 
   legacyNixpkgs = templateTest {

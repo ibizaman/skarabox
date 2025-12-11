@@ -8,6 +8,10 @@ let
 in
 {
   options.skarabox.hotspot = {
+    enable = lib.mkEnableOption "the Skarabox HotSpot" // {
+      default = true;
+    };
+
     ip = mkOption {
       description = "IP address of the beacon in the hotspot network.";
       type = types.str;
@@ -20,7 +24,7 @@ in
       default = "Skarabox";
     };
   };
-  config = {
+  config = lib.mkIf cfg.enable {
     systemd.services."${hotspotService}@" = {
       description = "Create AP Service";
       after = [ "network.target" "network-pre.target" ];
