@@ -124,41 +124,72 @@ Now, skip to [step C](#run-installer).
 _This guide assumes you know how to boot your server on a USB stick.
 Usually this involves opening your computer's BIOS and selecting the USB stick._
 
-1. Setup IP and system in the [flake.nix](@REPO@/template/flake.nix).
+The beacon can either connect to the local network
+and/or setup its own WiFi hotspot with SSID `Skarabox`.
+Connecting to the beacon will thus depend on the chosen method.
+
+1. Choose either DHCP or static IP configuration.
+
+   In [./myskarabox/configuration.nix][], set the configuration of the server.
+   The default is DHCP:
+
+   ```nix
+   skarabox.staticNetwork = null;
+   ```
+
+   To setup a static IP, replace the `null` value with something like:
+
+   ```nix
+   skarabox.staticNetwork = {
+     ip = "192.168.1.30";
+     gateway = "192.168.1.1";
+   }
+   ```
+
+   The same configuration will be used in the beacon.
+
+2. Modify the ssh ports if needed.
+
+   In [./myskarabox/configuration.nix][], set the ssh ports the OpenSSH server will listen on.
+   The default is:
+
+   ```nix
+   skarabox = {
+     sshPort = 2222;
+     boot.sshPort = 2223;
+   }
+   ```
+
+   In [./flake.nix][], set the ssh ports that will be used to connect to the server.
+   The default is the same as above:
+
+   ```nix
+   skarabox.hosts.<name> = {
+     sshPort = 2222;
+     sshBottPort = 2223;
+   }
+   ```
+
+   Usually, they should be the same, but if you access the server through a router with port forwarding,
+   they can differ.
+
+   [./flake.nix]: @REPO@/template/flake.nix.
+
+3. Setup system in the [./flake.nix][].
 
    ```nix
    skarabox.hosts.<name> = {
      system = "x86_64-linux";
-     ip = "192.168.1.30";
    }
    ```
 
-   Choose an IP that you can access in your network
-   and the system that matches your server.
-   It is also possible to use a hostname as long as it can resolve to the correct IP
-   or if you set up your ssh config accordingly.
-
-   The IP used here will be statically assigned to the beacon
-   and will be used to setup the WiFi hotspot from the beacon,
-   if a WiFi card is enabled.
-   Having a same IP for all makes the installation procedure much easier.
-
-   You can also setup a static IP for the server itself by enabling
-   the `skarabox.staticNetwork` option in your [./myskarabox/configuration.nix][] file.
-
-   Then, generate the known host file:
-
-   ```bash
-   $ nix run .#myskarabox-gen-knownhosts-file
-   ```
-
-2. Create the .iso file.
+4. Create the .iso file.
 
    ```bash
    $ nix build .#myskarabox-beacon
    ```
 
-3. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
+5. Copy the .iso file to a USB key. This WILL ERASE THE CONTENT of the USB key.
 
    ```bash
    $ nix run .#beacon-usbimager
@@ -168,20 +199,37 @@ Usually this involves opening your computer's BIOS and selecting the USB stick._
    - Select USB key in row 3.
    - Click write (arrow down) in row 2.
 
-4. Plug the USB stick in the server. Choose to boot on it.
+6. Plug the USB stick in the server. Choose to boot on it.
 
    You will be logged in automatically with the user `skarabox.username`.
 
-5. Note down the IP address and disk layout of the server.
-   For that, follow the steps that appeared when booting on the USB stick.
+7. Setup IP to reach the server in [./flake.nix][].
+
+   If a static IP was used, it will be the same as the one in `skarabox.staticNetwork.ip`.
+
+   If DHCP was used, first find the IP given to the beacon
+   by following the steps that appeared when booting on the USB stick.
    To reprint the steps, run the command `skarabox-help`.
+   For example, if the IP is `192.168.1.30`:
 
-   If a static IP was used, it should be the same as the one chosen above.
-   Otherwise, it could be different.
-   In that case, it's a good time to update the IP set in `skarabox.hosts.<name>.ip`
-   and generate the known hosts file again.
+   ```nix
+   skarabox.hosts.<name> = {
+     ip = "192.168.1.30";
+   }
+   ```
 
-6. Open the various files just to see if everything looks good.
+   It is also possible to use a hostname as long as it can resolve to the correct IP,
+   for example if you set up your ssh config accordingly.
+
+8. Generate the known host file:
+
+   ```bash
+   $ nix run .#myskarabox-gen-knownhosts-file
+   ```
+
+   Redo this step if any of the ssh port or IP under the flake `skarabox.hosts.<name>` option changes.
+
+9. Open the various files just to see if everything looks good.
 
 ## B. (option 3) Install on a Cloud Server {#cloud}
 

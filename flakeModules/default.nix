@@ -13,10 +13,19 @@ let
   readAndTrim = f: lib.strings.trim (builtins.readFile f);
   readAsStr = v: if lib.isPath v then readAndTrim v else v;
 
-  beacon-module = { config, lib, modulesPath, ... }: {
+  beacon-module = hostCfg: { config, lib, modulesPath, ... }: {
     imports = [
       ../modules/beacon.nix
       (modulesPath + "/profiles/minimal.nix")
+      {
+        skarabox.username = hostCfg.skarabox.username;
+        skarabox.hostname = "${hostCfg.skarabox.hostname}-beacon";
+        skarabox.sshAuthorizedKey = hostCfg.skarabox.sshAuthorizedKey;
+        skarabox.staticNetwork = hostCfg.skarabox.staticNetwork;
+        skarabox.sshPort = hostCfg.skarabox.sshPort;
+        skarabox.hotspot.ip = lib.mkIf (hostCfg.skarabox.staticNetwork != null) hostCfg.skarabox.staticNetwork.ip;
+        boot.initrd.network.udhcpc.enable = hostCfg.skarabox.staticNetwork == null;
+      }
     ];
   };
 
@@ -63,9 +72,44 @@ in
           ip = mkOption {
             description = ''
               IP or hostname used to ssh into the server.
+
+              This can be the fqdn used to access the server
+              or the external IP if port forwarding is configured on the router
+              or the internal IP if on the same network.
+
+              All cases are valid and might need to be adapted if the server moves
+              or if the DNS or DHCP server are mis-configured.
             '';
             type = types.str;
             default = "127.0.0.1";
+          };
+          sshPort = mkOption {
+            description = ''
+              Port used to ssh into the server.
+
+              This usually should be the same as the port configured in the configuration.nix
+              but can be different if accessing the server from outside with some port forwarding enabled
+              or if you want to update the ssh port.
+
+              To update the ssh port of the server, first update the ssh port in the configuration.nix
+              then deploy the new change, and finally update the port here.
+            '';
+            type = types.port;
+            default = "2222";
+          };
+          sshBootPort = mkOption {
+            description = ''
+              Port used to ssh into the server.
+
+              This usually should be the same as the port configured in the configuration.nix
+              but can be different if accessing the server from outside with some port forwarding enabled
+              or if you want to update the ssh port.
+
+              To update the ssh port of the server, first update the ssh port in the configuration.nix
+              then deploy the new change, and finally update the port here.
+            '';
+            type = types.port;
+            default = "2223";
           };
           sshPrivateKeyPath = mkOption {
             description = "Path from the top of the repo to the ssh private file used to ssh into the host. Set to null if you use an ssh agent.";
@@ -176,7 +220,7 @@ in
           text = ''
             ssh \
               "${cfg'.ip}" \
-              "${toString hostCfg.skarabox.boot.sshPort}" \
+              "${toString cfg'.sshBootPort}" \
               root \
               -o UserKnownHostsFile=${cfg'.knownHosts} \
               -o ConnectTimeout=10 \
@@ -195,13 +239,7 @@ in
           format = "install-iso";
 
           modules = cfg'.extraBeaconModules ++ [
-            beacon-module
-            {
-              skarabox.username = hostCfg.skarabox.username;
-              skarabox.hostname = "${hostCfg.skarabox.hostname}-beacon";
-              skarabox.sshAuthorizedKey = hostCfg.skarabox.sshAuthorizedKey;
-              skarabox.ip = cfg'.ip;
-            }
+            (beacon-module hostCfg)
           ];
         };
 
@@ -235,20 +273,13 @@ in
               format = "install-iso";
 
               modules = [
-                beacon-module
-                {
-                  skarabox.sshAuthorizedKey = hostCfg.skarabox.sshAuthorizedKey;
-                  skarabox.ip = "127.0.0.1";
-                }
+                (beacon-module hostCfg)
                 ({ lib, modulesPath, ... }: {
                   imports = [
                     # This profile adds virtio drivers needed in the guest
                     # to be able to share the /nix/store folder.
                     (modulesPath + "/profiles/qemu-guest.nix")
                   ];
-
-                  config.services.openssh.ports = lib.mkForce [ 2222 ];
-
                   # Since this is the VM and we will mount the hosts' nix store,
                   # we do not need to create a squashfs file.
                   config.isoImage.storeContents = lib.mkForce [];
@@ -287,9 +318,9 @@ in
 
             set -x
 
-            guestport=2222
+            guestport=${toString cfg'.sshPort}
             hostport=${toString hostCfg.skarabox.sshPort}
-            guestbootport=2223
+            guestbootport=${toString cfg'.sshBootPort}
             hostbootport=${toString hostCfg.skarabox.boot.sshPort}
 
             ${qemu} \
@@ -330,8 +361,8 @@ in
 
             text = ''
               ip=${cfg'.ip}
-              ssh_port=${toString hostCfg.skarabox.sshPort}
-              ssh_boot_port=${toString hostCfg.skarabox.boot.sshPort}
+              ssh_port=${toString cfg'.sshPort}
+              ssh_boot_port=${toString cfg'.sshBootPort}
               host_key_pub="${cfg'.hostKeyPub}"
 
               gen-knownhosts-file \
@@ -381,7 +412,7 @@ in
                 mapAttrsToList mkTmpFile secrets;
             in ''
               ip=${toString cfg'.ip}
-              ssh_port=${toString hostCfg.skarabox.sshPort}
+              ssh_port=${toString cfg'.sshPort}
               flake=".#${toString name}"
 
               export SOPS_AGE_KEY_FILE="${cfg.sopsKeyPath}"
@@ -428,7 +459,7 @@ in
             text = ''
               ssh \
                 "${cfg'.ip}" \
-                "${toString hostCfg.skarabox.sshPort}" \
+                "${toString cfg'.sshPort}" \
                 ${topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username} \
                 -o UserKnownHostsFile=${cfg'.knownHosts} \
                 -o ConnectTimeout=10 \

@@ -45,6 +45,8 @@
         inherit system;
         hostKeyPub = ./myskarabox/host_key.pub;
         ip = "192.168.1.30";
+        sshPort = 2222;
+        sshBootPort = 2223;
         knownHosts = ./myskarabox/known_hosts;
 
         modules = [

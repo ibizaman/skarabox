@@ -11,9 +11,14 @@
 
   For a wireless connection, if a card is found, a "Skarabox" wifi hotspot will
   be created automatically. Connect to it from your laptop.
-
-  The IP address for this beacon is ${cfg.ip}.
-
+  ''
+  + (if (cfg.staticNetwork == null) then ''
+  The IP address for this beacon is set through DHCP.
+  Run "ip a" command to get the IP address.
+  '' else ''
+  The IP address for this beacon is ${cfg.staticNetwork.ip}.
+  '')
+  + ''
   * Step 2.  Identify the disk layout.
 
   To know what disk existing in the system, type the command "lsblk" without
@@ -43,6 +48,7 @@
 in {
   imports = [
     ./hotspot.nix
+    ./network.nix
   ];
 
   options.skarabox = {
@@ -61,6 +67,14 @@ in {
       description = "Username with which you can log on the beacon. Use the same as for the host to simplify installation.";
       type = types.str;
       default = "skarabox";
+    };
+
+    sshPort = lib.mkOption {
+      type = types.int;
+      default = 2222;
+      description = ''
+        Port the SSH daemon listens to.
+      '';
     };
 
     sshAuthorizedKey = lib.mkOption {
@@ -94,8 +108,6 @@ in {
     image.fileName = mkForce "beacon.iso";
     image.baseName = mkForce "beacon";
 
-    networking.firewall.allowedTCPPorts = [ 22 ];
-
     boot.loader.systemd-boot.enable = true;
 
     environment.systemPackages = let
@@ -117,19 +129,12 @@ in {
       pkgs.iotop
     ];
 
-    systemd.network = {
+    services.openssh = {
       enable = true;
-      networks."10-lan" = {
-        matchConfig.Name = "en*";
-        address = [
-          "${cfg.ip}/24"
-        ];
-        linkConfig.RequiredForOnline = true;
-      };
+      ports = [ cfg.sshPort ];
     };
-    skarabox.hotspot.ip = cfg.ip;
 
-    services.getty.helpLine = mkForce ''
+    services.getty.helpLine = mkForce (''
 
         /           \\
        |/  _.-=-._  \\|       SKARABOX
@@ -157,8 +162,12 @@ in {
        WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
 
       Run the command `skarabox-help` to print more details.
-
-      The IP address for this beacon is ${cfg.ip}.
-    '';
+    ''
+    + (if (cfg.staticNetwork == null) then ''
+    The IP address for this beacon is set through DHCP.
+    Run "ip a" command to get the IP address.
+    '' else ''
+    The IP address for this beacon is ${cfg.staticNetwork.ip}.
+    ''));
   };
 }

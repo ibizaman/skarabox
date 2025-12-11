@@ -58,6 +58,7 @@ in
       pkgs.nixos-facter
     ];
 
+    networking.firewall.allowedTCPPorts = [ cfg.sshPort ];
     services.openssh = {
       enable = true;
       settings = {
