@@ -22,7 +22,7 @@ jobs:
             modules/**
             tests/**
             flake.lock
-            *.nix
+            **/*.nix
             .github/workflows/build.yaml
           separator: "\n"
 
