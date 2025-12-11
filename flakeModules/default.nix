@@ -72,11 +72,6 @@ in
             type = types.nullOr types.str;
             default = "${name}/ssh";
           };
-          sshAuthorizedKey = mkOption {
-            description = "SSH public file used to ssh into the host.";
-            type = with types; oneOf [ str path ];
-            apply = readAsStr;
-          };
           secretsFilePath = mkOption {
             description = ''
               Path from the top of the repo to the SOPS secrets file.
@@ -204,7 +199,7 @@ in
             {
               skarabox.username = hostCfg.skarabox.username;
               skarabox.hostname = "${hostCfg.skarabox.hostname}-beacon";
-              skarabox.sshAuthorizedKey = cfg'.sshAuthorizedKey;
+              skarabox.sshAuthorizedKey = hostCfg.skarabox.sshAuthorizedKey;
               skarabox.ip = cfg'.ip;
             }
           ];
@@ -242,7 +237,7 @@ in
               modules = [
                 beacon-module
                 {
-                  skarabox.sshAuthorizedKey = cfg'.sshAuthorizedKey;
+                  skarabox.sshAuthorizedKey = hostCfg.skarabox.sshAuthorizedKey;
                   skarabox.ip = "127.0.0.1";
                 }
                 ({ lib, modulesPath, ... }: {
