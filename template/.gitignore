@@ -1,3 +1,5 @@
 .skarabox-tmp
-ssh_skarabox
+ssh
+host_key
 sops.key
+result
