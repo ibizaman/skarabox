@@ -2,9 +2,9 @@
 
 Template:
 
-## New Features
-
 ## Breaking Changes
+
+## New Features
 
 ## User Facing Backwards Compatible Changes
 
@@ -15,6 +15,25 @@ Template:
 -->
 
 # Upcoming Release
+
+# v1.4.0
+
+## Breaking Changes
+
+- Removed command-line argument `-n` to flake `#init` command.
+  This command was to initialize with a custom hostname but it was not working
+  so it was removed in the meantime.
+- Removed flake `skarabox.sshAuthorizedKey` because it was a duplicate of the NixOS module one.
+
+## New Features
+
+- Allow to configure hotspot SSID with option `skarabox.hotspot.ssid` which defaults to `Skarabox`.
+- Re-use configuration from host for beacon.
+  This means the beacon uses the same DHCP or static network configuration than the final host.
+
+## Fixes
+
+- Fix network DHCP setup which was conflicting between systemd and the NixOS' custom script.
 
 # v1.3.0
 
