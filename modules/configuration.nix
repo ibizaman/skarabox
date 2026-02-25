@@ -39,7 +39,7 @@ in
       isNormalUser = true;
       extraGroups = [ "wheel" ];
       inherit (cfg) hashedPasswordFile;
-      openssh.authorizedKeys.keys = [ cfg.sshAuthorizedKey ];
+      openssh.authorizedKeys.keys = cfg.sshAuthorizedKey;
     };
 
     security.sudo.extraRules = [

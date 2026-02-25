@@ -33,9 +33,7 @@ in
         # This should contain just one line and removing the trailing
         # newline could be fixed with a removeSuffix call but treating
         # it as a file containing multiple lines makes this forward compatible.
-        authorizedKeys = [
-          config.skarabox.sshAuthorizedKey
-        ];
+        authorizedKeys = config.skarabox.sshAuthorizedKey;
       };
 
       postCommands = ''
