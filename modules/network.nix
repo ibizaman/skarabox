@@ -63,7 +63,8 @@ in
 
               firstMatchingDevice = builtins.head (builtins.filter (lib.hasPrefix "en") (lib.flatten (map (x: x.unix_device_names) network_interfaces)));
             in
-              if isString cfg'.device then cfg'.device else firstMatchingDevice;
+              # hardware attr is not set when using system.build.noFacter.
+              if builtins.hasAttr "hardware" config.hardware.facter.report && isString cfg'.device then cfg'.device else firstMatchingDevice;
           };
         };
       });
