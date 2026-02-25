@@ -295,7 +295,7 @@ skarabox.staticNetwork.deviceName = let
 
   fn = n: n.sub_class.name == "Ethernet" && lib.hasPrefix cfg'.device.namePrefix n.unix_device_names;
 
-  firstMatchingDevice = (builtins.head (builtins.filter fn config.facter.report.hardware.network_interface)).unix_device_names;
+  firstMatchingDevice = (builtins.head (builtins.filter fn config.hardware.facter.report.hardware.network_interface)).unix_device_names;
 in
   if isString cfg'.device then cfg'.device else firstMatchingDevice;
 ```

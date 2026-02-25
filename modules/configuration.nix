@@ -9,7 +9,7 @@ in
   ];
 
   config = {
-    facter.reportPath = lib.mkIf (builtins.pathExists cfg.facter-config) cfg.facter-config;
+    hardware.facter.reportPath = lib.mkIf (builtins.pathExists cfg.facter-config) cfg.facter-config;
 
     networking.hostName = cfg.hostname;
     networking.hostId = cfg.hostId;

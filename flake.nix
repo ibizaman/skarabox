@@ -11,10 +11,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nixos-facter-modules = {
-      url = "github:numtide/nixos-facter-modules";
-    };
-
     flake-parts = {
       url = "github:hercules-ci/flake-parts";
     };
@@ -33,7 +29,6 @@
     self,
     flake-parts,
     nixos-anywhere,
-    nixos-facter-modules,
     nix-flake-tests,
     ...
   }: let
@@ -145,7 +140,6 @@
       nixosModules.skarabox = {
         imports = [
           nixos-anywhere.inputs.disko.nixosModules.disko
-          nixos-facter-modules.nixosModules.facter
           ./modules/disks.nix
           ./modules/bootssh.nix
           ./modules/configuration.nix
