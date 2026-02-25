@@ -4,6 +4,7 @@ let
 
   readAndTrim = f: lib.strings.trim (builtins.readFile f);
   readAsStr = v: if lib.isPath v then readAndTrim v else v;
+  readAsListOfStr = v: if lib.isList v then map readAsStr v else [ (readAsStr v) ];
 in
 {
   options.skarabox = {
@@ -47,11 +48,22 @@ in
     };
 
     sshAuthorizedKey = mkOption {
-      type = with types; oneOf [ str path ];
+      type =
+        with types;
+        let
+          t = oneOf [
+            str
+            path
+          ];
+        in
+        oneOf [
+          t
+          (listOf t)
+        ];
       description = ''
-        Public SSH key used to connect on boot to decrypt the root pool.
+        Public SSH key(s) used to connect on boot to decrypt the root pool.
       '';
-      apply = readAsStr;
+      apply = readAsListOfStr;
     };
   };
 }
