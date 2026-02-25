@@ -544,8 +544,8 @@ in
       allPackages = lib.mapAttrs (system: hostNames:
         lib.listToAttrs (lib.concatMap (name: [
           { name = name; value = allNixosConfigurations.${name}.config.system.build.toplevel; }
-          { name = "${name}-debug-facter-nvd"; value = allNixosConfigurations.${name}.config.facter.debug.nvd; }
-          { name = "${name}-debug-facter-nix-diff"; value = allNixosConfigurations.${name}.config.facter.debug.nix-diff; }
+          { name = "${name}-debug-facter-nvd"; value = allNixosConfigurations.${name}.config.hardware.facter.debug.nvd; }
+          { name = "${name}-debug-facter-nix-diff"; value = allNixosConfigurations.${name}.config.hardware.facter.debug.nix-diff; }
         ]) hostNames)
       ) hostsBySystem;
 

@@ -42,7 +42,7 @@ in
       '';
     };
 
-    boot.kernelParams = lib.optionals (config.skarabox.staticNetwork != null && config.facter.report != {}) (let
+    boot.kernelParams = lib.optionals (config.skarabox.staticNetwork != null && config.hardware.facter.report != {}) (let
       cfg' = config.skarabox.staticNetwork;
     in [
       # https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt

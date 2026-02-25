@@ -59,7 +59,7 @@ in
             default = let
               cfg' = cfg.staticNetwork;
 
-              network_interfaces = config.facter.report.hardware.network_interface;
+              network_interfaces = config.hardware.facter.report.hardware.network_interface;
 
               firstMatchingDevice = builtins.head (builtins.filter (lib.hasPrefix "en") (lib.flatten (map (x: x.unix_device_names) network_interfaces)));
             in
