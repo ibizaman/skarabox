@@ -95,7 +95,7 @@ in
               then deploy the new change, and finally update the port here.
             '';
             type = types.port;
-            default = "2222";
+            default = 2222;
           };
           sshBootPort = mkOption {
             description = ''
@@ -109,7 +109,7 @@ in
               then deploy the new change, and finally update the port here.
             '';
             type = types.port;
-            default = "2223";
+            default = 2223;
           };
           sshPrivateKeyPath = mkOption {
             description = "Path from the top of the repo to the ssh private file used to ssh into the host. Set to null if you use an ssh agent.";
