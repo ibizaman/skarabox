@@ -59,12 +59,12 @@ in
             default = let
               cfg' = cfg.staticNetwork;
 
-              network_interfaces = config.hardware.facter.report.hardware.network_interface;
+              network_interfaces = if builtins.hasAttr "hardware" config.hardware.facter.report then config.hardware.facter.report.hardware.network_interface else [];
 
-              firstMatchingDevice = builtins.head (builtins.filter (lib.hasPrefix "en") (lib.flatten (map (x: x.unix_device_names) network_interfaces)));
+              firstMatchingDevice = if network_interfaces == [] then "" else builtins.head (builtins.filter (lib.hasPrefix "en") (lib.flatten (map (x: x.unix_device_names) network_interfaces)));
             in
               # hardware attr is not set when using system.build.noFacter.
-              if builtins.hasAttr "hardware" config.hardware.facter.report && isString cfg'.device then cfg'.device else firstMatchingDevice;
+              if isString cfg'.device then cfg'.device else firstMatchingDevice;
           };
         };
       });
