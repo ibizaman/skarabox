@@ -12,7 +12,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
       - name: Install Nix
-        uses: cachix/install-nix-action@v31.10.0
+        uses: cachix/install-nix-action@v31.10.1
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           enable_kvm: true
