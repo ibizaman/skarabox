@@ -215,6 +215,7 @@ in
               postCreateHook = "zfs list -t snapshot -H -o name | grep -E '^${cfg.rootPool.name}/local/root@blank$' || zfs snapshot ${cfg.rootPool.name}/local/root@blank";
             };
 
+            # https://nixos.org/manual/nixos/stable/#sec-state-nix
             "local/nix" = {
               type = "zfs_fs";
               mountpoint = "/nix";
@@ -235,6 +236,13 @@ in
               postMountHook = optionalString cfg.dataPool.enable ''
                 cp /tmp/data_passphrase /mnt/persist/data_passphrase
               '';
+            };
+
+            # https://nixos.org/manual/nixos/stable/#sec-state-users
+            "safe/users" = {
+              type = "zfs_fs";
+              mountpoint = "/var/lib/nixos";
+              options.mountpoint = "legacy";
             };
           };
         };

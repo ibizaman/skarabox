@@ -16,6 +16,12 @@ Template:
 
 # Upcoming Release
 
+# v1.5.0
+
+## Breaking Changes
+
+- Added zfs dataset `safe/users` on mountpoint `/var/lib/nixos` which stores the [uid and gid mappings](https://nixos.org/manual/nixos/stable/#sec-state-users).
+
 # v1.4.0
 
 ## Breaking Changes

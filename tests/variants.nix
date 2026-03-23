@@ -154,6 +154,19 @@ let
     ${nix} run .#myskarabox-ssh -- -F none sudo cat /etc/shadow | ${gnugrep}/bin/grep "$hashedpwd"
     endgroup "Password has been set."
 
+    group "Checking nixos users mapping is consistnet."
+    uidmap=$(${nix} run .#myskarabox-ssh -- -F none sudo cat /var/lib/nixos/uid-map)
+    gidmap=$(${nix} run .#myskarabox-ssh -- -F none sudo cat /var/lib/nixos/gid-map)
+    if [ -z "$uidmap" ]; then
+      echo "No uid map found"
+      exit 1
+    fi
+    if [ -z "$gidmap" ]; then
+      echo "No gid map found"
+      exit 1
+    fi
+    endgroup "We'll see later."
+
     group "Rebooting to confirm we can connect after a reboot."
     # We sleep first and run the whole script in the background
     # to avoid a race condition where the VM reboots too fast
@@ -183,6 +196,28 @@ let
     group "Checking password for skarabox user is still set."
     ${nix} run .#myskarabox-ssh -- -F none sudo cat /etc/shadow | ${gnugrep}/bin/grep "$hashedpwd"
     endgroup "Password has been set."
+
+    group "Checking nixos users mapping is consistnet."
+    uidmap2=$(${nix} run .#myskarabox-ssh -- -F none sudo cat /var/lib/nixos/uid-map)
+    gidmap2=$(${nix} run .#myskarabox-ssh -- -F none sudo cat /var/lib/nixos/gid-map)
+
+    if [ "$uidmap2" != "$uidmap" ]; then
+      echo "Uid map is not consistent, got first:"
+      echo "$uidmap"
+      echo "and then":
+      echo "$uidmap2"
+      exit 1
+    fi
+
+    if [ "$gidmap2" != "$gidmap" ]; then
+      echo "Gid map is not consistent, got first:"
+      echo "$gidmap"
+      echo "and then":
+      echo "$uidmap2"
+      exit 1
+    fi
+
+    endgroup "Mapping is consistent."
 
     group "Deploying with deploy-rs."
     sed -i 's/inputs.skarabox.flakeModules.colmena/# inputs.skarabox.flakeModules.colmena/' ./flake.nix
