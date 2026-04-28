@@ -244,6 +244,13 @@ in
               mountpoint = "/var/lib/nixos";
               options.mountpoint = "legacy";
             };
+
+            # https://nixos.org/manual/nixos/stable/#sec-zfs-state
+            "safe/zpool-cache" = {
+              type = "zfs_fs";
+              mountpoint = "/etc/zfs";
+              options.mountpoint = "legacy";
+            };
           };
         };
 
