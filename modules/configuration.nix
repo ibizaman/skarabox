@@ -52,6 +52,9 @@ in
       }
     ];
 
+    # Skarabox does not support systemd in stage1 yet.
+    boot.initrd.systemd.enable = false;
+
     environment.systemPackages = [
       pkgs.vim
       pkgs.curl
