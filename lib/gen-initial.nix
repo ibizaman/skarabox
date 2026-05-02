@@ -110,7 +110,6 @@ USAGE
     fi
 
     ${nix} flake init --template ${../.}
-    ${nix} flake update
 
     if [ -n "$path" ]; then
       ${nix} flake update --override-input skarabox "$path" skarabox
