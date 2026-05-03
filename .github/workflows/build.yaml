@@ -21,6 +21,7 @@ jobs:
             lib/**
             modules/**
             tests/**
+            template/**
             flake.lock
             **/*.nix
             .github/workflows/build.yaml
