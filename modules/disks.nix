@@ -251,6 +251,13 @@ in
               mountpoint = "/etc/zfs";
               options.mountpoint = "legacy";
             };
+
+            # https://nixos.org/manual/nixos/stable/#sec-var-systemd
+            "safe/var-lib-systemd" = {
+              type = "zfs_fs";
+              mountpoint = "/var/lib/systemd";
+              options.mountpoint = "legacy";
+            };
           };
         };
 
