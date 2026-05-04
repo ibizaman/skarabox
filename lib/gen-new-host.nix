@@ -3,6 +3,7 @@
   lib,
   add-sops-cfg,
   gen-hostId,
+  gen-machineId,
 }:
 pkgs.writeShellApplication {
   name = "gen-new-host";
@@ -124,6 +125,9 @@ USAGE
 
     e "Generating hostid..."
     sed -i "s/\(skarabox.hostId =\) null;/\1 \"$(${lib.getExe gen-hostId})\";/" "$configuration"
+
+    e "Generating machineid..."
+    sed -i "s/\(skarabox.machineId =\) null;/\1 \"$(${lib.getExe gen-machineId})\";/" "$configuration"
 
     sops_cfg="./.sops.yaml"
     secrets="$hostname/secrets.yaml"

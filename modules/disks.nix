@@ -258,6 +258,13 @@ in
               mountpoint = "/var/lib/systemd";
               options.mountpoint = "legacy";
             };
+
+            # https://nixos.org/manual/nixos/stable/#sec-var-journal
+            "safe/var-log-journal" = {
+              type = "zfs_fs";
+              mountpoint = "/var/log/journal";
+              options.mountpoint = "legacy";
+            };
           };
         };
 

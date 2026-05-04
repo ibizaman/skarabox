@@ -14,6 +14,8 @@ in
     networking.hostName = cfg.hostname;
     networking.hostId = cfg.hostId;
 
+    environment.etc."machine-id".text = cfg.machineId;
+
     powerManagement.cpuFreqGovernor = "performance";
 
     nix.settings.trusted-users = [ cfg.username ];
