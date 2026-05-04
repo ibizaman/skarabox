@@ -39,6 +39,15 @@ in
       '';
     };
 
+    machineId = mkOption {
+      type = types.str;
+      description = ''
+        Unique identifier. Generate with `uuidgen -r | tr -d -`.
+
+        This must be persisted https://nixos.org/manual/nixos/stable/#sec-machine-id
+      '';
+    };
+
     sshPort = mkOption {
       type = types.int;
       default = 2222;
