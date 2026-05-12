@@ -84,6 +84,12 @@ let
     sed -i "s/\(skarabox.boot.sshPort =\) 2223/\1 $sshBootPort/" "./myskarabox/configuration.nix"
     sed -i "s/\(sshBootPort =\) 2223/\1 $sshBootPort/" "./flake.nix"
     ${nix} run .#myskarabox-gen-knownhosts-file --show-trace
+
+    if grep -R "I'm empty and in plain text right now" .; then
+      echo "Failed to replace secrets file, fix the templating."
+      exit 1
+    fi
+
     # Using a git repo here allows to only copy in the nix store non temporary files.
     # In particular, we avoid copying the disk*.qcow2 files.
     git init
