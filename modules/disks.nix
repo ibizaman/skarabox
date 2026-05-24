@@ -339,6 +339,12 @@ in
       "/boot-backup" = mkIf (cfg.rootPool.disk2 != null) { neededForBoot = true; };
     };
 
+    # This is needed so the keys to decrypt the data zpool
+    # is available when the zpool is imported.
+    fileSystems = {
+      "/persist".neededForBoot = true;
+    };
+
     # Follows https://grahamc.com/blog/erase-your-darlings/
     # https://github.com/NixOS/nixpkgs/pull/346247/files
     boot.initrd.postResumeCommands = lib.mkAfter ''
