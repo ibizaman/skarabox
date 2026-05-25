@@ -16,11 +16,34 @@ Template:
 
 # Upcoming Release
 
+# v1.6.0
+
+## Breaking Changes
+
+- Added zfs dataset `safe/zpool-cache` on mountpoint `/etc/zfs` which stores the [ZFS cache file](https://nixos.org/manual/nixos/stable/#sec-zfs-state).
+  Follow the PR for how to migrate https://github.com/ibizaman/skarabox/pull/232
+- Added zfs dataset `safe/var-lib-systemd` on mountpoint `/var/lib/systemd` which stores the [state of systemd](https://nixos.org/manual/nixos/stable/#sec-var-systemd).
+  Follow the PR for how to migrate https://github.com/ibizaman/skarabox/pull/240
+- Added zfs dataset which stores the [state of journalctl](https://nixos.org/manual/nixos/stable/#sec-var-journal)
+  Follow the PR for how to migrate https://github.com/ibizaman/skarabox/pull/241
+
+## Fixes
+
+- Mount `/persist` on early boot because it contains the key to decrypt other zpools like `data`. https://github.com/ibizaman/skarabox/pull/252
+- Make `/etc/machine-id` declarative and persistent across reboots https://nixos.org/manual/nixos/stable/#sec-machine-id
+
+## Other Changes
+
+- Disabled `boot.initrd.systemd` for the moment.
+
+## Breaking Changes
+
 # v1.5.0
 
 ## Breaking Changes
 
 - Added zfs dataset `safe/users` on mountpoint `/var/lib/nixos` which stores the [uid and gid mappings](https://nixos.org/manual/nixos/stable/#sec-state-users).
+  Follow the PR for how to migrate https://github.com/ibizaman/skarabox/pull/223
 
 # v1.4.0
 
