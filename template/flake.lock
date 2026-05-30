@@ -694,11 +694,11 @@
         "nmdsrc": "nmdsrc_2"
       },
       "locked": {
-        "lastModified": 1779936156,
-        "narHash": "sha256-L4aOMMhExn3fCx5sSnJCZ3aCBxFH01r3ryZgKtphp8o=",
+        "lastModified": 1780022557,
+        "narHash": "sha256-Dekf4WTtj62Et6lqpHe8I3omGlmSOoufXkSSk5kmWfU=",
         "owner": "ibizaman",
         "repo": "skarabox",
-        "rev": "81dc234a4d079d490525bdd00424acdd0e253369",
+        "rev": "f030349525a72c27b370b7c821625ad07a3d3850",
         "type": "github"
       },
       "original": {
