@@ -166,7 +166,7 @@ Connecting to the beacon will thus depend on the chosen method.
    ```nix
    skarabox.hosts.<name> = {
      sshPort = 2222;
-     sshBottPort = 2223;
+     sshBootPort = 2223;
    }
    ```
 
