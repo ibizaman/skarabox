@@ -52,9 +52,11 @@ in
     };
 
     # 'change' is needed to be correctly triggered by the udevadm trigger command.
+    # KERNEL!="ap*" ignores virtual AP interfaces created by create_ap, otherwise
+    # the hotspot service recursively starts on its own generated interfaces.
     services.udev.extraRules = ''
-      ACTION=="add|change", SUBSYSTEM=="net", ENV{DEVTYPE}=="wlan", TAG+="systemd", ENV{SYSTEMD_WANTS}="${hotspotService}@%k.service"
-      ACTION=="remove",     SUBSYSTEM=="net", ENV{DEVTYPE}=="wlan", RUN+="${pkgs.systemdMinimal}/bin/systemctl stop ${hotspotService}@%k.service"
+      ACTION=="add|change", SUBSYSTEM=="net", ENV{DEVTYPE}=="wlan", KERNEL!="ap*", TAG+="systemd", ENV{SYSTEMD_WANTS}="${hotspotService}@%k.service"
+      ACTION=="remove",     SUBSYSTEM=="net", ENV{DEVTYPE}=="wlan", KERNEL!="ap*", RUN+="${pkgs.systemdMinimal}/bin/systemctl stop ${hotspotService}@%k.service"
     '';
   };
 }
