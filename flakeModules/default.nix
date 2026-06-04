@@ -58,6 +58,11 @@ in
               This option allows to patch nixpkgs following https://wiki.nixos.org/wiki/Nixpkgs/Patching_Nixpkgs
             '';
           };
+          specialArgs = mkOption {
+            description = "Extra specialArgs passed to the host nixosConfiguration.";
+            type = types.attrsOf types.raw;
+            default = { };
+          };
           hostKeyPath = mkOption {
             description = "Path from the top of the repo to the ssh private file used as the host key.";
             type = types.str;
@@ -525,7 +530,7 @@ in
           inherit nixpkgs';
           inherit (pkgs') lib;
 
-          inherit (cfg') system;
+          inherit (cfg') system specialArgs;
           modules = cfg'.modules ++ [
             inputs.skarabox.nixosModules.skarabox
             {
