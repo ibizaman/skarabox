@@ -63,7 +63,6 @@ in
       pkgs.nixos-facter
     ];
 
-    networking.firewall.allowedTCPPorts = [ cfg.sshPort ];
     services.openssh = {
       enable = true;
       settings = {
@@ -71,6 +70,7 @@ in
         PasswordAuthentication = false;
       };
       ports = [ cfg.sshPort ];
+      openFirewall = true;
       hostKeys = lib.mkForce [];
       extraConfig = ''
         HostKey /boot/host_key
