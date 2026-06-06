@@ -1,17 +1,24 @@
 <!-- Read these docs at https://installer.skarabox.com -->
 # Installation {#installation}
 
-If you don't have an existing repository, choose the [bootstrapping][] method.
-If you do have one, follow the [Add in Existing Repo][] method.
+The installation is split in 3 major steps - A, B and C.
+Each individual step may be split it in parallel tracks,
+depending on your setup.
 
-The installation procedure can be followed on a [VM][],
-to test the installation process, on an [on-premise server][]
-or on a [cloud instance][].
-For the first option, this flake template will create a suitable VM to
-test on and for the second, an ISO file will be produced that you
-can install on a USB stick and boot from on your on-premise server.
+- Step A: [Repository](#a-repository).
+  - If you don't have an existing repository, follow the [A.1. bootstrapping](#a-repository-bootstrapping)) method.
+  - If you do have one, follow the [A.2. Add in Existing Repo](#a-repository-existing-repo) method.
 
-Finally, [run the installer][].
+- Step B: [Beacon](#b-beacon). The installation can be done on:
+  - A [VM](#b-beacon-vm), which is provided by Skarabox.
+  - An [on-premise server](#b-beacon-on-premise),
+    for which Skarabox provides an ISO file that you can install on a USB stick
+    and boot from on your on-premise server
+  - A [cloud instance](#b-beacon-cloud),
+    which needs nothing special as you should be able to configure
+    your cloud VM to have ssh access, for example by booting in rescue mode.
+
+- Step C. Finally, [run the installer](#c-installer).
 
 ::: {.warning}
 Following the installation procedure on a server
@@ -19,14 +26,11 @@ WILL ERASE THE CONTENT of any disk on that server.
 Take the time to remove any disk you care about.
 :::
 
-[bootstrapping]: #bootstrapping
-[Add in Existing Repo]: #existing-repo
-[VM]: #vm
-[On-Premise Server]: #on-premise
-[Cloud Instance]: #cloud
-[Run the Installer]: #run-installer
+## A. Repository {#a-repository}
 
-## A. (option 1) Bootstrapping {#bootstrapping}
+This will prepare a repository where Skarabox is configured.
+
+### A. (option 1) Bootstrapping {#a-repository-bootstrapping}
 
 Create a directory and download the template.
 
@@ -49,7 +53,7 @@ in  [./configuration.nix](@REPO@/template/myskarabox/configuration.nix)
 then afterwards to generate [./known_hosts](@REPO@/template/myskarabox/known_hosts).
 Detailed instructions will be shown in Step B.
 
-## A. (option 2) Add in Existing Repo {#existing-repo}
+### A. (option 2) Add in Existing Repo {#a-repository-existing-repo}
 
 ::: {.note}
 For a concrete example, look at the commit history of
@@ -72,7 +76,7 @@ to a repository using [nix-starter-configs](https://github.com/Misterio77/nix-st
 
    `nix run .#sops-add-main-key`.
 
-4. Create config for host `myskarabox` in folder `./myskarabox`:
+4. Create config for target host `myskarabox` in folder `./myskarabox`:
 
    `nix run .#gen-new-host myskarabox`.
 
@@ -84,7 +88,9 @@ to a repository using [nix-starter-configs](https://github.com/Misterio77/nix-st
 
    Now, pick one of the Step B underneath.
 
-## B. (option 1) Test on a VM {#vm}
+## B. Beacon {#b-beacon}
+
+### B. (option 1) Test on a VM {#b-beacon-vm}
 
 Assuming the [./myskarabox/configuration.nix][] file is left untouched,
 you can now test the installation process on a VM.
@@ -117,9 +123,9 @@ For info, this VM has 4 hard drives:
 - `/dev/sda`
 - `/dev/sdb`
 
-Now, skip to [step C](#run-installer).
+Now, skip to [step C](#c-installer).
 
-## B. (option 2) Install on an On-Premise Server {#on-premise}
+### B. (option 2) Install on an On-Premise Server {#b-beacon-on-premise}
 
 _This guide assumes you know how to boot your server on a USB stick.
 Usually this involves opening your computer's BIOS and selecting the USB stick._
@@ -231,12 +237,11 @@ Connecting to the beacon will thus depend on the chosen method.
 
 9. Open the various files just to see if everything looks good.
 
-## B. (option 3) Install on a Cloud Server {#cloud}
+### B. (option 3) Install on a Cloud Server {#b-beacon-cloud}
 
 No need for the beacon here.
-As long as you can boot the instance, [nixos-anywhere][] will
-take care of installing NixOS on it. For Hetzner for example,
-you can start in recovery mode.
+You just need to start the instance and enable ssh access.
+The easiest is usually to boot in rescue mode.
 
 Retrieve the IP of the server, then update the values:
 
@@ -255,7 +260,7 @@ nix run .#myskarabox-gen-knownhosts-file
 
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 
-## C. Run the Installer {#run-installer}
+## C. Run the Installer {#c-installer}
 
 Create a `./myskarabox/facter.json` file containing
 the hardware specification of the host (or the VM) with:
@@ -274,7 +279,9 @@ $ nix run .#myskarabox-debug-facter-nix-diff
 $ nix run .#myskarabox-debug-facter-nvd
 ```
 
-Now, run the installation process on the host:
+3. Run the installer
+
+Now, run the installation process on the target host:
 
 ```bash
 $ nix run .#myskarabox-install-on-beacon
