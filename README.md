@@ -24,8 +24,8 @@ with all batteries included.
 Skarabox is a flake template which combines three main features
 which all work together to provide a seamless NixOS install experience.
 
-Skarabox uses a lot of existing wonderful tools.
-It merely provides an opinionated way to make them all fit together.
+It uses a lot of existing wonderful tools
+and merely provides an opinionated way to make them all fit together.
 By being more opinionated, it gets you set up faster.
 
 ### NixOS Module
@@ -64,9 +64,9 @@ and also afterwards:
 
 ### Beacon
 
-To install NixOS on you server, you must be able to first
-boot on it. For a cloud install, that's usually easy but
-for an on-premise server, you must create a bootable USB key.
+To install NixOS on you server, you must be able to first boot on it.
+For a cloud install, that's usually done by booting in rescue mode
+but for an on-premise server, you must create a bootable USB key.
 That's the goal of the beacon which generates an ISO file
 that's writable on an USB key.
 
@@ -91,7 +91,7 @@ The flake module:
 
 - Assigns the same values, like IP address, to the [beacon options][] and the [NixOS module options][].
 - Creates random host key and ssh key to access the server.
-  The host key is used then to populate a known hosts file.
+  The host key is then used to populate a known hosts file.
 - Create a main [SOPS][sops-nix] key.
 - Create one `secrets.yaml` SOPS file per host, encrypted by the main SOPS key
   and by the corresponding host key.
@@ -119,7 +119,9 @@ of Skarabox.
 [recovery]: https://installer.skarabox.com/recovery.html
 [architecture]: https://installer.skarabox.com/architecture.html
 
-## Usage in Brief
+### Usage in Brief
+
+_The manual linked above has detailed instructions._
 
 1. Initialize repo either from scratch or in an existing repo.
 2. Either test with the VM beacon or start the beacon on an on-premise host
