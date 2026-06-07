@@ -161,9 +161,14 @@ USAGE
     sops unset "$secrets" \
       "['tmp_secret']"
 
-    e "You will need to set the 'skarabox.hosts.<name>.ip' and 'skarabox.hosts.<name>.system' options in 'flake.nix' then generate ./$hostname/known_hosts."
-    e "Optionally, adjust the 'skarabox.sshPort' and 'skarabox.boot.sshPort' in options in '$configuration' if you want to."
-    e "Follow the ./README.md for more information and to continue the installation."
+    e ""
+    e "READ THIS"
+    e ""
+    e "> You are now at step B of the installation process."
+    e "> See https://installer.skarabox.com/installation.html#b-beacon for remaining steps."
+    e ""
+    e "> Some options in the generated nix files must be tweaked."
+    e "> Please read the comments in 'flake.nix' and './$hostname/configuration.nix'."
   '';
 
 }
