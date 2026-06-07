@@ -393,7 +393,7 @@ in
                 inherit pkgs;
                 inherit (inputs.nixos-anywhere.packages.${system}) nixos-anywhere;
               })
-              pkgs.sops
+              sops
             ];
             text = let
               secrets =
@@ -407,6 +407,7 @@ in
 
               diskEncryptionTmpFiles = let
                 mkTmpFile = name: path: ''
+                  echo "Using secret at ${path} in file ${cfg'.secretsFilePath} for ${name}"
                   secret_file_${name}="$(mktemp -u)"
                   mkfifo -m 600 "$secret_file_${name}"
                   trap 'rm -f "$secret_file_${name}"' EXIT
