@@ -40,7 +40,9 @@ $ cd myskarabox
 $ nix run github:ibizaman/skarabox?ref=v@VERSION@#init
 ```
 
-This last command asks for the password you want for the admin user
+The `#init` command accepts arguments, add `-- -h` so see them.
+
+The `#init` command by default asks for the password you want for the admin user
 and will generate all other secrets.
 The hostname will be `myskarabox` and the files located
 under the [./myskarabox](@REPO@/template/myskarabox) folder.
