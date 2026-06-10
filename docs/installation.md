@@ -112,10 +112,19 @@ Generate the known hosts file:
 nix run .#myskarabox-gen-knownhosts-file
 ```
 
+This file is for the final installed system. The beacon VM has its own temporary
+SSH host key, which will be trusted after the VM starts.
+
 Then, start the VM:
 
 ```bash
 $ nix run .#myskarabox-beacon-vm &
+```
+
+Trust the beacon SSH host key:
+
+```bash
+$ nix run .#myskarabox-beacon-trust
 ```
 
 For info, this VM has 4 hard drives:
@@ -229,7 +238,7 @@ Connecting to the beacon will thus depend on the chosen method.
    It is also possible to use a hostname as long as it can resolve to the correct IP,
    for example if you set up your ssh config accordingly.
 
-8. Generate the known host file:
+8. Generate the known host file for the final installed system:
 
    ```bash
    $ nix run .#myskarabox-gen-knownhosts-file
@@ -237,7 +246,17 @@ Connecting to the beacon will thus depend on the chosen method.
 
    Redo this step if any of the ssh port or IP under the flake `skarabox.hosts.<name>` option changes.
 
-9. Open the various files just to see if everything looks good.
+9. Trust the beacon SSH host key:
+
+   ```bash
+   $ nix run .#myskarabox-beacon-trust
+   ```
+
+   This writes `./myskarabox/beacon_known_hosts`, which is local trust state for
+   the temporary beacon environment. If the beacon is rebooted and its key
+   changes, rerun the command with `--force` after verifying the new fingerprint.
+
+10. Open the various files just to see if everything looks good.
 
 ### B. (option 3) Install on a Cloud Server {#b-beacon-cloud}
 
@@ -260,6 +279,13 @@ Generate the known hosts file:
 nix run .#myskarabox-gen-knownhosts-file
 ```
 
+This file is for the final installed system. To trust the cloud rescue
+environment used for installation, run:
+
+```bash
+nix run .#myskarabox-beacon-trust
+```
+
 [nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
 
 ## C. Run the Installer {#c-installer}
@@ -268,7 +294,7 @@ Create a `./myskarabox/facter.json` file containing
 the hardware specification of the host (or the VM) with:
 
 ```bash
-$ nix run .#myskarabox-get-facter > ./myskarabox/facter.json
+$ nix run .#myskarabox-beacon-get-facter > ./myskarabox/facter.json
 ```
 
 Add the `./myskarabox/facter.json` to git (run `git add ./myskarabox/facter.json`).
@@ -286,7 +312,7 @@ $ nix run .#myskarabox-debug-facter-nvd
 Now, run the installation process on the target host:
 
 ```bash
-$ nix run .#myskarabox-install-on-beacon
+$ nix run .#myskarabox-beacon-install
 ```
 
 The server will reboot into NixOS on its own.

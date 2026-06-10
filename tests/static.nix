@@ -84,24 +84,45 @@
 
     sleep 10
 
-    group "Starting ssh loop to figure out when beacon started."
+    group "Starting beacon trust loop to figure out when beacon started."
     e "You might see some flickering on the command line."
-    # We can't yet be strict on the host key check since the beacon
-    # initially has a random one.
-    while ! ${nix} run .#myskarabox-ssh -- -F none -o CheckHostIP=no -o StrictHostKeyChecking=no echo "connected"; do
+    deadline=$((SECONDS + 300))
+    while ! ${nix} run .#myskarabox-beacon-trust -- --yes; do
+      if [ "$SECONDS" -ge "$deadline" ]; then
+        echo "Timed out waiting for beacon trust to succeed"
+        exit 1
+      fi
       sleep 5
     done
     endgroup "Beacon VM has started."
 
+    group "Checking final host key is not trusted for beacon."
+    final_host_pub="$(cut -d' ' -f-2 ./myskarabox/host_key.pub)"
+    printf 'myskarabox-beacon %s\n' "$final_host_pub" > ./myskarabox/beacon_known_hosts
+    if ${nix} run .#myskarabox-beacon-ssh -- -F none echo "connected"; then
+      echo "Beacon SSH unexpectedly accepted the final host key"
+      exit 1
+    fi
+    ${nix} run .#myskarabox-beacon-trust -- --yes --force
+    deadline=$((SECONDS + 120))
+    until ${nix} run .#myskarabox-beacon-ssh -- -F none echo "connected"; do
+      if [ "$SECONDS" -ge "$deadline" ]; then
+        echo "Timed out waiting for beacon SSH to accept commands"
+        exit 1
+      fi
+      sleep 5
+    done
+    endgroup "Beacon trust is separate from final host trust."
+
     group "Generating hardware config."
-    ${nix} run .#myskarabox-get-facter > ./myskarabox/facter.json
+    ${nix} run .#myskarabox-beacon-get-facter > ./myskarabox/facter.json
     ${jq}/bin/jq < ./myskarabox/facter.json
     git add ./myskarabox/facter.json
     git commit -m 'generate hardware config'
     endgroup "Generation succeeded."
 
     group "Starting installation on beacon VM."
-    ${nix} run .#myskarabox-install-on-beacon -- --no-substitute-on-destination
+    ${nix} run .#myskarabox-beacon-install -- --no-substitute-on-destination
     endgroup "Installation succeeded."
 
     group "Starting ssh loop to figure out when VM is ready to receive root passphrase."
