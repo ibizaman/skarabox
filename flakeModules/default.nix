@@ -571,16 +571,8 @@ in
             '';
           };
 
-          get-facter = pkgs.writeShellApplication {
-            name = "get-facter";
-
-            runtimeInputs = [
-              ssh-beacon
-            ];
-
-            text = ''
-              ssh sudo nixos-facter
-            '';
+          get-facter = import ../lib/get-facter.nix {
+            inherit name pkgs ssh-beacon;
           };
 
           unlock = pkgs.writeShellApplication {
