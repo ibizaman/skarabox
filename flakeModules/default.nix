@@ -157,6 +157,11 @@ in
             type = types.str;
             default = "${name}/known_hosts";
           };
+          beaconKnownHostsPath = mkOption {
+            description = "Path from the top of the repo to the known hosts file used only for beacon SSH access.";
+            type = types.str;
+            default = "${name}/beacon_known_hosts";
+          };
           knownHosts = mkOption {
             description = "Known hosts file.";
             type = types.path;
@@ -376,6 +381,64 @@ in
             '';
           };
 
+          beacon-trust = let
+            script = pkgs.writers.writePython3Bin "beacon-trust" { } (builtins.readFile ./beacon-trust.py);
+            flags = {
+              beacon-ip = toString cfg'.ip;
+              beacon-port = toString cfg'.sshPort;
+              beacon-host-alias = "${name}-beacon";
+              beacon-known-hosts = cfg'.beaconKnownHostsPath;
+            };
+            flagArgs = lib.flatten (lib.mapAttrsToList (flag: value: [
+              "--${flag}"
+              value
+            ]) flags);
+            wrapperFlags = lib.escapeShellArg (lib.escapeShellArgs flagArgs);
+          in
+            pkgs.symlinkJoin {
+              name = "beacon-trust";
+              paths = [
+                script
+              ];
+              nativeBuildInputs = [
+                pkgs.makeWrapper
+              ];
+              postBuild = ''
+                wrapProgram "$out/bin/beacon-trust" \
+                  --prefix PATH : ${lib.makeBinPath [ pkgs.openssh ]} \
+                  --add-flags ${wrapperFlags}
+              '';
+            };
+
+          beacon-ssh = pkgs.writeShellApplication {
+            name = "beacon-ssh";
+
+            runtimeInputs = [
+              pkgs.openssh
+            ];
+
+            text = ''
+              known_hosts="${cfg'.beaconKnownHostsPath}"
+
+              if [ ! -s "$known_hosts" ]; then
+                echo "Missing beacon known_hosts file: $known_hosts" >&2
+                echo "Run: nix run .#${name}-beacon-trust" >&2
+                exit 1
+              fi
+
+              ssh \
+                -p "${toString cfg'.sshPort}" \
+                -o IdentitiesOnly=yes \
+                -o UserKnownHostsFile="$known_hosts" \
+                -o HostKeyAlias="${name}-beacon" \
+                -o StrictHostKeyChecking=yes \
+                -o ConnectTimeout=10 \
+                ${if cfg'.sshPrivateKeyPath != null then "-i ${cfg'.sshPrivateKeyPath}" else ""} \
+                "${topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username}@${cfg'.ip}" \
+                "$@"
+            '';
+          };
+
           # Install a nixosConfigurations instance (<flake>) on a server.
           #
           # This command is intended to be run against a server which
@@ -383,11 +446,11 @@ in
           # on any OS supported by nixos-anywhere. The latter has not been
           # tested in the context of Skarabox.
           #
-          #   nix run .#install-on-beacon [<command> ...]
-          #   nix run .#install-on-beacon
-          #   nix run .#install-on-beacon -v
-          install-on-beacon = pkgs.writeShellApplication {
-            name = "install-on-beacon";
+          #   nix run .#beacon-install [<command> ...]
+          #   nix run .#beacon-install
+          #   nix run .#beacon-install -v
+          beacon-install = pkgs.writeShellApplication {
+            name = "beacon-install";
             runtimeInputs = [
               (import ../lib/install-on-beacon.nix {
                 inherit pkgs;
@@ -417,11 +480,18 @@ in
               in
                 mapAttrsToList mkTmpFile secrets;
             in ''
-              ip=${toString cfg'.ip}
-              ssh_port=${toString cfg'.sshPort}
+              ip="${toString cfg'.ip}"
+              ssh_port="${toString cfg'.sshPort}"
               flake=".#${toString name}"
+              beacon_known_hosts="${cfg'.beaconKnownHostsPath}"
 
               export SOPS_AGE_KEY_FILE="${cfg.sopsKeyPath}"
+
+              if [ ! -s "$beacon_known_hosts" ]; then
+                echo "Missing beacon known_hosts file: $beacon_known_hosts" >&2
+                echo "Run: nix run .#${name}-beacon-trust" >&2
+                exit 1
+              fi
 
               ''
             + concatStringsSep "\n" diskEncryptionTmpFiles
@@ -429,6 +499,9 @@ in
                 # Build the extra arguments list properly
                 extraArgs = []
                   ++ [ "--ssh-option" "ConnectTimeout=10" ]
+                  ++ [ "--ssh-option" "UserKnownHostsFile=${cfg'.beaconKnownHostsPath}" ]
+                  ++ [ "--ssh-option" "HostKeyAlias=${name}-beacon" ]
+                  ++ [ "--ssh-option" "StrictHostKeyChecking=yes" ]
                   ++ (lib.optionals (cfg'.sshPrivateKeyPath != null) [ "-i" cfg'.sshPrivateKeyPath ])
                   ++ [ "--disk-encryption-keys" "/tmp/host_key" cfg'.hostKeyPath ]
                   ++ (lib.flatten (mapAttrsToList (name: path: [ "--disk-encryption-keys" "/tmp/${name}" "\$secret_file_${name}" ]) secrets));
@@ -446,6 +519,19 @@ in
                 ${argsString} \
                 "$@"
             '');
+          };
+
+          install-on-beacon = pkgs.writeShellApplication {
+            name = "install-on-beacon";
+
+            runtimeInputs = [
+              beacon-install
+            ];
+
+            text = ''
+              echo "warning: ${name}-install-on-beacon is deprecated; use ${name}-beacon-install" >&2
+              beacon-install "$@"
+            '';
           };
 
           # nix run .#ssh [<command> ...]
@@ -474,15 +560,28 @@ in
             '';
           };
 
+          beacon-get-facter = pkgs.writeShellApplication {
+            name = "beacon-get-facter";
+
+            runtimeInputs = [
+              beacon-ssh
+            ];
+
+            text = ''
+              beacon-ssh sudo nixos-facter
+            '';
+          };
+
           get-facter = pkgs.writeShellApplication {
             name = "get-facter";
 
             runtimeInputs = [
-              ssh
+              beacon-get-facter
             ];
 
             text = ''
-              ssh -o StrictHostKeyChecking=no sudo nixos-facter
+              echo "warning: ${name}-get-facter is deprecated; use ${name}-beacon-get-facter" >&2
+              beacon-get-facter "$@"
             '';
           };
 
@@ -503,6 +602,10 @@ in
           "${name}-boot-ssh" = boot-ssh;
           "${name}-sops" = sops;
           "${name}-beacon" = beacon;
+          "${name}-beacon-trust" = beacon-trust;
+          "${name}-beacon-ssh" = beacon-ssh;
+          "${name}-beacon-get-facter" = beacon-get-facter;
+          "${name}-beacon-install" = beacon-install;
           "${name}-beacon-vm" = beacon-vm;
           "${name}-gen-knownhosts-file" = gen-knownhosts-file;
           "${name}-install-on-beacon" = install-on-beacon;
