@@ -25,6 +25,9 @@ in
         disk1 = "/dev/nvme0n1";  # Update with result of running `fdisk -l` on the beacon.
         disk2 = null;  # Set a value only if you have a second disk for the root partition.
         reservation = "500M";  # Set to 10% of size SSD.
+        # The bootloader - "uefi" or "bios" - should be detected from the facter.json.
+        # If the detected value is wrong, you can set it manually with the following option:
+        # bootloader = "bios";
       };
       skarabox.disks.dataPool = {
         enable = true;  # Disable if only an SSD for root is present.
