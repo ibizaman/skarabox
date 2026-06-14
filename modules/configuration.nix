@@ -72,6 +72,7 @@ in
       ports = [ cfg.sshPort ];
       openFirewall = true;
       hostKeys = lib.mkForce [];
+      generateHostKeys = false;
       extraConfig = ''
         HostKey /boot/host_key
       '';
