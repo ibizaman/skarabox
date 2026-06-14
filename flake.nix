@@ -104,9 +104,6 @@
             ./modules/disks.nix
             ./modules/hotspot.nix
           ];
-          beaconModules = [
-            ./modules/beacon.nix
-          ];
           flakeModuleModules = [
             ./flakeModules/default.nix
             ./flakeModules/colmena.nix

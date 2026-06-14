@@ -10,7 +10,6 @@
 
 , release
 , skaraboxModules
-, beaconModules
 , flakeModuleModules
 }:
 
@@ -135,11 +134,6 @@ in stdenv.mkDerivation {
       --replace-fail \
         '@SKARABOX_OPTIONS_JSON@' \
         ${mkOptionsDocs skaraboxModules}/share/doc/nixos/options.json
-
-    substituteInPlace ./options.md \
-      --replace-fail \
-        '@BEACON_OPTIONS_JSON@' \
-        ${mkOptionsDocs beaconModules}/share/doc/nixos/options.json
 
     substituteInPlace ./options.md \
       --replace-fail \
