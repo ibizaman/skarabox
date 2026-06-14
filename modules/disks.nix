@@ -44,6 +44,16 @@ in
             '';
             example = "100G";
           };
+
+          bootloader = mkOption {
+            type = types.enum [ "uefi" "bios" ];
+            description = ''
+              What bootloader mode to use.
+            '';
+            default = if config.hardware.facter.detected.uefi.supported then "uefi" else "bios";
+            defaultText = ''if config.hardware.facter.detected.uefi.supported then "uefi" else "bios"'';
+            example = "bios";
+          };
         };
       };
     };
@@ -114,6 +124,13 @@ in
           content = {
             type = "gpt";
             partitions = {
+              zfs = {
+                size = "100%";
+                content = {
+                  type = "zfs";
+                  pool = cfg.rootPool.name;
+                };
+              };
               ESP = {
                 size = "500M";
                 type = "EF00";
@@ -131,12 +148,11 @@ in
                   '';
                 };
               };
-              zfs = {
-                size = "100%";
-                content = {
-                  type = "zfs";
-                  pool = cfg.rootPool.name;
-                };
+            } // lib.optionalAttrs (cfg.rootPool.bootloader == "bios") {
+              boot = {
+                size = "1M";
+                type = "EF02";
+                attributes = [ 0 ];
               };
             };
           };
@@ -353,20 +369,22 @@ in
 
     # Setup Grub to support UEFI.
     # nodev is for UEFI.
-    boot.loader.grub = {
+    boot.loader.grub = let
+      isUEFI = cfg.rootPool.bootloader == "uefi";
+    in {
       enable = true;
-      efiSupport = true;
-      efiInstallAsRemovable = true;
+      efiSupport = isUEFI;
+      efiInstallAsRemovable = isUEFI;
 
       mirroredBoots = lib.mkForce ([
         {
           path = "/boot";
-          devices = [ "nodev" ];
+          devices = if isUEFI then [ "nodev" ] else [ cfg.rootPool.disk1 ];
         }
       ] ++ (optionals (cfg.rootPool.disk2 != null) [
         {
           path = "/boot-backup";
-          devices = [ "nodev" ];
+          devices = if isUEFI then [ "nodev" ] else [ cfg.rootPool.disk2 ];
         }
       ]));
     };
