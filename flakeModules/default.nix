@@ -565,6 +565,7 @@ in
                 ${cfg'.beacon.username} \
                 -o ConnectTimeout=10 \
                 -o StrictHostKeyChecking=no \
+                -o UserKnownHostsFile=/dev/null \
                 ${if cfg'.beacon.sshPrivateKeyPath != null then "-i ${cfg'.beacon.sshPrivateKeyPath}" else ""} \
                 ${if cfg'.beacon.sshPublicKeyPath != null then "-i ${cfg'.beacon.sshPublicKeyPath}" else ""} \
                 "$@"
