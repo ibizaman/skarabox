@@ -32,7 +32,7 @@ in
     SystemMaxUse=2G
     SystemKeepFree=4G
     SystemMaxFileSize=100M
-    MaxFileSec=day
+    MaxFileSec=1d
     '';
 
     # hashedPasswordFile only works if users are not mutable.
