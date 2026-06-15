@@ -111,10 +111,18 @@ skarabox.hosts.<name> = {
 };
 ```
 
-Then, start the VM:
+Then, start the VM using the following command which will create a graphical window:
 
 ```bash
 $ nix run .#myskarabox-beacon-vm &
+```
+
+If you would rather get the dmesg output in your terminal and use the VM from there,
+you can too but you will need to dedicate a terminal window for it as the VM
+will not be able to run in the background, like above.
+
+```bash
+$ nix run .#myskarabox-beacon-vm -- -nographic
 ```
 
 For info, this VM has 4 hard drives:
