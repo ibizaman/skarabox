@@ -50,6 +50,7 @@ let
           tmpdir=''${OPTARG}
           ;;
         *)
+          echo "$0 [-p TEMPDIR] [-g]"
           exit 1
           ;;
       esac
