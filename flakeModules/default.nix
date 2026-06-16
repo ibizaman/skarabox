@@ -18,10 +18,10 @@ let
       ../modules/beacon.nix
       (modulesPath + "/profiles/minimal.nix")
       {
-        skarabox.username = hostCfg.skarabox.username;
         skarabox.hostname = "${hostCfg.skarabox.hostname}-beacon";
-        skarabox.sshAuthorizedKey = hostCfg.skarabox.sshAuthorizedKey;
         skarabox.staticNetwork = hostCfg.skarabox.staticNetwork;
+        skarabox.username = hostCfg.skarabox.username;
+        skarabox.sshAuthorizedKey = hostCfg.skarabox.sshAuthorizedKey;
         skarabox.sshPort = hostCfg.skarabox.sshPort;
         skarabox.hotspot.ip = lib.mkIf (hostCfg.skarabox.staticNetwork != null) hostCfg.skarabox.staticNetwork.ip;
         boot.initrd.network.udhcpc.enable = hostCfg.skarabox.staticNetwork == null;
@@ -43,8 +43,10 @@ in
     hosts = mkOption {
       description = "Hosts managed by Skarabox.";
       default = {};
-      type = types.attrsOf (types.submodule ({ name, ... }: {
-        options = {
+      type = types.attrsOf (types.submodule ({ name, config, ... }: {
+        options = let
+          hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;
+        in {
           nixpkgs = mkOption {
             # No evaluation or merging is wanted here, thus the raw type.
             type = types.raw;
@@ -92,29 +94,31 @@ in
             description = ''
               Port used to ssh into the server.
 
-              This usually should be the same as the port configured in the configuration.nix
+              By default it is the same as the port configured in the NixOS module in configuration.nix
               but can be different if accessing the server from outside with some port forwarding enabled
               or if you want to update the ssh port.
 
-              To update the ssh port of the server, first update the ssh port in the configuration.nix
+              To update the ssh port of a live target host, first update the ssh port in the configuration.nix
               then deploy the new change, and finally update the port here.
             '';
             type = types.port;
-            default = 2222;
+            default = hostCfg.skarabox.sshPort;
+            defaultText = "topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.sshPort";
           };
           sshBootPort = mkOption {
             description = ''
               Port used to ssh into the server.
 
-              This usually should be the same as the port configured in the configuration.nix
+              By default it is the same as the port configured in the NixOS module in configuration.nix
               but can be different if accessing the server from outside with some port forwarding enabled
               or if you want to update the ssh port.
 
-              To update the ssh port of the server, first update the ssh port in the configuration.nix
+              To update the ssh port of a live target host, first update the ssh port in the configuration.nix
               then deploy the new change, and finally update the port here.
             '';
             type = types.port;
-            default = 2223;
+            default = hostCfg.skarabox.boot.sshPort;
+            defaultText = "topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.boot.sshPort";
           };
           sshPrivateKeyPath = mkOption {
             description = "Path from the top of the repo to the ssh private file used to ssh into the host. Set to null if you use an ssh agent.";
@@ -169,6 +173,46 @@ in
             '';
             type = with types; oneOf [ str path ];
             apply = readAsStr;
+          };
+
+          beacon = {
+            username = lib.mkOption {
+              description = ''
+                Username with which you can log into the beacon.
+
+                Defaults to the username configured for the target host, which should work in most cases.
+
+                If installing on a cloud instance, set this to the user that can ssh into the instance as given by your cloud provider.
+              '';
+              type = types.str;
+              default = hostCfg.skarabox.username;
+              defaultText = "topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username";
+            };
+
+            sshPort = lib.mkOption {
+              type = types.int;
+              description = ''
+                Port the SSH daemon listens to on the beacon.
+
+                Defaults to the same port configured for the target host, which should work in most cases.
+
+                If installing on a cloud instance, set this to the port that can ssh into the instance as given by your cloud provider, usually 22.
+              '';
+              default = config.sshPort;
+              defaultText = "config.skarabox.sshPort";
+            };
+
+            sshPrivateKeyPath = lib.mkOption {
+              description = ''
+                Path from the top of the repo to the ssh private file used to ssh into the host.
+
+                Defaults to the ssh key for the target host `skarabox.hosts.<name>.sshPublicKeyPath`.
+
+                Set to null if you use an ssh agent. See also sshPublicKeyPath.
+              '';
+              type = types.nullOr types.str;
+              default = config.sshPrivateKeyPath;
+            };
           };
 
           modules = mkOption {
@@ -323,10 +367,10 @@ in
 
             set -x
 
-            guestport=${toString cfg'.sshPort}
-            hostport=${toString hostCfg.skarabox.sshPort}
-            guestbootport=${toString cfg'.sshBootPort}
-            hostbootport=${toString hostCfg.skarabox.boot.sshPort}
+            guestport=${toString hostCfg.skarabox.sshPort}
+            hostport=${toString cfg'.beacon.sshPort}
+            guestbootport=${toString hostCfg.skarabox.boot.sshPort}
+            hostbootport=${toString cfg'.sshBootPort}
 
             ${qemu} \
               -m 2048M \
@@ -418,7 +462,7 @@ in
                 mapAttrsToList mkTmpFile secrets;
             in ''
               ip=${toString cfg'.ip}
-              ssh_port=${toString cfg'.sshPort}
+              ssh_port=${toString cfg'.beacon.sshPort}
               flake=".#${toString name}"
 
               export SOPS_AGE_KEY_FILE="${cfg.sopsKeyPath}"
@@ -429,7 +473,7 @@ in
                 # Build the extra arguments list properly
                 extraArgs = []
                   ++ [ "--ssh-option" "ConnectTimeout=10" ]
-                  ++ (lib.optionals (cfg'.sshPrivateKeyPath != null) [ "-i" cfg'.sshPrivateKeyPath ])
+                  ++ (lib.optionals (cfg'.beacon.sshPrivateKeyPath != null) [ "-i" cfg'.beacon.sshPrivateKeyPath ])
                   ++ [ "--disk-encryption-keys" "/tmp/host_key" cfg'.hostKeyPath ]
                   ++ (lib.flatten (mapAttrsToList (name: path: [ "--disk-encryption-keys" "/tmp/${name}" "\$secret_file_${name}" ]) secrets));
                 
@@ -439,7 +483,7 @@ in
 
               install-on-beacon \
                 -i "$ip" \
-                -u ${hostCfg.skarabox.username} \
+                -u ${cfg'.beacon.username} \
                 -p "$ssh_port" \
                 -f "$flake" \
                 -- \
@@ -466,10 +510,31 @@ in
               ssh \
                 "${cfg'.ip}" \
                 "${toString cfg'.sshPort}" \
-                ${topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username} \
+                ${hostCfg.skarabox.username} \
                 -o UserKnownHostsFile=${cfg'.knownHosts} \
                 -o ConnectTimeout=10 \
                 ${if cfg'.sshPrivateKeyPath != null then "-i ${cfg'.sshPrivateKeyPath}" else ""} \
+                "$@"
+            '';
+          };
+
+          ssh-beacon = pkgs.writeShellApplication {
+            name = "ssh";
+
+            runtimeInputs = [
+              (import ../lib/ssh.nix {
+                inherit pkgs;
+              })
+            ];
+
+            text = ''
+              ssh \
+                "${cfg'.ip}" \
+                "${toString cfg'.beacon.sshPort}" \
+                ${cfg'.beacon.username} \
+                -o ConnectTimeout=10 \
+                -o StrictHostKeyChecking=no \
+                ${if cfg'.beacon.sshPrivateKeyPath != null then "-i ${cfg'.beacon.sshPrivateKeyPath}" else ""} \
                 "$@"
             '';
           };
@@ -478,11 +543,11 @@ in
             name = "get-facter";
 
             runtimeInputs = [
-              ssh
+              ssh-beacon
             ];
 
             text = ''
-              ssh -o StrictHostKeyChecking=no sudo nixos-facter
+              ssh sudo nixos-facter
             '';
           };
 
@@ -504,6 +569,7 @@ in
           "${name}-sops" = sops;
           "${name}-beacon" = beacon;
           "${name}-beacon-vm" = beacon-vm;
+          "${name}-ssh-beacon" = ssh-beacon;
           "${name}-gen-knownhosts-file" = gen-knownhosts-file;
           "${name}-install-on-beacon" = install-on-beacon;
           "${name}-ssh" = ssh;

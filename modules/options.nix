@@ -49,7 +49,7 @@ in
     };
 
     sshPort = mkOption {
-      type = types.int;
+      type = types.port;
       default = 2222;
       description = ''
         Port the SSH daemon listens to.

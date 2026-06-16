@@ -80,9 +80,7 @@ let
       sed -i "/inputs.selfhostblocks.nixosModules.default$/d" "flake.nix"
     fi
     sed -i "s/\(skarabox.sshPort =\) 2222/\1 $sshPort/" "./myskarabox/configuration.nix"
-    sed -i "s/\(sshPort =\) 2222/\1 $sshPort/" "./flake.nix"
     sed -i "s/\(skarabox.boot.sshPort =\) 2223/\1 $sshBootPort/" "./myskarabox/configuration.nix"
-    sed -i "s/\(sshBootPort =\) 2223/\1 $sshBootPort/" "./flake.nix"
     ${nix} run .#myskarabox-gen-knownhosts-file --show-trace
 
     if grep -R "I'm empty and in plain text right now" .; then

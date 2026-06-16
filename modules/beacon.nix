@@ -54,28 +54,47 @@ in {
 
   options.skarabox = {
     ip = lib.mkOption {
-      description = "Static IP for beacon.";
+      description = ''
+        Static IP of the beacon.
+      '';
       type = types.str;
+      default = cfg.ip;
+      defaultText = "config.skarabox.ip";
     };
 
     hostname = lib.mkOption {
-      description = "Hostname to give the beacon. Use the same as for the host to simplify installation.";
+      description = ''
+        Hostname to give to the beacon.
+
+        Defaults to the hostname configured for the target host.
+      '';
       type = types.str;
       default = "skarabox";
     };
 
     username = lib.mkOption {
-      description = "Username with which you can log on the beacon. Use the same as for the host to simplify installation.";
+      description = ''
+        Username with which you can log into the beacon.
+
+        Defaults to the hostname configured for the target host which works well if using the beacon.
+
+        If installing on a cloud instance, set this to the user that can ssh into the instance as given by your cloud provider.
+      '';
       type = types.str;
       default = "skarabox";
     };
 
     sshPort = lib.mkOption {
       type = types.int;
-      default = 2222;
       description = ''
-        Port the SSH daemon listens to.
+        Port the SSH daemon listens to on the beacon.
+
+        Defaults to the same port configured for the target host which works well if using the beacon.
+
+        If installing on a cloud instance, set this to the port that can ssh into the instance as given by your cloud provider, usually 22.
       '';
+      default = cfg.sshPort;
+      defaultText = "config.skarabox.sshPort";
     };
 
     sshAuthorizedKey = lib.mkOption {
@@ -91,7 +110,20 @@ in {
           t
           (listOf t)
         ];
-      description = "Public key to connect to the beacon. Use the same as for the host to simplify installation.";
+      description = ''
+        Public key(s) to connect to the beacon.
+
+        Each key defined will be added to the authorized key for the user.
+
+        Usually, for the beacon, one key is enough but the option allows multiple
+        to match the configuration for the target host.
+
+        Defaults to the same key(s) configured for the target host which works well if using the beacon.
+
+        If installing on a cloud instance, set this to the ssh key that can ssh into the instance as given by your cloud provider.
+      '';
+      default = cfg.sshAuthorizedKey;
+      defaultText = "config.skarabox.sshAuthorizedKey";
       apply = readAsListOfStr;
     };
   };
