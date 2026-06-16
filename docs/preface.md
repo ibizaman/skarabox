@@ -17,6 +17,23 @@ Skarabox uses a lot of existing wonderful tools.
 It merely provides an opinionated way to make them all fit together.
 By being more opinionated, it gets you set up faster.
 
+## Offline {#offline}
+
+To read this manual offline, run in your Skarabox flake repository either:
+
+```bash
+$ nix build .#manualHtml
+```
+
+Then open `result/share/doc/skarabox/index.html`.
+
+Or if you don't have a repository setup with Skarabox, run:
+
+```bash
+
+$ nix build github:ibizaman/skarabox?ref=v@VERSION@#manualHtml
+```
+
 ## NixOS Module {#nixos-module}
 
 The NixOS module provides features useful during installation

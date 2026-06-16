@@ -120,6 +120,11 @@ in stdenv.mkDerivation {
         '@VERSION@' \
         ${builtins.readFile ../VERSION}
 
+    substituteInPlace ./preface.md \
+      --replace-fail \
+        '@VERSION@' \
+        ${builtins.readFile ../VERSION}
+
     substituteInPlace ./installation.md \
       --replace-fail \
         '@VERSION@' \
