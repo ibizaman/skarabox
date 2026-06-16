@@ -303,7 +303,10 @@ the hardware specification of the host (or the VM) with:
 $ nix run .#myskarabox-get-facter > ./myskarabox/facter.json
 ```
 
+::: {.warning}
 Add the `./myskarabox/facter.json` to git (run `git add ./myskarabox/facter.json`).
+Do not forget this step otherwise the report will not be taken into account.
+:::
 
 Optionally, if you want to see exactly what `nixos-facter` did find
 and will configure, run one or both of:
