@@ -253,6 +253,7 @@ skarabox.hosts.<name>.beacon = {
   username = "<given by cloud provider>";
   sshPort = "<given by cloud provider>";
   sshPrivateKeyPath = "<given by cloud provider>";
+  sshPublicKeyPath = "<given by cloud provider>";
 }
 ```
 

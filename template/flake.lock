@@ -332,11 +332,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1781076331,
-        "narHash": "sha256-c1Uh6wQV3gglqm/Ybg7F4zqZwhMIQQ+7Kr933e1kJuQ=",
-        "owner": "nix-community",
+        "lastModified": 1780952835,
+        "narHash": "sha256-2MoxaVXJaAkZty9yRvgYbaxRBT+yk1a67PBeYDD9SAU=",
+        "owner": "ibizaman",
         "repo": "nixos-anywhere",
-        "rev": "e260e08bf1af4f91b4ae0cf9aef476add785d879",
+        "rev": "4344d164e2842fb7f0fb5df39445ac15a2f0ef4d",
         "type": "github"
       },
       "original": {

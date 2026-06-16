@@ -64,6 +64,7 @@
         # chmod 600 ssh.pub
         #
         # sshPrivateKeyPath = "./myskarabox/ssh";
+        # sshPublicKeyPath = ./myskarabox/ssh.pub;
 
         modules = [
           inputs.selfhostblocks.nixosModules.default
@@ -78,6 +79,7 @@
           # username = "<given by the cloud provider>";
           # sshPort = <given by the cloud provider>;
           # sshPrivateKeyPath = "<given by the cloud provider>";
+          # sshPublicKeyPath = "<given by the cloud provider>";
         };
         extraBeaconModules = [
           {

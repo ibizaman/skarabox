@@ -94,6 +94,7 @@ The flake module:
   or if the target host is behind a proxy with different connection settings.
 - Creates random host key and ssh key to access the server.
   The host key is then used to populate a known hosts file.
+- Supports using an ssh agent for the ssh key.
 - Create a main [SOPS][sops-nix] key.
 - Create one `secrets.yaml` SOPS file per host, encrypted by the main SOPS key
   and by the corresponding host key.
