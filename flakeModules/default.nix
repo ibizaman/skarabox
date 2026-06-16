@@ -125,6 +125,19 @@ in
             type = types.nullOr types.str;
             default = "${name}/ssh";
           };
+          sshPublicKeyPath = lib.mkOption {
+            description = ''
+              Path from the top of the repo to the ssh public file used to ssh into the host.
+
+              Should be only necessary when using an ssh agent which has a lot of ssh keys.
+              Setting this option allows the ssh agent to know which key to give,
+              otherwise ssh might fail with "too many authentication attempts".
+
+              If set, you should probably set sshPrivateKeyPath to null.
+            '';
+            type = types.nullOr types.str;
+            default = null;
+          };
           secretsFilePath = mkOption {
             description = ''
               Path from the top of the repo to the SOPS secrets file.
@@ -213,6 +226,21 @@ in
               type = types.nullOr types.str;
               default = config.sshPrivateKeyPath;
             };
+            sshPublicKeyPath = lib.mkOption {
+              description = ''
+                Path from the top of the repo to the ssh public file used to ssh into the host.
+
+                Defaults to the ssh key for the target host `skarabox.hosts.<name>.sshPublicKeyPath`.
+
+                Should be only necessary when using an ssh agent which has a lot of ssh keys.
+                Setting this option allows the ssh agent to know which key to give,
+                otherwise ssh might fail with "too many authentication attempts".
+
+                If set, you should probably set sshPrivateKeyPath to null.
+              '';
+              type = types.nullOr types.str;
+              default = config.sshPublicKeyPath;
+            };
           };
 
           modules = mkOption {
@@ -274,6 +302,7 @@ in
               -o UserKnownHostsFile=${cfg'.knownHosts} \
               -o ConnectTimeout=10 \
               ${if cfg'.sshPrivateKeyPath != null then "-i ${cfg'.sshPrivateKeyPath}" else ""} \
+              ${if cfg'.sshPublicKeyPath != null then "-i ${cfg'.sshPublicKeyPath}" else ""} \
               "$*"
           '';
         };
@@ -474,6 +503,7 @@ in
                 extraArgs = []
                   ++ [ "--ssh-option" "ConnectTimeout=10" ]
                   ++ (lib.optionals (cfg'.beacon.sshPrivateKeyPath != null) [ "-i" cfg'.beacon.sshPrivateKeyPath ])
+                  ++ (lib.optionals (cfg'.beacon.sshPublicKeyPath != null) [ "--ssh-public-key" cfg'.beacon.sshPublicKeyPath ])
                   ++ [ "--disk-encryption-keys" "/tmp/host_key" cfg'.hostKeyPath ]
                   ++ (lib.flatten (mapAttrsToList (name: path: [ "--disk-encryption-keys" "/tmp/${name}" "\$secret_file_${name}" ]) secrets));
                 
@@ -514,6 +544,7 @@ in
                 -o UserKnownHostsFile=${cfg'.knownHosts} \
                 -o ConnectTimeout=10 \
                 ${if cfg'.sshPrivateKeyPath != null then "-i ${cfg'.sshPrivateKeyPath}" else ""} \
+                ${if cfg'.sshPublicKeyPath != null then "-i ${cfg'.sshPublicKeyPath}" else ""} \
                 "$@"
             '';
           };
@@ -535,6 +566,7 @@ in
                 -o ConnectTimeout=10 \
                 -o StrictHostKeyChecking=no \
                 ${if cfg'.beacon.sshPrivateKeyPath != null then "-i ${cfg'.beacon.sshPrivateKeyPath}" else ""} \
+                ${if cfg'.beacon.sshPublicKeyPath != null then "-i ${cfg'.beacon.sshPublicKeyPath}" else ""} \
                 "$@"
             '';
           };
