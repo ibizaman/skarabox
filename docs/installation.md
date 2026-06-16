@@ -335,6 +335,16 @@ Now, run the installation process on the target host:
 $ nix run .#myskarabox-install-on-beacon
 ```
 
+:::{.info}
+If the command fails by not being able to ssh into the beacon,
+then the issue might be because your ssh agent is interfering.
+If that is the case, run the command as so:
+
+```bash
+$ SSH_AUTH_SOCK= nix run .#myskarabox-install-on-beacon
+```
+:::
+
 Additional flags can be added like:
 
 ```bash
