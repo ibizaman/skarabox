@@ -43,17 +43,42 @@
         # Comment this line to use inputs.nixpkgs as the input instead of SelfHostBlocks.
         nixpkgs = inputs.selfhostblocks.lib.${system}.patchedNixpkgs;
         inherit system;
+        hostKeyPath = "./myskarabox/host_key";
         hostKeyPub = ./myskarabox/host_key.pub;
         ip = "192.168.1.30";
-        sshPort = 2222;
-        sshBootPort = 2223;
         knownHosts = ./myskarabox/known_hosts;
+
+        # These ports default to the one set in ./myskarabox/configuration.nix
+        # You should only need to set these to other values
+        # if the target host is accessed through some proxy
+        # with some port forwarding.
+        #
+        # sshPort = 2222;
+        # sshBootPort = 2223;
+
+        # If you want to use an ssh agent to store the private key
+        # set the sshPrivateKeyPath option to `null`,
+        # generate an ssh key and add it to the ssh agent
+        # then replace the ssh.pub file with the public key from the ssh agent.
+        # Don't forget to set correct permissions on the ssh.pub file with
+        # chmod 600 ssh.pub
+        #
+        # sshPrivateKeyPath = "./myskarabox/ssh";
 
         modules = [
           inputs.selfhostblocks.nixosModules.default
           inputs.sops-nix.nixosModules.default
           self.nixosModules.myskarabox
         ];
+
+        # Set these options only if they differ from the options above.
+        # This is the case for example when installing on a cloud instance
+        # where the ssh config is given to you by the cloud provider.
+        beacon = {
+          # username = "<given by the cloud provider>";
+          # sshPort = <given by the cloud provider>;
+          # sshPrivateKeyPath = "<given by the cloud provider>";
+        };
         extraBeaconModules = [
           {
             # Add more utilities

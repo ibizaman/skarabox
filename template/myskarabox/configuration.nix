@@ -22,20 +22,23 @@ in
       skarabox.hashedPasswordFile = config.sops.secrets."myskarabox/user/hashedPassword".path;
       skarabox.facter-config = ./facter.json;
       skarabox.disks.rootPool = {
-        disk1 = "/dev/nvme0n1";  # Update with result of running `fdisk -l` on the USB stick.
+        disk1 = "/dev/nvme0n1";  # Update with result of running `fdisk -l` on the beacon.
         disk2 = null;  # Set a value only if you have a second disk for the root partition.
         reservation = "500M";  # Set to 10% of size SSD.
       };
       skarabox.disks.dataPool = {
         enable = true;  # Disable if only an SSD for root is present.
-        disk1 = "/dev/sda";  # Update with result of running `fdisk -l` on the USB stick.
-        disk2 = "/dev/sdb";  # Update with result of running `fdisk -l` on the USB stick.
+        disk1 = "/dev/sda";  # Update with result of running `fdisk -l` on the beacon.
+        disk2 = "/dev/sdb";  # Update with result of running `fdisk -l` on the beacon.
         reservation = "10G";  # Set to 5% of size Hard Drives.
       };
       # For security by obscurity, we choose another ssh port here than the default 22.
       skarabox.boot.sshPort = 2223;
       skarabox.sshPort = 2222;
       skarabox.sshAuthorizedKey = [ ./ssh.pub ];
+      # If you want to store the ssh key in a ssh agent,
+      # set the following option to null.
+      # skarabox.sshPrivateKeyPath = null;
       skarabox.hostId = null;
       skarabox.machineId = null;
 

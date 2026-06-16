@@ -89,7 +89,9 @@ the directory structure to manage a new host, including new random secrets.
 
 The flake module:
 
-- Assigns the same values, like IP address, to the [beacon options][] and the [NixOS module options][].
+- Assigns the same values, like IP address, to the [beacon options][] and the [NixOS module options][],
+  while still allowing to override them if the beacon is a cloud instance in rescue mode
+  or if the target host is behind a proxy with different connection settings.
 - Creates random host key and ssh key to access the server.
   The host key is then used to populate a known hosts file.
 - Create a main [SOPS][sops-nix] key.
