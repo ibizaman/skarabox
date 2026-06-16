@@ -275,7 +275,11 @@ $ nix run .#myskarabox-ssh-beacon -- -v
 
 ## C. Run the Installer {#c-installer}
 
-1. Get into NixOS installer
+1. (Optional) Get into NixOS installer
+
+This step is only needed if the beacon is not a NixOS system,
+like a cloud instance in rescue mode.
+It you're not sure, it doesn't hurt to run it even on a NixOS system.
 
 ```bash
 $ nix run .#myskarabox-install-on-beacon -- --phases kexec
