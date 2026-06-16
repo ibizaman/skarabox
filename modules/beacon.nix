@@ -209,12 +209,18 @@ in {
        WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
 
       Run the command `skarabox-help` to print more details.
+
     ''
     + (if (cfg.staticNetwork == null) then ''
     The IP address for this beacon is set through DHCP.
     Run "ip a" command to get the IP address.
+
     '' else ''
     The IP address for this beacon is ${cfg.staticNetwork.ip}.
-    ''));
+
+    '')
+    + ''
+    The ssh server is listening on port ${toString cfg.sshPort}.
+    '');
   };
 }
