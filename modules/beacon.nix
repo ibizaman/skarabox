@@ -221,6 +221,10 @@ in {
     '')
     + ''
     The ssh server is listening on port ${toString cfg.sshPort}.
+
+    This beacon's host key is (it will change after a reboot):
+
+    `ssh-keygen -lvf /etc/sshd/host_key.pub`
     '');
   };
 }
