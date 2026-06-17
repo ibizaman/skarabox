@@ -174,10 +174,6 @@ in
             type = types.str;
             default = "${name}/known_hosts";
           };
-          knownHosts = mkOption {
-            description = "Known hosts file.";
-            type = types.path;
-          };
           system = mkOption {
             description = ''
               System of the host.
@@ -299,7 +295,7 @@ in
               "${cfg'.ip}" \
               "${toString cfg'.sshBootPort}" \
               root \
-              -o UserKnownHostsFile=${cfg'.knownHosts} \
+              -o UserKnownHostsFile=${cfg'.knownHostsPath} \
               -o ConnectTimeout=10 \
               ${if cfg'.sshPrivateKeyPath != null then "-i ${cfg'.sshPrivateKeyPath}" else ""} \
               ${if cfg'.sshPublicKeyPath != null then "-i ${cfg'.sshPublicKeyPath}" else ""} \
@@ -450,7 +446,7 @@ in
 
               gen-knownhosts-file \
                 "$host_key_pub" "$ip" $ssh_port $ssh_boot_port \
-                > ${cfg'.knownHostsPath}
+                >> ${cfg'.knownHostsPath}
             '';
           };
 
@@ -546,7 +542,7 @@ in
                 "${cfg'.ip}" \
                 "${toString cfg'.sshPort}" \
                 ${hostCfg.skarabox.username} \
-                -o UserKnownHostsFile=${cfg'.knownHosts} \
+                -o UserKnownHostsFile=${cfg'.knownHostsPath} \
                 -o ConnectTimeout=10 \
                 ${if cfg'.sshPrivateKeyPath != null then "-i ${cfg'.sshPrivateKeyPath}" else ""} \
                 ${if cfg'.sshPublicKeyPath != null then "-i ${cfg'.sshPublicKeyPath}" else ""} \

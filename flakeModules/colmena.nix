@@ -34,7 +34,7 @@ in
                 targetUser = topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username;
                 sshOptions = [
                   "-o" "IdentitiesOnly=yes"
-                  "-o" "UserKnownHostsFile=${cfg'.knownHosts}"
+                  "-o" "UserKnownHostsFile=${cfg'.knownHostsPath}"
                   "-o" "ConnectTimeout=10"
                 ] ++ lib.optionals (cfg'.sshPrivateKeyPath != null) [ "-i" cfg'.sshPrivateKeyPath ];
               };
