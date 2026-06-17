@@ -46,7 +46,6 @@
         hostKeyPath = "./myskarabox/host_key";
         hostKeyPub = ./myskarabox/host_key.pub;
         ip = "192.168.1.30";
-        knownHosts = ./myskarabox/known_hosts;
 
         # These ports default to the one set in ./myskarabox/configuration.nix
         # You should only need to set these to other values
