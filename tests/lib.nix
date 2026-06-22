@@ -204,19 +204,16 @@ in
             system = "aarch64-linux";
             hostKeyPub = dummy;
             sshAuthorizedKey = [ dummy ];
-            knownHosts = dummy;
           };
           server2 = {
             system = "aarch64-linux";
             hostKeyPub = dummy;
             sshAuthorizedKey = [ dummy ];
-            knownHosts = dummy;
           };
           server3 = {
             system = "x86_64-linux";
             hostKeyPub = dummy;
             sshAuthorizedKey = [ dummy ];
-            knownHosts = dummy;
           };
         };
       };

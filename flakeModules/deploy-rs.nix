@@ -66,7 +66,7 @@ in
               # For example, running `nix run .#deploy-rs -- -s --ssh-opts -v` will result in only the -v flag.
               sshOpts = [
                 "-o" "IdentitiesOnly=yes"
-                "-o" "UserKnownHostsFile=${cfg'.knownHosts}"
+                "-o" "UserKnownHostsFile=${cfg'.knownHostsPath}"
                 "-o" "ConnectTimeout=10"
                 "-p" (toString hostCfg.skarabox.sshPort)
               ] ++ lib.optionals (cfg'.sshPrivateKeyPath != null) [ "-i" cfg'.sshPrivateKeyPath ];

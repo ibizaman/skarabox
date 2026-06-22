@@ -210,17 +210,35 @@ in {
 
       Run the command `skarabox-help` to print more details.
 
-    ''
-    + (if (cfg.staticNetwork == null) then ''
-    The IP address for this beacon is set through DHCP.
-    Run "ip a" command to get the IP address.
-
-    '' else ''
-    The IP address for this beacon is ${cfg.staticNetwork.ip}.
-
-    '')
-    + ''
-    The ssh server is listening on port ${toString cfg.sshPort}.
     '');
+
+    environment.shellInit =
+      ''
+      message() {
+      ''
+      + (if (cfg.staticNetwork == null) then ''
+      echo -e "The IP address for this beacon is set through DHCP. It is printed hereunder:\n"
+
+      echo "$ ip -oneline address"
+      ip -oneline address
+      echo
+
+      '' else ''
+      echo -e "The IP address for this beacon is ${cfg.staticNetwork.ip}.\n"
+
+      '')
+      + ''
+      echo -e "The ssh server is listening on port ${toString cfg.sshPort}.\n"
+
+      echo -e "This beacon's host key is (it will change after a reboot):\n"
+
+      echo "$ cat /etc/ssh/ssh_host_ed25519_key.pub"
+      cat /etc/ssh/ssh_host_ed25519_key.pub
+      }
+
+      if [[ -n "$XDG_VTNR" ]]; then
+        message
+      fi
+      '';
   };
 }
