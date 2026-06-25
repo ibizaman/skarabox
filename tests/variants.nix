@@ -73,7 +73,7 @@ let
     cd $tmpdir
 
     group "Initialising template"
-    echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s -p ${../.}
+    echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s
     sed -i "s/\(ip =\) \"192.168.1.30\"/\1 \"127.0.0.1\"/" "flake.nix"
     sed -i "s/\(system =\) \"x86_64-linux\"/\1 \"${system}\"/" "flake.nix"
     if [ "$legacyNixpkgs" = true ]; then
@@ -82,7 +82,6 @@ let
     fi
     sed -i "s/\(skarabox.sshPort =\) 2222/\1 $sshPort/" "./myskarabox/configuration.nix"
     sed -i "s/\(skarabox.boot.sshPort =\) 2223/\1 $sshBootPort/" "./myskarabox/configuration.nix"
-    ${nix} run .#myskarabox-gen-knownhosts-file --show-trace
 
     if grep -R "I'm empty and in plain text right now" .; then
       echo "Failed to replace secrets file, fix the templating."
@@ -97,6 +96,13 @@ let
     git config user.name "skarabox"
     git config user.email "skarabox@skarabox.com"
     git commit -m 'init repository'
+    ${nix} flake update --override-input skarabox ${../.} skarabox
+    git add flake.lock
+    git commit -m 'use local skarabox input'
+    ${nix} run .#myskarabox-gen-knownhosts-file --show-trace
+    git add ./myskarabox/known_hosts
+    git commit -m 'generate known hosts'
+
     endgroup "Initialisation done"
 
     if [ "$dataPool" = false ]; then

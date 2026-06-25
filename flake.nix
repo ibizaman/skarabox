@@ -47,7 +47,7 @@
     perSystem = { self', inputs', pkgs, system, ... }: {
       packages = rec {
         # Usage:
-        #  init [-h] [-y] [-s] [-v] [-p PATH]
+        #  init [-h] [-y] [-s] [-v]
         #
         # printasdf help:
         #  init -h

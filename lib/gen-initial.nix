@@ -28,27 +28,22 @@ pkgs.writeShellApplication {
 
     name=myskarabox
     yes=0
-    path=
     verbose=
 
     usage () {
       cat <<USAGE
-Usage: $0 [-h] [-n] [-y] [-s] [-v] [-p PATH]
+Usage: $0 [-h] [-n] [-y] [-s] [-v]
 
   -h:        Shows this usage
   -y:        Answer yes to all questions
   -s:        Take user password from stdin. Only useful
              in scripts.
-  -p PATH:   Replace occurences of github:ibizaman/skarabox
-             with the given path, for example ../skarabox.
-             This is useful for testing with your own fork
-             of skarabox.
   -v:        Shows what commands are being run.
 USAGE
     }
 
     args=()
-    while getopts ":hn:ysp:v" o; do
+    while getopts ":hn:ysv" o; do
       case "''${o}" in
         h)
           usage
@@ -60,9 +55,6 @@ USAGE
           ;;
         s)
           args+=(-s)
-          ;;
-        p)
-          path=''${OPTARG}
           ;;
         v)
           args+=(-v)
@@ -110,10 +102,6 @@ USAGE
     fi
 
     ${nix} flake init --template ${../.}
-
-    if [ -n "$path" ]; then
-      ${nix} flake update --override-input skarabox "$path" skarabox
-    fi
 
     e "Now, we will generate the global secrets."
 
