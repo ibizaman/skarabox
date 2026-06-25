@@ -2,8 +2,14 @@
 let
   inherit (lib) mkOption types;
 
-  readAndTrim = f: lib.strings.trim (builtins.readFile f);
-  readAsStr = v: if lib.isPath v then readAndTrim v else v;
+  isNonEmptySingleLine = v: v != "" && !(lib.hasInfix "\n" v);
+  isNonEmptySingleLineFile = v:
+    let
+      lines = lib.splitString "\n" (builtins.readFile v);
+    in
+    (builtins.length lines == 1 && builtins.elemAt lines 0 != "")
+    || (builtins.length lines == 2 && builtins.elemAt lines 0 != "" && builtins.elemAt lines 1 == "");
+  readAsStr = v: if lib.isPath v then lib.removeSuffix "\n" (builtins.readFile v) else v;
   readAsListOfStr = v: if lib.isList v then map readAsStr v else [ (readAsStr v) ];
 in
 {
@@ -60,9 +66,15 @@ in
       type =
         with types;
         let
+          keyString = addCheck str isNonEmptySingleLine // {
+            description = "non-empty single-line SSH public key string";
+          };
+          keyPath = addCheck path isNonEmptySingleLineFile // {
+            description = "path to a non-empty single-line SSH public key file";
+          };
           t = oneOf [
-            str
-            path
+            keyString
+            keyPath
           ];
         in
         oneOf [

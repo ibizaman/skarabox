@@ -4,6 +4,22 @@
 }:
 let
   add-sops-cfg = pkgs.callPackage ../lib/add-sops-cfg.nix {};
+  singleKeyFile = ./fixtures/single-ssh-key.pub;
+  singleKey = pkgs.lib.removeSuffix "\n" (builtins.readFile singleKeyFile);
+  multiKeyFile = ./fixtures/two-ssh-keys.pub;
+  evalSshAuthorizedKey = sshAuthorizedKey: (pkgs.lib.evalModules {
+    modules = [
+      ../modules/options.nix
+      ({ ... }: {
+        config.skarabox.sshAuthorizedKey = sshAuthorizedKey;
+      })
+    ];
+  }).config.skarabox.sshAuthorizedKey;
+  tryEvalSshAuthorizedKey = sshAuthorizedKey:
+    let
+      value = evalSshAuthorizedKey sshAuthorizedKey;
+    in
+    builtins.tryEval (builtins.deepSeq value value);
 
   exec = {
     name,
@@ -191,6 +207,26 @@ in
         '';
       cmd = "alias a OTHERSOPSKEY";
     };
+  };
+
+  testSshAuthorizedKeyRejectsMultiLineFile = {
+    expected = false;
+    expr = (tryEvalSshAuthorizedKey multiKeyFile).success;
+  };
+
+  testSshAuthorizedKeyRejectsEmptyString = {
+    expected = false;
+    expr = (tryEvalSshAuthorizedKey "").success;
+  };
+
+  testSshAuthorizedKeyRejectsNewlineTerminatedString = {
+    expected = false;
+    expr = (tryEvalSshAuthorizedKey "${singleKey}\n").success;
+  };
+
+  testSshAuthorizedKeyAcceptsNewlineTerminatedFile = {
+    expected = [ singleKey ];
+    expr = evalSshAuthorizedKey singleKeyFile;
   };
 
   testMultiHostSameArch = let
