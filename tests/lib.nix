@@ -240,6 +240,37 @@ in
     expr = evalSshAuthorizedKey [ singleKey ];
   };
 
+  testBootsshTrimsNewlineTerminatedAuthorizedKey = let
+    nixos = import (pkgs.path + "/nixos/lib/eval-config.nix") {
+      inherit (pkgs) system;
+      modules = [
+        ../modules/options.nix
+        ../modules/bootssh.nix
+        ({ lib, ... }: {
+          options.skarabox.staticNetwork = lib.mkOption {
+            type = with lib.types; nullOr attrs;
+            default = null;
+          };
+
+          options.skarabox.disks.rootPool.disk2 = lib.mkOption {
+            type = with lib.types; nullOr str;
+            default = null;
+          };
+
+          config = {
+            skarabox.sshAuthorizedKey = singleKeyFile;
+            system.stateVersion = "26.11";
+          };
+        })
+      ];
+    };
+  in {
+    expected = [
+      ''command="/bin/systemctl default" ${singleKey}''
+    ];
+    expr = nixos.config.boot.initrd.network.ssh.authorizedKeys;
+  };
+
   testMultiHostSameArch = let
     # Create minimal test flake using the actual skarabox flakeModule
     dummy = pkgs.writeText "dummy" "";
