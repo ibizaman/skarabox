@@ -160,45 +160,45 @@ So here, we want to run an ssh server in initrd
 which allows us to unlock the root pool
 and continue the boot process.
 
-The relevant config is in [modules/disks.nix](@REPO@/modules/disks.nix):
+For the default DHCP case, the relevant systemd initrd excerpt is in
+[modules/bootssh.nix](@REPO@/modules/bootssh.nix):
 
 ```nix
+boot.initrd.systemd.network = {
+  enable = true;
+  networks."10-lan" = {
+    matchConfig.Name = "en*";
+    networkConfig.DHCP = "ipv4";
+    linkConfig.RequiredForOnline = true;
+  };
+};
+
 boot.initrd.network = {
   enable = true;
-
-  udhcpc.enable = lib.mkDefault true;
-
   ssh = {
     enable = true;
-    port = lib.mkDefault cfg.boot.sshPort;
-    authorizedKeyFiles = [
-      ./<hostname>/ssh.pub
-    ];
+    port = lib.mkDefault cfg.sshPort;
+    authorizedKeys =
+      map (key: ''command="/bin/systemctl default" ${key}'') config.skarabox.sshAuthorizedKey;
   };
-
-  postCommands = ''
-    zpool import -a
-    echo "zfs load-key ${cfg.rootPool}; killall zfs; exit" >> /root/.profile
-  '';
+};
 ```
 
-We enable `boot.initrd.network` and the `.ssh` options.
-We set the port to 2222 by default.
-We add an ssh public key so we can connect as the root user.
+We enable systemd initrd networking and initrd SSH.
+We set the port to the configured initrd SSH port, which defaults to 2223.
+The regular SSH port defaults to 2222.
+We add ssh public keys with a forced command so successful SSH
+authentication can only run `systemctl default`.
+This excerpt leaves out host key configuration, which is covered in
+[Host Key](#host-key).
 
 This ssh public key is generated as part of the [initialization](@REPO@/lib/gen-initial.nix)
 process in `./<hostname>/ssh.pub` and the private key in `./<hostname>/ssh`.
 We also add that file to `.gitignore` to ensure
 we don't store the private file in the repo.
 
-The commands in `postCommands` are executed when the sshd
-daemon has started. The command added in `/root/.profile` will
-be executed when we log in through SSH.
-This results in ZFS prompting us to enter the
-root zpool's passphrase as soon as we're logged in.
-
-The `udhcpc.enable` option enables DHCP.
-Allowing a static IP here is planned.
+Running `systemctl default` lets the systemd initrd prompt for passphrases
+as necessary while importing the encrypted root pool.
 
 If by any change the kernel does not try to connect to the network
 and fails to ask for an IP and no error message is shown,
@@ -235,12 +235,19 @@ systemd.network = {
 and at boot:
 
 ```nix
-boot.initrd.network.udhcpc.enable = true;
+boot.initrd.systemd.network = {
+  enable = true;
+  networks."10-lan" = {
+    matchConfig.Name = "en*";
+    networkConfig.DHCP = "ipv4";
+    linkConfig.RequiredForOnline = true;
+  };
+};
 ```
 
 On the server, we can use a catch-all `"en*"` setting to
 match all Ethernet connections, which is a nice default.
-At boot, `udhcpc` does that too automatically.
+The same matching is used in the systemd initrd.
 
 If the `skarabox.staticNetwork` is set to for example:
 
@@ -270,38 +277,23 @@ systemd.network = {
 ```
 
 Here also we can use the catch-all `"en*"` setting.
-
-At boot, we disabled `udhcpc`
-and need to set the `boot.kernelParams` option too:
+The systemd initrd gets the same static network configuration:
 
 ```nix
-boot.initrd.network.udhcpc.enable = false;
-
-boot.kernelParams = let
-  cfg' = config.skarabox.staticNetwork;
-in [
-  "ip=${cfg'.ip}::${cfg'.gateway}:255.255.255.0:${config.skarabox.hostname}-initrd:${cfg'.deviceName}:off:::"
-];
+boot.initrd.systemd.network = {
+  enable = true;
+  networks."10-lan" = {
+    matchConfig.Name = "en*";
+    address = [
+      "${config.skarabox.staticNetwork.ip}/24"
+    ];
+    routes = [
+      { Gateway = config.skarabox.staticNetwork.gateway; }
+    ];
+    linkConfig.RequiredForOnline = true;
+  };
+};
 ```
-
-A big difference here is we cannot use a catch-all setting for all Ethernet devices.
-So instead we must know which interface name to bind to.
-To avoid doing that, we'll use the `facter.json` report to extract
-the interface name we want to bind to:
-
-```nix
-skarabox.staticNetwork.deviceName = let
-  cfg' = cfg.staticNetwork;
-
-  fn = n: n.sub_class.name == "Ethernet" && lib.hasPrefix cfg'.device.namePrefix n.unix_device_names;
-
-  firstMatchingDevice = (builtins.head (builtins.filter fn config.hardware.facter.report.hardware.network_interface)).unix_device_names;
-in
-  if isString cfg'.device then cfg'.device else firstMatchingDevice;
-```
-
-The option `device.namePrefix` is used to distinguish between
-Ethernet and Wireless interfaces.
 
 On the beacon, we always use a static IP address to make sure
 it will match with the one the server will have. This way,
@@ -353,8 +345,8 @@ For the initrd ssh access, to decrypt the root partition,
 the configuration is similar although here the user is `root`:
 
 ```nix
-boot.initrd.network = {
-  ssh.authorizedKeys = config.skarabox.sshAuthorizedKeys;
+boot.initrd.network.ssh = {
+  authorizedKeys = map (key: ''command="/bin/systemctl default" ${key}'') config.skarabox.sshAuthorizedKeys;
 };
 ```
 
@@ -393,9 +385,21 @@ This snapshot is thus empty.
 Now, we revert back to the snapshot upon every boot with:
 
 ```nix
-boot.initrd.postResumeCommands = lib.mkAfter ''
-  zfs rollback -r ${cfg.rootPool}/local/root@blank
-'';
+boot.initrd.systemd.services.skarabox-rollback-root = {
+  description = "Rollback impermanent root dataset";
+  # NixOS' ZFS module imports the root pool in this generated service.
+  # The rollback can only run after the pool is available.
+  after = [ "zfs-import-${cfg.rootPool.name}.service" ];
+  before = [ "sysroot.mount" ];
+  requiredBy = [ "sysroot.mount" ];
+  # Match the generated ZFS import unit's early initrd ordering.
+  unitConfig.DefaultDependencies = false;
+  serviceConfig.Type = "oneshot";
+  path = [ config.boot.zfs.package ];
+  script = ''
+    zfs rollback -r ${cfg.rootPool.name}/local/root@blank
+  '';
+};
 ```
 
 To save a directory, we must create a dataset and mount it:

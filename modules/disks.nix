@@ -363,9 +363,36 @@ in
 
     # Follows https://grahamc.com/blog/erase-your-darlings/
     # https://github.com/NixOS/nixpkgs/pull/346247/files
-    boot.initrd.postResumeCommands = lib.mkAfter ''
-      zfs rollback -r ${cfg.rootPool.name}/local/root@blank
-    '';
+    boot.initrd.systemd.services.skarabox-rollback-root = {
+      description = "Rollback impermanent root dataset";
+      # NixOS' ZFS module imports the root pool in this generated service.
+      # The rollback can only run after the pool is available.
+      after = [ "zfs-import-${cfg.rootPool.name}.service" ];
+      before = [ "sysroot.mount" ];
+      requiredBy = [ "sysroot.mount" ];
+      # Match the generated ZFS import unit's early initrd ordering.
+      unitConfig.DefaultDependencies = false;
+      serviceConfig = {
+        Type = "oneshot";
+        # Ordering:
+        # 1. zfs-import-root.service waits for the encrypted pool to be unlocked.
+        # 2. sysroot.mount requires this service, and Before=sysroot.mount orders
+        #    the rollback after import but before /sysroot is mounted.
+        # 3. /sysroot submounts are mounted.
+        # 4. initrd-nixos-activation.service has RequiresMountsFor=/sysroot/run,
+        #    so systemd later creates another transaction that ensures
+        #    sysroot.mount and its requirements are available before activation.
+        # A plain oneshot is inactive after ExecStart exits, so that later
+        # transaction can run the rollback a second time after /sysroot submounts
+        # already exist. Keep it active (exited) to record that rollback already
+        # ran this boot.
+        RemainAfterExit = true;
+      };
+      path = [ config.boot.zfs.package ];
+      script = ''
+        zfs rollback -r ${cfg.rootPool.name}/local/root@blank
+      '';
+    };
 
     # Setup Grub to support UEFI.
     # nodev is for UEFI.

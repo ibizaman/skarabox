@@ -84,11 +84,11 @@ in
   config = lib.mkIf (!cfg.disableNetworkSetup) {
     assertions = [
       {
-        assertion = cfg.staticNetwork == null -> config.boot.initrd.network.udhcpc.enable;
+        assertion = !config.boot.initrd.network.ssh.enable || cfg.staticNetwork != null || config.boot.initrd.systemd.network.enable;
         message = ''
-          If DHCP is disabled and an IP is not set, the box will not be reachable through the network on boot and you will not be able to enter the passphrase through SSH.
+          Initrd SSH is enabled, but no static IP is set and initrd systemd networking is disabled. The box will not be reachable through the network on boot and you will not be able to enter the passphrase through SSH.
 
-          To fix this error, either set config.boot.initrd.network.udhcpc.enable = true or give an IP to skarabox.staticNetwork.ip.
+          To fix this error, set config.boot.initrd.systemd.network.enable = true, give an IP to skarabox.staticNetwork.ip, or disable config.boot.initrd.network.ssh.enable if remote unlock is not required.
         '';
       }
     ];
@@ -96,6 +96,7 @@ in
     # Removing this line shows a warning that the current configuration
     # leads to network interfaces managed by both systemd and a custom NixOS script.
     networking.useNetworkd = true;
+    # Keep this in sync with the initrd networkd config in ./bootssh.nix.
     systemd.network = (
       {
         enable = true;
