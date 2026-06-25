@@ -4,6 +4,22 @@
 }:
 let
   add-sops-cfg = pkgs.callPackage ../lib/add-sops-cfg.nix {};
+  singleKeyFile = ./fixtures/single-ssh-key.pub;
+  singleKey = pkgs.lib.removeSuffix "\n" (builtins.readFile singleKeyFile);
+  multiKeyFile = ./fixtures/two-ssh-keys.pub;
+  evalSshAuthorizedKey = sshAuthorizedKey: (pkgs.lib.evalModules {
+    modules = [
+      ../modules/options.nix
+      ({ ... }: {
+        config.skarabox.sshAuthorizedKey = sshAuthorizedKey;
+      })
+    ];
+  }).config.skarabox.sshAuthorizedKey;
+  tryEvalSshAuthorizedKey = sshAuthorizedKey:
+    let
+      value = evalSshAuthorizedKey sshAuthorizedKey;
+    in
+    builtins.tryEval (builtins.deepSeq value value);
 
   exec = {
     name,
@@ -191,6 +207,59 @@ in
         '';
       cmd = "alias a OTHERSOPSKEY";
     };
+  };
+
+  testSshAuthorizedKeyRejectsMultiLineFile = {
+    expected = false;
+    expr = (tryEvalSshAuthorizedKey multiKeyFile).success;
+  };
+
+  testSshAuthorizedKeyRejectsEmptyString = {
+    expected = false;
+    expr = (tryEvalSshAuthorizedKey "").success;
+  };
+
+  testSshAuthorizedKeyRejectsNewlineTerminatedString = {
+    expected = false;
+    expr = (tryEvalSshAuthorizedKey "${singleKey}\n").success;
+  };
+
+  testSshAuthorizedKeyAcceptsNewlineTerminatedFile = {
+    expected = [
+      singleKey
+    ];
+    expr = evalSshAuthorizedKey singleKeyFile;
+  };
+
+  testBootsshTrimsNewlineTerminatedAuthorizedKey = let
+    nixos = import (pkgs.path + "/nixos/lib/eval-config.nix") {
+      inherit (pkgs) system;
+      modules = [
+        ../modules/options.nix
+        ../modules/bootssh.nix
+        ({ lib, ... }: {
+          options.skarabox.staticNetwork = lib.mkOption {
+            type = with lib.types; nullOr attrs;
+            default = null;
+          };
+
+          options.skarabox.disks.rootPool.disk2 = lib.mkOption {
+            type = with lib.types; nullOr str;
+            default = null;
+          };
+
+          config = {
+            skarabox.sshAuthorizedKey = singleKeyFile;
+            system.stateVersion = "26.11";
+          };
+        })
+      ];
+    };
+  in {
+    expected = [
+      ''command="/bin/systemctl default" ${singleKey}''
+    ];
+    expr = nixos.config.boot.initrd.network.ssh.authorizedKeys;
   };
 
   testMultiHostSameArch = let
