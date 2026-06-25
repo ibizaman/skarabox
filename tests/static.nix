@@ -130,15 +130,11 @@
     ${nix} run .#myskarabox-install-on-beacon -- --no-substitute-on-destination
     endgroup "Installation succeeded."
 
-    group "Starting ssh loop to figure out when VM is ready to receive root passphrase."
+    group "Starting unlock loop to decrypt root dataset."
     e "You might see some flickering on the command line."
-    while ! ${nix} run .#myskarabox-boot-ssh -- -F none echo "connected"; do
+    while ! ${nix} run .#myskarabox-unlock -- -F none; do
       sleep 5
     done
-    endgroup "Beacon VM is ready to accept root passphrase."
-
-    group "Decrypting root dataset."
-    ${nix} run .#myskarabox-unlock -- -F none
     endgroup "Decryption done."
 
     group "Starting ssh loop to figure out when VM has booted."
