@@ -58,10 +58,9 @@
     cd $tmpdir
 
     group "Initialising template"
-    echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s -p ${../.}
+    echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s
     sed -i "s/\(ip =\) \"192.168.1.30\"/\1 \"127.0.0.1\"/" "flake.nix"
     sed -i "s/\(system =\) \"x86_64-linux\"/\1 \"${system}\"/" "flake.nix"
-    ${nix} run .#myskarabox-gen-knownhosts-file
     # Using a git repo here allows to only copy in the nix store non temporary files.
     # In particular, we avoid copying the disk*.qcow2 files.
     git init
@@ -70,6 +69,12 @@
     git config user.name "skarabox"
     git config user.email "skarabox@skarabox.com"
     git commit -m 'init repository'
+    ${nix} flake update --override-input skarabox ${../.} skarabox
+    git add flake.lock
+    git commit -m 'use local skarabox input'
+    ${nix} run .#myskarabox-gen-knownhosts-file
+    git add ./myskarabox/known_hosts
+    git commit -m 'generate known hosts'
     endgroup "Initialisation done"
 
     sed -i 's-staticNetwork = null-staticNetwork = { ip="10.0.2.15"; gateway="10.0.2.255"; }-' ./myskarabox/configuration.nix
