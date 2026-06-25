@@ -154,8 +154,7 @@ in {
 
     boot.loader.systemd-boot.enable = true;
 
-    # Skarabox does not support systemd in stage1 yet.
-    boot.initrd.systemd.enable = false;
+    boot.initrd.systemd.enable = true;
 
     environment.systemPackages = let
       skarabox-help = pkgs.writeText "skarabox-help" helptext;

@@ -363,9 +363,21 @@ in
 
     # Follows https://grahamc.com/blog/erase-your-darlings/
     # https://github.com/NixOS/nixpkgs/pull/346247/files
-    boot.initrd.postResumeCommands = lib.mkAfter ''
-      zfs rollback -r ${cfg.rootPool.name}/local/root@blank
-    '';
+    boot.initrd.systemd.services.skarabox-rollback-root = {
+      description = "Rollback impermanent root dataset";
+      # NixOS' ZFS module imports the root pool in this generated service.
+      # The rollback can only run after the pool is available.
+      after = [ "zfs-import-${cfg.rootPool.name}.service" ];
+      before = [ "sysroot.mount" ];
+      requiredBy = [ "sysroot.mount" ];
+      # Match the generated ZFS import unit's early initrd ordering.
+      unitConfig.DefaultDependencies = false;
+      serviceConfig.Type = "oneshot";
+      path = [ config.boot.zfs.package ];
+      script = ''
+        zfs rollback -r ${cfg.rootPool.name}/local/root@blank
+      '';
+    };
 
     # Setup Grub to support UEFI.
     # nodev is for UEFI.
