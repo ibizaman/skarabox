@@ -14,14 +14,29 @@ in
   };
 
   config = {
-    # Enables DHCP in stage-1 even if networking.useDHCP is false.
-    boot.initrd.network.udhcpc.enable = lib.mkDefault (config.skarabox.staticNetwork == null);
-    # From https://wiki.nixos.org/wiki/ZFS#Remote_unlock
+    # Keep this in sync with the stage-2 networkd config in ./network.nix.
+    boot.initrd.systemd.network = {
+      enable = true;
+    } // (if config.skarabox.staticNetwork == null then {
+      networks."10-lan" = {
+        matchConfig.Name = "en*";
+        networkConfig.DHCP = "ipv4";
+        linkConfig.RequiredForOnline = true;
+      };
+    } else {
+      networks."10-lan" = {
+        matchConfig.Name = "en*";
+        address = [
+          "${config.skarabox.staticNetwork.ip}/24"
+        ];
+        routes = [
+          { Gateway = config.skarabox.staticNetwork.gateway; }
+        ];
+        linkConfig.RequiredForOnline = true;
+      };
+    });
+
     boot.initrd.network = {
-      # This will use udhcp to get an ip address. Nixos-facter should have found the correct drivers
-      # to load but in case not, they need to be added to `boot.initrd.availableKernelModules`.
-      # Static ip addresses might be configured using the ip argument in kernel command line:
-      # https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
       enable = true;
       ssh = {
         enable = true;
@@ -29,25 +44,9 @@ in
         # a different port for ssh is used.
         port = lib.mkDefault cfg.sshPort;
         hostKeys = lib.mkForce ([ "/boot/host_key" ] ++ (optionals (config.skarabox.disks.rootPool.disk2 != null) [ "/boot-backup/host_key" ]));
-        # Public ssh key used for login.
-        # This should contain just one line and removing the trailing
-        # newline could be fixed with a removeSuffix call but treating
-        # it as a file containing multiple lines makes this forward compatible.
-        authorizedKeys = config.skarabox.sshAuthorizedKey;
+        # Only allow remote unlocks, not arbitrary initrd commands.
+        authorizedKeys = map (key: ''command="/bin/systemctl default" ${key}'') config.skarabox.sshAuthorizedKey;
       };
-
-      postCommands = ''
-      zpool import -a
-      echo "zfs load-key ${config.skarabox.disks.rootPool.name}; killall zfs; exit" >> /root/.profile
-      '';
     };
-
-    boot.kernelParams = lib.optionals (config.skarabox.staticNetwork != null && config.hardware.facter.report != {}) (let
-      cfg' = config.skarabox.staticNetwork;
-    in [
-      # https://www.kernel.org/doc/Documentation/filesystems/nfs/nfsroot.txt
-      # ip=<client-ip>:<server-ip>:<gw-ip>:<netmask>:<hostname>:<device>:<autoconf>:<dns0-ip>:<dns1-ip>:<ntp0-ip>
-      "ip=${cfg'.ip}::${cfg'.gateway}:255.255.255.0:${config.skarabox.hostname}-initrd:${cfg'.deviceName}:off:::"
-    ]);
   };
 }
