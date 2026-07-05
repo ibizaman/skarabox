@@ -264,11 +264,14 @@ in
         })
       ];
     };
+    authorizedKeys = nixos.config.boot.initrd.network.ssh.authorizedKeys;
+    authorizedKey = pkgs.lib.head authorizedKeys;
+    authorizedKeyMatch = builtins.match ''command="/nix/store/[a-z0-9]+-skarabox-unlock-root/bin/skarabox-unlock-root" (.*)'' authorizedKey;
   in {
-    expected = [
-      ''command="/bin/systemctl default" ${singleKey}''
-    ];
-    expr = nixos.config.boot.initrd.network.ssh.authorizedKeys;
+    expected = true;
+    expr =
+      pkgs.lib.length authorizedKeys == 1
+      && authorizedKeyMatch == [ singleKey ];
   };
 
   testMultiHostSameArch = let
