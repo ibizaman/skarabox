@@ -582,11 +582,11 @@ in
               boot-ssh
             ];
 
-            # systemd initrd prompts for the ZFS key through the TTY password agent.
-            # -tt forces TTY allocation even though the passphrase is piped on stdin.
+            # skarabox-unlock-root answers systemd's ask-password request directly,
+            # so this path must not allocate a TTY that could echo the passphrase.
             text = ''
               root_passphrase="$(sops decrypt --extract "${cfg'.secretsRootPassphrasePath}" "${cfg'.secretsFilePath}")"
-              printf '%s\n' "$root_passphrase" | boot-ssh -tt "$@"
+              printf '%s\n' "$root_passphrase" | boot-ssh -T "$@"
             '';
           };
         in {
