@@ -288,7 +288,7 @@ $ nix run .#myskarabox-install-on-beacon -- --phases kexec
 2. Print the disk layout
 
 ```bash
-$ nix run .#myskarabox-ssh-beacon -- fdisk -l
+$ nix run .#myskarabox-ssh-beacon -- sudo fdisk -l
 $ nix run .#myskarabox-ssh-beacon -- lsblk
 ```
 
