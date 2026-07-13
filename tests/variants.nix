@@ -1,4 +1,4 @@
-{ system, nix, gnugrep, jq, writeShellScriptBin }:
+{ system, nix, gnugrep, jq, setsid, writeShellScriptBin }:
 let
   toBashBool = v: if v then "true" else "false";
 
@@ -35,11 +35,35 @@ let
 
     graphic=-nographic
     tmpdir=
+    remove_tmpdir=false
+    beacon_vm_pid=
     rootDisk2=${toBashBool rootDisk2}
     dataPool=${toBashBool dataPool}
     legacyNixpkgs=${toBashBool legacyNixpkgs}
     sshPort=${toString sshPort}
     sshBootPort=${toString sshBootPort}
+
+    cleanup () {
+      status="$1"
+      # Disable traps while cleaning up so cleanup does not recursively call itself.
+      trap - INT TERM EXIT
+
+      if [ -n "$beacon_vm_pid" ]; then
+        # A leading '-' makes kill signal that process group, not just that PID.
+        kill -- "-$beacon_vm_pid" 2>/dev/null || true
+        wait "$beacon_vm_pid" 2>/dev/null || true
+      fi
+
+      if [ "$remove_tmpdir" = true ]; then
+        rm -rf -- "$tmpdir"
+      fi
+
+      exit "$status"
+    }
+    # Preserve the original exit status, and use conventional statuses for signals.
+    trap 'cleanup $?' EXIT
+    trap 'cleanup 130' INT
+    trap 'cleanup 143' TERM
 
     while getopts "gp:" o; do
       case "''${o}" in
@@ -60,17 +84,13 @@ let
     if [ -z "$tmpdir" ]; then
       group "Creating tmpdir"
       tmpdir="$(mktemp -d)"
+      remove_tmpdir=true
       e "Created temp dir at $tmpdir, will be cleaned up on exit or abort"
-
-      # Kills all children bash processes,
-      # like the one that will run in the background hereunder.
-      # https://stackoverflow.com/a/2173421/1013628
-      trap "rm -rf $tmpdir/* $tmpdir/.* $tmpdir; trap - SIGTERM && kill -- -$$ || :" SIGINT SIGTERM EXIT
       endgroup "Done creating tmpdir"
     else
-      e "Using provided temp dir $tmpdir, nothing will be cleaned up"
+      e "Using provided temp dir $tmpdir, it will not be cleaned up"
     fi
-    cd $tmpdir
+    cd "$tmpdir"
 
     group "Initialising template"
     echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s
@@ -118,7 +138,8 @@ let
 
     e "Starting beacon VM."
 
-    ${nix} run .#myskarabox-beacon-vm -- $graphic &
+    ${setsid} ${nix} run .#myskarabox-beacon-vm -- $graphic &
+    beacon_vm_pid=$!
 
     sleep 10
 
