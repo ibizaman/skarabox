@@ -16,6 +16,14 @@ Template:
 
 # Upcoming Release
 
+## User Facing Backwards Compatible Changes
+
+- Deprecated `skarabox.sshAuthorizedKey` in favor of
+  `skarabox.sshAuthorizedKeys`, which accepts a list of non-empty, single-line
+  SSH public key strings or paths to files containing one such key. This change
+  applies only to target hosts; the beacon's `skarabox.sshAuthorizedKey` option
+  is unchanged.
+
 # v1.6.0
 
 ## Breaking Changes

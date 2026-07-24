@@ -13,6 +13,13 @@ let
   readAsListOfStr = v: if lib.isList v then map readAsStr v else [ (readAsStr v) ];
 in
 {
+  imports = [
+    (lib.mkChangedOptionModule
+      [ "skarabox" "sshAuthorizedKey" ]
+      [ "skarabox" "sshAuthorizedKeys" ]
+      (config: readAsListOfStr config.skarabox.sshAuthorizedKey))
+  ];
+
   options.skarabox = {
     hostname = mkOption {
       description = "Hostname to give to the server.";
@@ -62,7 +69,7 @@ in
       '';
     };
 
-    sshAuthorizedKey = mkOption {
+    sshAuthorizedKeys = mkOption {
       type =
         with types;
         let
@@ -77,10 +84,7 @@ in
             keyPath
           ];
         in
-        oneOf [
-          t
-          (listOf t)
-        ];
+        listOf t;
       description = ''
         Public SSH key(s) used to connect on boot to decrypt the root pool.
       '';

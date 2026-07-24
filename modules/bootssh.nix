@@ -29,11 +29,8 @@ in
         # a different port for ssh is used.
         port = lib.mkDefault cfg.sshPort;
         hostKeys = lib.mkForce ([ "/boot/host_key" ] ++ (optionals (config.skarabox.disks.rootPool.disk2 != null) [ "/boot-backup/host_key" ]));
-        # Public ssh key used for login.
-        # This should contain just one line and removing the trailing
-        # newline could be fixed with a removeSuffix call but treating
-        # it as a file containing multiple lines makes this forward compatible.
-        authorizedKeys = config.skarabox.sshAuthorizedKey;
+        # Public SSH keys used for login.
+        authorizedKeys = config.skarabox.sshAuthorizedKeys;
       };
 
       postCommands = ''

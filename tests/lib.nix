@@ -7,17 +7,18 @@ let
   singleKeyFile = ./fixtures/single-ssh-key.pub;
   singleKey = pkgs.lib.removeSuffix "\n" (builtins.readFile singleKeyFile);
   multiKeyFile = ./fixtures/two-ssh-keys.pub;
-  evalSshAuthorizedKey = sshAuthorizedKey: (pkgs.lib.evalModules {
+  evalSshAuthorizedKey = sshAuthorizedKeys: (pkgs.lib.evalModules {
     modules = [
+      (pkgs.path + "/nixos/modules/misc/assertions.nix")
       ../modules/options.nix
       ({ ... }: {
-        config.skarabox.sshAuthorizedKey = sshAuthorizedKey;
+        config.skarabox.sshAuthorizedKeys = sshAuthorizedKeys;
       })
     ];
-  }).config.skarabox.sshAuthorizedKey;
-  tryEvalSshAuthorizedKey = sshAuthorizedKey:
+  }).config.skarabox.sshAuthorizedKeys;
+  tryEvalSshAuthorizedKey = sshAuthorizedKeys:
     let
-      value = evalSshAuthorizedKey sshAuthorizedKey;
+      value = evalSshAuthorizedKey sshAuthorizedKeys;
     in
     builtins.tryEval (builtins.deepSeq value value);
 
@@ -209,24 +210,34 @@ in
     };
   };
 
-  testSshAuthorizedKeyRejectsMultiLineFile = {
+  testSshAuthorizedKeysRejectsMultiLineFile = {
     expected = false;
-    expr = (tryEvalSshAuthorizedKey multiKeyFile).success;
+    expr = (tryEvalSshAuthorizedKey [ multiKeyFile ]).success;
   };
 
-  testSshAuthorizedKeyRejectsEmptyString = {
+  testSshAuthorizedKeysRejectsEmptyString = {
     expected = false;
-    expr = (tryEvalSshAuthorizedKey "").success;
+    expr = (tryEvalSshAuthorizedKey [ "" ]).success;
   };
 
-  testSshAuthorizedKeyRejectsNewlineTerminatedString = {
+  testSshAuthorizedKeysRejectsNewlineTerminatedString = {
     expected = false;
-    expr = (tryEvalSshAuthorizedKey "${singleKey}\n").success;
+    expr = (tryEvalSshAuthorizedKey [ "${singleKey}\n" ]).success;
   };
 
-  testSshAuthorizedKeyAcceptsNewlineTerminatedFile = {
+  testSshAuthorizedKeysAcceptsNewlineTerminatedFile = {
     expected = [ singleKey ];
-    expr = evalSshAuthorizedKey singleKeyFile;
+    expr = evalSshAuthorizedKey [ singleKeyFile ];
+  };
+
+  testSshAuthorizedKeysRejectsScalarString = {
+    expected = false;
+    expr = (tryEvalSshAuthorizedKey singleKey).success;
+  };
+
+  testSshAuthorizedKeysAcceptsStringList = {
+    expected = [ singleKey ];
+    expr = evalSshAuthorizedKey [ singleKey ];
   };
 
   testMultiHostSameArch = let
@@ -239,17 +250,17 @@ in
           server1 = {
             system = "aarch64-linux";
             hostKeyPub = dummy;
-            sshAuthorizedKey = [ dummy ];
+            sshAuthorizedKeys = [ dummy ];
           };
           server2 = {
             system = "aarch64-linux";
             hostKeyPub = dummy;
-            sshAuthorizedKey = [ dummy ];
+            sshAuthorizedKeys = [ dummy ];
           };
           server3 = {
             system = "x86_64-linux";
             hostKeyPub = dummy;
-            sshAuthorizedKey = [ dummy ];
+            sshAuthorizedKeys = [ dummy ];
           };
         };
       };
