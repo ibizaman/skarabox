@@ -21,8 +21,11 @@ Template:
 - Deprecated `skarabox.sshAuthorizedKey` in favor of
   `skarabox.sshAuthorizedKeys`, which accepts a list of non-empty, single-line
   SSH public key strings or paths to files containing one such key. This change
-  applies only to target hosts; the beacon's `skarabox.sshAuthorizedKey` option
-  is unchanged.
+  applies only to target hosts.
+
+- Deprecated the beacon module's `skarabox.sshAuthorizedKey` option in favor of
+  `skarabox.sshAuthorizedKeys`. The new option requires a list while preserving
+  the beacon's existing handling of string and path entries.
 
 # v1.6.0
 
