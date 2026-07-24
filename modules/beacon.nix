@@ -50,6 +50,10 @@ in {
   imports = [
     ./hotspot.nix
     ./network.nix
+    (lib.mkChangedOptionModule
+      [ "skarabox" "sshAuthorizedKey" ]
+      [ "skarabox" "sshAuthorizedKeys" ]
+      (config: readAsListOfStr config.skarabox.sshAuthorizedKey))
   ];
 
   options.skarabox = {
@@ -97,7 +101,7 @@ in {
       defaultText = "config.skarabox.sshPort";
     };
 
-    sshAuthorizedKey = lib.mkOption {
+    sshAuthorizedKeys = lib.mkOption {
       type =
         with types;
         let
@@ -106,10 +110,7 @@ in {
             path
           ];
         in
-        oneOf [
-          t
-          (listOf t)
-        ];
+        listOf t;
       description = ''
         Public key(s) to connect to the beacon.
 
@@ -122,8 +123,8 @@ in {
 
         If installing on a cloud instance, set this to the ssh key that can ssh into the instance as given by your cloud provider.
       '';
-      default = cfg.sshAuthorizedKey;
-      defaultText = "config.skarabox.sshAuthorizedKey";
+      default = cfg.sshAuthorizedKeys;
+      defaultText = "config.skarabox.sshAuthorizedKeys";
       apply = readAsListOfStr;
     };
   };
@@ -133,7 +134,7 @@ in {
 
     # Also allow root to connect for nixos-anywhere.
     users.users.root = {
-      openssh.authorizedKeys.keys = cfg.sshAuthorizedKey;
+      openssh.authorizedKeys.keys = cfg.sshAuthorizedKeys;
     };
     # Override user set in profiles/installation-device.nix
     users.users.${cfg.username} = {
@@ -142,7 +143,7 @@ in {
       # Allow the graphical user to login without password
       initialHashedPassword = "";
       # Set shared ssh key
-      openssh.authorizedKeys.keys = cfg.sshAuthorizedKey;
+      openssh.authorizedKeys.keys = cfg.sshAuthorizedKeys;
     };
     # Automatically log in at the virtual consoles.
     services.getty.autologinUser = lib.mkForce cfg.username;
