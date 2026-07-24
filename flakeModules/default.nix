@@ -24,7 +24,6 @@ let
         skarabox.sshAuthorizedKey = hostCfg.skarabox.sshAuthorizedKeys;
         skarabox.sshPort = hostCfg.skarabox.sshPort;
         skarabox.hotspot.ip = lib.mkIf (hostCfg.skarabox.staticNetwork != null) hostCfg.skarabox.staticNetwork.ip;
-        boot.initrd.network.udhcpc.enable = hostCfg.skarabox.staticNetwork == null;
       }
     ];
   };
@@ -278,9 +277,7 @@ in
       mkHostPackages = name: cfg': let
         hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;
 
-        # nix run .#boot-ssh [<command> ...]
         # nix run .#boot-ssh
-        # nix run .#boot-ssh echo hello
         boot-ssh = pkgs.writeShellApplication {
           name = "boot-ssh";
 
@@ -585,9 +582,11 @@ in
               boot-ssh
             ];
 
+            # skarabox-unlock-root answers systemd's ask-password request directly,
+            # so this path must not allocate a TTY that could echo the passphrase.
             text = ''
               root_passphrase="$(sops decrypt --extract "${cfg'.secretsRootPassphrasePath}" "${cfg'.secretsFilePath}")"
-              printf '%s' "$root_passphrase" | boot-ssh -T "$@"
+              printf '%s\n' "$root_passphrase" | boot-ssh -T "$@"
             '';
           };
         in {
