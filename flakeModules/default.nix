@@ -21,7 +21,7 @@ let
         skarabox.hostname = "${hostCfg.skarabox.hostname}-beacon";
         skarabox.staticNetwork = hostCfg.skarabox.staticNetwork;
         skarabox.username = hostCfg.skarabox.username;
-        skarabox.sshAuthorizedKey = hostCfg.skarabox.sshAuthorizedKey;
+        skarabox.sshAuthorizedKey = hostCfg.skarabox.sshAuthorizedKeys;
         skarabox.sshPort = hostCfg.skarabox.sshPort;
         skarabox.hotspot.ip = lib.mkIf (hostCfg.skarabox.staticNetwork != null) hostCfg.skarabox.staticNetwork.ip;
         boot.initrd.network.udhcpc.enable = hostCfg.skarabox.staticNetwork == null;

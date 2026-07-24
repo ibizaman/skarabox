@@ -38,7 +38,7 @@ in
       # For security by obscurity, we choose another ssh port here than the default 22.
       skarabox.boot.sshPort = 2223;
       skarabox.sshPort = 2222;
-      skarabox.sshAuthorizedKey = [ ./ssh.pub ];
+      skarabox.sshAuthorizedKeys = [ ./ssh.pub ];
       # If you want to store the ssh key in a ssh agent,
       # set the following option to null.
       # skarabox.sshPrivateKeyPath = null;

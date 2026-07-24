@@ -345,9 +345,7 @@ to the `authorizedKeys` file of the user:
 
 ```nix
 users.users.${config.skarabox.username} = {
-  openssh.authorizedKeys.keys = [
-    config.skarabox.sshAuthorizedKey
-  ];
+  openssh.authorizedKeys.keys = config.skarabox.sshAuthorizedKeys;
 };
 ```
 
@@ -356,9 +354,7 @@ the configuration is similar although here the user is `root`:
 
 ```nix
 boot.initrd.network = {
-  ssh.authorizedKeys = [
-    config.skarabox.sshAuthorizedKey
-  ];
+  ssh.authorizedKeys = config.skarabox.sshAuthorizedKeys;
 };
 ```
 
