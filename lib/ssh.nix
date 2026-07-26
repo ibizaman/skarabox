@@ -1,5 +1,5 @@
 {
-  pkgs
+  pkgs,
 }:
 # SSH into a host
 #

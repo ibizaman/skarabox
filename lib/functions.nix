@@ -9,14 +9,18 @@
     import "${nixpkgs'}/nixos/lib/eval-config.nix" (
       {
         system = null;
-        modules = (args.modules or []) ++ [
-          ({ config, pkgs, ... }:
+        modules = (args.modules or [ ]) ++ [
+          (
+            { config, pkgs, ... }:
             {
               nixpkgs.flake.source = nixpkgs.outPath;
             }
           )
         ];
       }
-      // builtins.removeAttrs args [ "modules" "nixpkgs'" ]
+      // builtins.removeAttrs args [
+        "modules"
+        "nixpkgs'"
+      ]
     );
 }

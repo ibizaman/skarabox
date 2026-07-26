@@ -22,18 +22,18 @@ in
       skarabox.hashedPasswordFile = config.sops.secrets."myskarabox/user/hashedPassword".path;
       skarabox.facter-config = ./facter.json;
       skarabox.disks.rootPool = {
-        disk1 = "/dev/nvme0n1";  # Update with result of running `fdisk -l` on the beacon.
-        disk2 = null;  # Set a value only if you have a second disk for the root partition.
-        reservation = "500M";  # Set to 10% of size SSD.
+        disk1 = "/dev/nvme0n1"; # Update with result of running `fdisk -l` on the beacon.
+        disk2 = null; # Set a value only if you have a second disk for the root partition.
+        reservation = "500M"; # Set to 10% of size SSD.
         # The bootloader - "uefi" or "bios" - should be detected from the facter.json.
         # If the detected value is wrong, you can set it manually with the following option:
         # bootloader = "bios";
       };
       skarabox.disks.dataPool = {
-        enable = true;  # Disable if only an SSD for root is present.
-        disk1 = "/dev/sda";  # Update with result of running `fdisk -l` on the beacon.
-        disk2 = "/dev/sdb";  # Update with result of running `fdisk -l` on the beacon.
-        reservation = "10G";  # Set to 5% of size Hard Drives.
+        enable = true; # Disable if only an SSD for root is present.
+        disk1 = "/dev/sda"; # Update with result of running `fdisk -l` on the beacon.
+        disk2 = "/dev/sdb"; # Update with result of running `fdisk -l` on the beacon.
+        reservation = "10G"; # Set to 5% of size Hard Drives.
       };
       # For security by obscurity, we choose another ssh port here than the default 22.
       skarabox.boot.sshPort = 2223;

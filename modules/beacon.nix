@@ -1,59 +1,70 @@
-{ config, lib, pkgs, ... }: let
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
   inherit (lib) mkForce types;
 
   cfg = config.skarabox;
 
   helptext = ''
-  * Step 1.  Enable network access to this server.
+    * Step 1.  Enable network access to this server.
 
-  For a wired network connection, just plug in an ethernet cable from your router
-  to this server. The connection will be made automatically.
+    For a wired network connection, just plug in an ethernet cable from your router
+    to this server. The connection will be made automatically.
 
-  For a wireless connection, if a card is found, a "Skarabox" wifi hotspot will
-  be created automatically. Connect to it from your laptop.
+    For a wireless connection, if a card is found, a "Skarabox" wifi hotspot will
+    be created automatically. Connect to it from your laptop.
   ''
-  + (if (cfg.staticNetwork == null) then ''
-  The IP address for this beacon is set through DHCP.
-  Run "ip a" command to get the IP address.
-  '' else ''
-  The IP address for this beacon is ${cfg.staticNetwork.ip}.
-  '')
+  + (
+    if (cfg.staticNetwork == null) then
+      ''
+        The IP address for this beacon is set through DHCP.
+        Run "ip a" command to get the IP address.
+      ''
+    else
+      ''
+        The IP address for this beacon is ${cfg.staticNetwork.ip}.
+      ''
+  )
   + ''
-  * Step 2.  Identify the disk layout.
+    * Step 2.  Identify the disk layout.
 
-  To know what disk existing in the system, type the command "lsblk" without
-  the double quotes. This will show lines like so:
+    To know what disk existing in the system, type the command "lsblk" without
+    the double quotes. This will show lines like so:
 
-  NAME             TYPE
-  /dev/nvme0n1     disk             This is an NVMe drive
-  /dev/sda         disk             This is an SSD or HDD drive
-  /dev/sdb         disK             This is an SSD or HDD drive
+    NAME             TYPE
+    /dev/nvme0n1     disk             This is an NVMe drive
+    /dev/sda         disk             This is an SSD or HDD drive
+    /dev/sdb         disK             This is an SSD or HDD drive
 
-  With the above setup, in the flake.nix template, set the following options:
+    With the above setup, in the flake.nix template, set the following options:
 
-      skarabox.disks.rootPool.disk1 = "/dev/nvme0n1"
-      skarabox.disks.dataPool.disk1 = "/dev/sda"
-      skarabox.disks.dataPool.disk2 = "/dev/sdb"
+        skarabox.disks.rootPool.disk1 = "/dev/nvme0n1"
+        skarabox.disks.dataPool.disk1 = "/dev/sda"
+        skarabox.disks.dataPool.disk2 = "/dev/sdb"
 
-  * Step 3.  Run the installer.
+    * Step 3.  Run the installer.
 
-  From your laptop, run the installer. The server will then reboot automatically
-  in the new system as soon as the installer ran successfully.
+    From your laptop, run the installer. The server will then reboot automatically
+    in the new system as soon as the installer ran successfully.
 
-  Enjoy your NixOS system powered by Skarabox!
+    Enjoy your NixOS system powered by Skarabox!
   '';
 
   readAndTrim = f: lib.strings.trim (builtins.readFile f);
   readAsStr = v: if lib.isPath v then readAndTrim v else v;
   readAsListOfStr = v: if lib.isList v then map readAsStr v else [ (readAsStr v) ];
-in {
+in
+{
   imports = [
     ./hotspot.nix
     ./network.nix
-    (lib.mkChangedOptionModule
-      [ "skarabox" "sshAuthorizedKey" ]
-      [ "skarabox" "sshAuthorizedKeys" ]
-      (config: readAsListOfStr config.skarabox.sshAuthorizedKey))
+    (lib.mkChangedOptionModule [ "skarabox" "sshAuthorizedKey" ] [ "skarabox" "sshAuthorizedKeys" ] (
+      config: readAsListOfStr config.skarabox.sshAuthorizedKey
+    ))
   ];
 
   options.skarabox = {
@@ -139,7 +150,11 @@ in {
     # Override user set in profiles/installation-device.nix
     users.users.${cfg.username} = {
       isNormalUser = true;
-      extraGroups = [ "wheel" "networkmanager" "video" ];
+      extraGroups = [
+        "wheel"
+        "networkmanager"
+        "video"
+      ];
       # Allow the graphical user to login without password
       initialHashedPassword = "";
       # Set shared ssh key
@@ -148,7 +163,10 @@ in {
     # Automatically log in at the virtual consoles.
     services.getty.autologinUser = lib.mkForce cfg.username;
     nix.settings.trusted-users = [ cfg.username ];
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+    nix.settings.experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
 
     image.fileName = mkForce "beacon.iso";
     image.baseName = mkForce "beacon";
@@ -157,24 +175,26 @@ in {
 
     boot.initrd.systemd.enable = true;
 
-    environment.systemPackages = let
-      skarabox-help = pkgs.writeText "skarabox-help" helptext;
-    in [
-      (pkgs.writeShellScriptBin "skarabox-help" ''
-       cat ${skarabox-help}
-       '')
-      pkgs.nixos-facter
+    environment.systemPackages =
+      let
+        skarabox-help = pkgs.writeText "skarabox-help" helptext;
+      in
+      [
+        (pkgs.writeShellScriptBin "skarabox-help" ''
+          cat ${skarabox-help}
+        '')
+        pkgs.nixos-facter
 
-      pkgs.tmux
+        pkgs.tmux
 
-      # Useful network tools
-      pkgs.dig
+        # Useful network tools
+        pkgs.dig
 
-      # Useful system tools
-      pkgs.htop
-      pkgs.glances
-      pkgs.iotop
-    ];
+        # Useful system tools
+        pkgs.htop
+        pkgs.glances
+        pkgs.iotop
+      ];
 
     services.openssh = {
       enable = true;
@@ -212,22 +232,26 @@ in {
 
     '');
 
-    environment.shellInit =
-      ''
+    environment.shellInit = ''
       message() {
-      ''
-      + (if (cfg.staticNetwork == null) then ''
-      echo -e "The IP address for this beacon is set through DHCP. It is printed hereunder:\n"
+    ''
+    + (
+      if (cfg.staticNetwork == null) then
+        ''
+          echo -e "The IP address for this beacon is set through DHCP. It is printed hereunder:\n"
 
-      echo "$ ip -oneline address"
-      ip -oneline address
-      echo
+          echo "$ ip -oneline address"
+          ip -oneline address
+          echo
 
-      '' else ''
-      echo -e "The IP address for this beacon is ${cfg.staticNetwork.ip}.\n"
+        ''
+      else
+        ''
+          echo -e "The IP address for this beacon is ${cfg.staticNetwork.ip}.\n"
 
-      '')
-      + ''
+        ''
+    )
+    + ''
       echo -e "The ssh server is listening on port ${toString cfg.sshPort}.\n"
 
       echo -e "This beacon's host key is (it will change after a reboot):\n"
@@ -239,6 +263,6 @@ in {
       if [[ -n "$XDG_VTNR" ]]; then
         message
       fi
-      '';
+    '';
   };
 }

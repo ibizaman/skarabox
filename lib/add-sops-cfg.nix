@@ -1,5 +1,5 @@
 {
-  pkgs
+  pkgs,
 }:
 pkgs.writers.writePython3Bin "add-sops-cfg"
   {

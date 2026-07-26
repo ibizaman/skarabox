@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.skarabox;
 in
@@ -9,7 +14,9 @@ in
   ];
 
   config = {
-    hardware.facter.reportPath = lib.mkIf (builtins.pathExists cfg.facter-config && (builtins.readFile cfg.facter-config != "")) cfg.facter-config;
+    hardware.facter.reportPath = lib.mkIf (
+      builtins.pathExists cfg.facter-config && (builtins.readFile cfg.facter-config != "")
+    ) cfg.facter-config;
 
     networking.hostName = cfg.hostname;
     networking.hostId = cfg.hostId;
@@ -19,7 +26,10 @@ in
     powerManagement.cpuFreqGovernor = "performance";
 
     nix.settings.trusted-users = [ cfg.username ];
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+    nix.settings.experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     nix.settings.auto-optimise-store = true;
     nix.gc = {
       automatic = true;
@@ -29,10 +39,10 @@ in
 
     # See https://www.freedesktop.org/software/systemd/man/journald.conf.html#SystemMaxUse=
     services.journald.extraConfig = ''
-    SystemMaxUse=2G
-    SystemKeepFree=4G
-    SystemMaxFileSize=100M
-    MaxFileSec=1d
+      SystemMaxUse=2G
+      SystemKeepFree=4G
+      SystemMaxFileSize=100M
+      MaxFileSec=1d
     '';
 
     # hashedPasswordFile only works if users are not mutable.
@@ -45,9 +55,11 @@ in
     };
 
     security.sudo.extraRules = [
-      { users = [ cfg.username ];
+      {
+        users = [ cfg.username ];
         commands = [
-          { command = "ALL";
+          {
+            command = "ALL";
             options = [ "NOPASSWD" ];
           }
         ];
@@ -70,7 +82,7 @@ in
       };
       ports = [ cfg.sshPort ];
       openFirewall = true;
-      hostKeys = lib.mkForce [];
+      hostKeys = lib.mkForce [ ];
       generateHostKeys = false;
       extraConfig = ''
         HostKey /boot/host_key

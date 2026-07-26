@@ -6,7 +6,7 @@
 pkgs.writeShellApplication {
   name = "get-facter";
 
-  runtimeInputs  = [
+  runtimeInputs = [
     ssh-beacon
   ];
 

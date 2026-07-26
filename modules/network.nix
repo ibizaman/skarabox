@@ -10,64 +10,81 @@ in
       description = "Use static IP configuration. If unset, use DHCP.";
       default = null;
       example = lib.literalExpression ''
-      {
-        ip = "192.168.1.30";
-        gateway = "192.168.1.1";
-      }
+        {
+          ip = "192.168.1.30";
+          gateway = "192.168.1.1";
+        }
       '';
-      type = types.nullOr (types.submodule {
-        options = {
-          enable = lib.mkEnableOption "Skarabox static IP configuration";
-          ip = mkOption {
-            type = types.str;
-            description = "Static IP to use.";
-          };
-          gateway = mkOption {
-            type = types.str;
-            description = "IP Gateway, often same beginning as `ip` and finishing by a `1`: `XXX.YYY.ZZZ.1`.";
-          };
-          device = mkOption {
-            description = ''
-            Device for which to configure the IP address for.
+      type = types.nullOr (
+        types.submodule {
+          options = {
+            enable = lib.mkEnableOption "Skarabox static IP configuration";
+            ip = mkOption {
+              type = types.str;
+              description = "Static IP to use.";
+            };
+            gateway = mkOption {
+              type = types.str;
+              description = "IP Gateway, often same beginning as `ip` and finishing by a `1`: `XXX.YYY.ZZZ.1`.";
+            };
+            device = mkOption {
+              description = ''
+                Device for which to configure the IP address for.
 
-            Either pass the device name directly if you know it, like "ens3".
-            Or configure the `deviceName` option to get the first device name
-            matching that prefix from the facter.json report.
-            '';
-            default = { namePrefix = "en"; };
-            type = with types; oneOf [
-              str
-              (submodule {
-                options = {
-                  namePrefix = mkOption {
-                    type = str;
-                    description = "Name prefix as it appears in the facter.json report. Used to distinguish between wifi and ethernet.";
-                    default = "en";
-                    example = "wl";
-                  };
-                };
-              })
-            ];
-          };
-          deviceName = mkOption {
-            description = ''
-            Result of applying match pattern from `.device` option
-            or the string defined in `.device` option.
-            '';
-            readOnly = true;
-            internal = true;
-            default = let
-              cfg' = cfg.staticNetwork;
+                Either pass the device name directly if you know it, like "ens3".
+                Or configure the `deviceName` option to get the first device name
+                matching that prefix from the facter.json report.
+              '';
+              default = {
+                namePrefix = "en";
+              };
+              type =
+                with types;
+                oneOf [
+                  str
+                  (submodule {
+                    options = {
+                      namePrefix = mkOption {
+                        type = str;
+                        description = "Name prefix as it appears in the facter.json report. Used to distinguish between wifi and ethernet.";
+                        default = "en";
+                        example = "wl";
+                      };
+                    };
+                  })
+                ];
+            };
+            deviceName = mkOption {
+              description = ''
+                Result of applying match pattern from `.device` option
+                or the string defined in `.device` option.
+              '';
+              readOnly = true;
+              internal = true;
+              default =
+                let
+                  cfg' = cfg.staticNetwork;
 
-              network_interfaces = if builtins.hasAttr "hardware" config.hardware.facter.report then config.hardware.facter.report.hardware.network_interface else [];
+                  network_interfaces =
+                    if builtins.hasAttr "hardware" config.hardware.facter.report then
+                      config.hardware.facter.report.hardware.network_interface
+                    else
+                      [ ];
 
-              firstMatchingDevice = if network_interfaces == [] then "" else builtins.head (builtins.filter (lib.hasPrefix "en") (lib.flatten (map (x: x.unix_device_names) network_interfaces)));
-            in
-              # hardware attr is not set when using system.build.noFacter.
-              if isString cfg'.device then cfg'.device else firstMatchingDevice;
+                  firstMatchingDevice =
+                    if network_interfaces == [ ] then
+                      ""
+                    else
+                      builtins.head (
+                        builtins.filter (lib.hasPrefix "en") (lib.flatten (map (x: x.unix_device_names) network_interfaces))
+                      );
+                in
+                # hardware attr is not set when using system.build.noFacter.
+                if isString cfg'.device then cfg'.device else firstMatchingDevice;
+            };
           };
-        };
-      });
+        }
+      );
     };
 
     disableNetworkSetup = mkOption {
@@ -84,7 +101,10 @@ in
   config = lib.mkIf (!cfg.disableNetworkSetup) {
     assertions = [
       {
-        assertion = !config.boot.initrd.network.ssh.enable || cfg.staticNetwork != null || config.boot.initrd.systemd.network.enable;
+        assertion =
+          !config.boot.initrd.network.ssh.enable
+          || cfg.staticNetwork != null
+          || config.boot.initrd.systemd.network.enable;
         message = ''
           Initrd SSH is enabled, but no static IP is set and initrd systemd networking is disabled. The box will not be reachable through the network on boot and you will not be able to enter the passphrase through SSH.
 
@@ -101,24 +121,30 @@ in
       {
         enable = true;
       }
-      // (if cfg.staticNetwork == null then {
-        networks."10-lan" = {
-          matchConfig.Name = "en*";
-          networkConfig.DHCP = "ipv4";
-          linkConfig.RequiredForOnline = true;
-        };
-      } else {
-        networks."10-lan" = {
-          matchConfig.Name = "en*";
-          address = [
-            "${cfg.staticNetwork.ip}/24"
-          ];
-          routes = [
-            { Gateway = cfg.staticNetwork.gateway; }
-          ];
-          linkConfig.RequiredForOnline = true;
-        };
-      }));
+      // (
+        if cfg.staticNetwork == null then
+          {
+            networks."10-lan" = {
+              matchConfig.Name = "en*";
+              networkConfig.DHCP = "ipv4";
+              linkConfig.RequiredForOnline = true;
+            };
+          }
+        else
+          {
+            networks."10-lan" = {
+              matchConfig.Name = "en*";
+              address = [
+                "${cfg.staticNetwork.ip}/24"
+              ];
+              routes = [
+                { Gateway = cfg.staticNetwork.gateway; }
+              ];
+              linkConfig.RequiredForOnline = true;
+            };
+          }
+      )
+    );
 
   };
 }

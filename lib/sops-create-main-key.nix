@@ -1,5 +1,5 @@
 {
-  pkgs
+  pkgs,
 }:
 pkgs.writeShellApplication {
   name = "sops-create-main-key";
