@@ -2,105 +2,118 @@
 let
   cfg = config.skarabox.disks;
 
-  inherit (lib) mkIf mkOption optionals optionalString types;
+  inherit (lib)
+    mkIf
+    mkOption
+    optionals
+    optionalString
+    types
+    ;
 in
 {
   options.skarabox.disks = {
     rootPool = mkOption {
       description = "ZFS root pool where the OS is stored.";
-      type = with types; submodule {
-        options = {
-          name = mkOption {
-            type = types.str;
-            description = "Name of the root pool";
-            default = "root";
-          };
+      type =
+        with types;
+        submodule {
+          options = {
+            name = mkOption {
+              type = types.str;
+              description = "Name of the root pool";
+              default = "root";
+            };
 
-          disk1 = mkOption {
-            type = types.str;
-            description = "SSD disk on which to install. Required";
-            example = "/dev/nvme0n1";
-          };
+            disk1 = mkOption {
+              type = types.str;
+              description = "SSD disk on which to install. Required";
+              example = "/dev/nvme0n1";
+            };
 
-          disk2 = mkOption {
-            type = types.nullOr types.str;
-            description = "Mirror SSD disk on which to install. Optional. Boot partition will be mirrored too.";
-            example = "/dev/nvme0n2";
-            default = null;
-          };
+            disk2 = mkOption {
+              type = types.nullOr types.str;
+              description = "Mirror SSD disk on which to install. Optional. Boot partition will be mirrored too.";
+              example = "/dev/nvme0n2";
+              default = null;
+            };
 
-          reservation = mkOption {
-            type = types.str;
-            description = ''
-              Disk size to reserve for ZFS internals. Should be between 10% and 15% of available size as recorded by zpool.
+            reservation = mkOption {
+              type = types.str;
+              description = ''
+                Disk size to reserve for ZFS internals. Should be between 10% and 15% of available size as recorded by zpool.
 
-              To get available size on zpool:
+                To get available size on zpool:
 
-                 zfs get -Hpo value available <pool name>
+                   zfs get -Hpo value available <pool name>
 
-              Then to set manually, if needed:
+                Then to set manually, if needed:
 
-                 sudo zfs set reservation=100G <pool name>
-            '';
-            example = "100G";
-          };
+                   sudo zfs set reservation=100G <pool name>
+              '';
+              example = "100G";
+            };
 
-          bootloader = mkOption {
-            type = types.enum [ "uefi" "bios" ];
-            description = ''
-              What bootloader mode to use.
-            '';
-            default = if config.hardware.facter.detected.uefi.supported then "uefi" else "bios";
-            defaultText = ''if config.hardware.facter.detected.uefi.supported then "uefi" else "bios"'';
-            example = "bios";
+            bootloader = mkOption {
+              type = types.enum [
+                "uefi"
+                "bios"
+              ];
+              description = ''
+                What bootloader mode to use.
+              '';
+              default = if config.hardware.facter.detected.uefi.supported then "uefi" else "bios";
+              defaultText = ''if config.hardware.facter.detected.uefi.supported then "uefi" else "bios"'';
+              example = "bios";
+            };
           };
         };
-      };
     };
 
     dataPool = mkOption {
       description = "ZFS pool to store important data.";
-      type = with types; submodule {
-        options = {
-          enable = lib.mkEnableOption "the data pool on other hard drives." // {
-            default = true;
-          };
+      type =
+        with types;
+        submodule {
+          options = {
+            enable = lib.mkEnableOption "the data pool on other hard drives." // {
+              default = true;
+            };
 
-          name = mkOption {
-            type = types.str;
-            description = "Name of the data pool";
-            default = "zdata";
-          };
+            name = mkOption {
+              type = types.str;
+              description = "Name of the data pool";
+              default = "zdata";
+            };
 
-          disk1 = mkOption {
-            type = types.str;
-            description = "First disk on which to install the data pool.";
-            example = "/dev/sda";
-          };
+            disk1 = mkOption {
+              type = types.str;
+              description = "First disk on which to install the data pool.";
+              example = "/dev/sda";
+            };
 
-          disk2 = mkOption {
-            type = types.str;
-            description = "Second disk on which to install the data pool.";
-            example = "/dev/sdb";
-          };
+            disk2 = mkOption {
+              type = types.str;
+              description = "Second disk on which to install the data pool.";
+              example = "/dev/sdb";
+            };
 
-          reservation = mkOption {
-            type = types.str;
-            description = ''
-              Disk size to reserve for ZFS internals. Should be between 5% and 10% of available size as recorded by zpool.
+            reservation = mkOption {
+              type = types.str;
+              description = ''
+                Disk size to reserve for ZFS internals. Should be between 5% and 10% of available size as recorded by zpool.
 
-              To get available size on zpool:
+                To get available size on zpool:
 
-                 zfs get -Hpo value available <pool name>
+                   zfs get -Hpo value available <pool name>
 
-              Then to set manually, if needed:
+                Then to set manually, if needed:
 
-                 sudo zfs set reservation=100G <pool name>
-            '';
-            example = "1T";
+                   sudo zfs set reservation=100G <pool name>
+              '';
+              example = "1T";
+            };
           };
         };
-      };
     };
 
     initialBackupDataset = mkOption {
@@ -109,78 +122,87 @@ in
       default = true;
     };
 
+  };
 
-
- };
-
- config = {
+  config = {
     disko.devices = {
-      disk = let
-        hasRaid = cfg.rootPool.disk2 != null;
+      disk =
+        let
+          hasRaid = cfg.rootPool.disk2 != null;
 
-        mkRoot = { disk, id ? "" }: {
-          type = "disk";
-          device = disk;
-          content = {
-            type = "gpt";
-            partitions = {
-              zfs = {
-                size = "100%";
-                content = {
-                  type = "zfs";
-                  pool = cfg.rootPool.name;
-                };
-              };
-              ESP = {
-                size = "500M";
-                type = "EF00";
-                content = {
-                  type = "filesystem";
-                  format = "vfat";
-                  mountpoint = "/boot${id}";
-                  # Otherwise you get https://discourse.nixos.org/t/security-warning-when-installing-nixos-23-11/37636/2
-                  mountOptions = [ "umask=0077" ];
-                  # Copy the host_key needed for initrd in a location accessible on boot.
-                  # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
-                  # We're using the same host key because, well, it's the same host!
-                  postMountHook = ''
-                    cp /tmp/host_key /mnt/boot${id}/host_key
-                  '';
-                };
-              };
-            } // lib.optionalAttrs (cfg.rootPool.bootloader == "bios") {
-              boot = {
-                size = "1M";
-                type = "EF02";
-                attributes = [ 0 ];
-              };
-            };
-          };
-        };
-
-        mkDataDisk = dataDisk: {
-          type = "disk";
-          device = dataDisk;
-          content = {
-            type = "gpt";
-            partitions = {
-              zfs = {
-                size = "100%";
-                content = {
-                  type = "zfs";
-                  pool = cfg.dataPool.name;
+          mkRoot =
+            {
+              disk,
+              id ? "",
+            }:
+            {
+              type = "disk";
+              device = disk;
+              content = {
+                type = "gpt";
+                partitions = {
+                  zfs = {
+                    size = "100%";
+                    content = {
+                      type = "zfs";
+                      pool = cfg.rootPool.name;
+                    };
+                  };
+                  ESP = {
+                    size = "500M";
+                    type = "EF00";
+                    content = {
+                      type = "filesystem";
+                      format = "vfat";
+                      mountpoint = "/boot${id}";
+                      # Otherwise you get https://discourse.nixos.org/t/security-warning-when-installing-nixos-23-11/37636/2
+                      mountOptions = [ "umask=0077" ];
+                      # Copy the host_key needed for initrd in a location accessible on boot.
+                      # It's prefixed by /mnt because we're installing and everything is mounted under /mnt.
+                      # We're using the same host key because, well, it's the same host!
+                      postMountHook = ''
+                        cp /tmp/host_key /mnt/boot${id}/host_key
+                      '';
+                    };
+                  };
+                }
+                // lib.optionalAttrs (cfg.rootPool.bootloader == "bios") {
+                  boot = {
+                    size = "1M";
+                    type = "EF02";
+                    attributes = [ 0 ];
+                  };
                 };
               };
             };
+
+          mkDataDisk = dataDisk: {
+            type = "disk";
+            device = dataDisk;
+            content = {
+              type = "gpt";
+              partitions = {
+                zfs = {
+                  size = "100%";
+                  content = {
+                    type = "zfs";
+                    pool = cfg.dataPool.name;
+                  };
+                };
+              };
+            };
           };
+        in
+        {
+          root = mkRoot { disk = cfg.rootPool.disk1; };
+          # Second root must have id=-backup.
+          root1 = mkIf hasRaid (mkRoot {
+            disk = cfg.rootPool.disk2;
+            id = "-backup";
+          });
+          data1 = mkIf cfg.dataPool.enable (mkDataDisk cfg.dataPool.disk1);
+          data2 = mkIf cfg.dataPool.enable (mkDataDisk cfg.dataPool.disk2);
         };
-      in {
-        root = mkRoot { disk = cfg.rootPool.disk1; };
-        # Second root must have id=-backup.
-        root1 = mkIf hasRaid (mkRoot { disk = cfg.rootPool.disk2; id = "-backup"; });
-        data1 = mkIf cfg.dataPool.enable (mkDataDisk cfg.dataPool.disk1);
-        data2 = mkIf cfg.dataPool.enable (mkDataDisk cfg.dataPool.disk2);
-      };
       zpool = {
         ${cfg.rootPool.name} = {
           type = "zpool";
@@ -322,7 +344,8 @@ in
               };
               type = "zfs_fs";
             };
-          } // lib.optionalAttrs cfg.initialBackupDataset {
+          }
+          // lib.optionalAttrs cfg.initialBackupDataset {
             "backup" = {
               type = "zfs_fs";
               mountpoint = "/srv/backup";
@@ -396,25 +419,30 @@ in
 
     # Setup Grub to support UEFI.
     # nodev is for UEFI.
-    boot.loader.grub = let
-      isUEFI = cfg.rootPool.bootloader == "uefi";
-    in {
-      enable = true;
-      efiSupport = isUEFI;
-      efiInstallAsRemovable = isUEFI;
+    boot.loader.grub =
+      let
+        isUEFI = cfg.rootPool.bootloader == "uefi";
+      in
+      {
+        enable = true;
+        efiSupport = isUEFI;
+        efiInstallAsRemovable = isUEFI;
 
-      mirroredBoots = lib.mkForce ([
-        {
-          path = "/boot";
-          devices = if isUEFI then [ "nodev" ] else [ cfg.rootPool.disk1 ];
-        }
-      ] ++ (optionals (cfg.rootPool.disk2 != null) [
-        {
-          path = "/boot-backup";
-          devices = if isUEFI then [ "nodev" ] else [ cfg.rootPool.disk2 ];
-        }
-      ]));
-    };
+        mirroredBoots = lib.mkForce (
+          [
+            {
+              path = "/boot";
+              devices = if isUEFI then [ "nodev" ] else [ cfg.rootPool.disk1 ];
+            }
+          ]
+          ++ (optionals (cfg.rootPool.disk2 != null) [
+            {
+              path = "/boot-backup";
+              devices = if isUEFI then [ "nodev" ] else [ cfg.rootPool.disk2 ];
+            }
+          ])
+        );
+      };
 
     services.zfs.autoScrub.enable = true;
   };

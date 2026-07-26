@@ -1,4 +1,9 @@
-{ config, pkgs, lib, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 let
   cfg = config.skarabox.hotspot;
 
@@ -27,7 +32,10 @@ in
   config = lib.mkIf cfg.enable {
     systemd.services."${hotspotService}@" = {
       description = "Create AP Service";
-      after = [ "network.target" "network-pre.target" ];
+      after = [
+        "network.target"
+        "network-pre.target"
+      ];
       serviceConfig = {
         ExecStart = "${pkgs.linux-wifi-hotspot}/bin/create_ap --redirect-to-localhost -n -g ${cfg.ip} %I ${cfg.ssid}";
         KillSignal = "SIGINT";
@@ -37,7 +45,10 @@ in
 
     systemd.services."skarabox-hotspot-force-udev" = {
       description = "Trigger udev for existing wlan interfaces";
-      after = [ "systemd-udev-settle.service" "network-pre.target" ];
+      after = [
+        "systemd-udev-settle.service"
+        "network-pre.target"
+      ];
       before = [ "network.target" ];
       wantedBy = [ "network.target" ];
 

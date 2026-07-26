@@ -12,42 +12,62 @@ let
 in
 {
   config = {
-    perSystem = { inputs', ... }: {
-      apps = {
-        inherit (inputs'.colmena.apps) colmena;
+    perSystem =
+      { inputs', ... }:
+      {
+        apps = {
+          inherit (inputs'.colmena.apps) colmena;
+        };
       };
-    };
 
-    flake = flakeInputs: let
-      mkFlake = name: cfg': {
-        colmenaHive = inputs.colmena.lib.makeHive ({
-          meta.nixpkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
-          meta.nodeNixpkgs = mapAttrs (_: cfg': import (if cfg'.nixpkgs != null then cfg'.nixpkgs else inputs.nixpkgs)  { inherit (cfg') system; }) cfg.hosts;
-        } // (let
-          mkNode = name: cfg': let
-            hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;
-          in
+    flake =
+      flakeInputs:
+      let
+        mkFlake = name: cfg': {
+          colmenaHive = inputs.colmena.lib.makeHive (
             {
-              deployment = {
-                targetHost = cfg'.ip;
-                targetPort = hostCfg.skarabox.sshPort;
-                targetUser = topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username;
-                sshOptions = [
-                  "-o" "IdentitiesOnly=yes"
-                  "-o" "UserKnownHostsFile=${cfg'.knownHostsPath}"
-                  "-o" "ConnectTimeout=10"
-                ] ++ lib.optionals (cfg'.sshPrivateKeyPath != null) [ "-i" cfg'.sshPrivateKeyPath ];
-              };
+              meta.nixpkgs = import inputs.nixpkgs { system = "x86_64-linux"; };
+              meta.nodeNixpkgs = mapAttrs (
+                _: cfg':
+                import (if cfg'.nixpkgs != null then cfg'.nixpkgs else inputs.nixpkgs) { inherit (cfg') system; }
+              ) cfg.hosts;
+            }
+            // (
+              let
+                mkNode =
+                  name: cfg':
+                  let
+                    hostCfg = topLevelConfig.flake.nixosConfigurations.${name}.config;
+                  in
+                  {
+                    deployment = {
+                      targetHost = cfg'.ip;
+                      targetPort = hostCfg.skarabox.sshPort;
+                      targetUser = topLevelConfig.flake.nixosConfigurations.${name}.config.skarabox.username;
+                      sshOptions = [
+                        "-o"
+                        "IdentitiesOnly=yes"
+                        "-o"
+                        "UserKnownHostsFile=${cfg'.knownHostsPath}"
+                        "-o"
+                        "ConnectTimeout=10"
+                      ]
+                      ++ lib.optionals (cfg'.sshPrivateKeyPath != null) [
+                        "-i"
+                        cfg'.sshPrivateKeyPath
+                      ];
+                    };
 
-              imports = cfg'.modules ++ [
-                inputs.skarabox.nixosModules.skarabox
-              ];
-            };
-        in
-          mapAttrs mkNode cfg.hosts
-        ));
-      };
-    in
+                    imports = cfg'.modules ++ [
+                      inputs.skarabox.nixosModules.skarabox
+                    ];
+                  };
+              in
+              mapAttrs mkNode cfg.hosts
+            )
+          );
+        };
+      in
       (concatMapAttrs mkFlake cfg.hosts);
   };
 }

@@ -1,4 +1,10 @@
-{ system, nix, jq, setsid, writeShellScriptBin }:
+{
+  system,
+  nix,
+  jq,
+  setsid,
+  writeShellScriptBin,
+}:
 {
   staticIP = writeShellScriptBin "staticIP" ''
     set -e

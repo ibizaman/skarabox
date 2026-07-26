@@ -1,5 +1,5 @@
 {
-  pkgs
+  pkgs,
 }:
 # Generate knownhosts file.
 #

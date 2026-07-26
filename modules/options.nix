@@ -3,7 +3,8 @@ let
   inherit (lib) mkOption types;
 
   isNonEmptySingleLine = v: v != "" && !(lib.hasInfix "\n" v);
-  isNonEmptySingleLineFile = v:
+  isNonEmptySingleLineFile =
+    v:
     let
       lines = lib.splitString "\n" (builtins.readFile v);
     in
@@ -14,10 +15,9 @@ let
 in
 {
   imports = [
-    (lib.mkChangedOptionModule
-      [ "skarabox" "sshAuthorizedKey" ]
-      [ "skarabox" "sshAuthorizedKeys" ]
-      (config: readAsListOfStr config.skarabox.sshAuthorizedKey))
+    (lib.mkChangedOptionModule [ "skarabox" "sshAuthorizedKey" ] [ "skarabox" "sshAuthorizedKeys" ] (
+      config: readAsListOfStr config.skarabox.sshAuthorizedKey
+    ))
   ];
 
   options.skarabox = {

@@ -1,36 +1,41 @@
 # Taken nearly verbatim from https://github.com/nix-community/home-manager/pull/4673
 # Read these docs online at https://shb.skarabox.com.
-{ pkgs
-, buildPackages
-, lib
-, nmdsrc
-, stdenv
-, documentation-highlighter
-, nixos-render-docs
+{
+  pkgs,
+  buildPackages,
+  lib,
+  nmdsrc,
+  stdenv,
+  documentation-highlighter,
+  nixos-render-docs,
 
-, release
-, skaraboxModules
-, flakeModuleModules
+  release,
+  skaraboxModules,
+  flakeModuleModules,
 }:
 
 let
   shbPath = toString ./..;
 
-  gitHubDeclaration = user: repo: subpath:
-    let urlRef = "main";
-        end = if subpath == "" then "" else "/" + subpath;
-    in {
+  gitHubDeclaration =
+    user: repo: subpath:
+    let
+      urlRef = "main";
+      end = if subpath == "" then "" else "/" + subpath;
+    in
+    {
       url = "https://github.com/${user}/${repo}/blob/${urlRef}${end}";
       name = "<${repo}${end}>";
     };
 
   ghRoot = (gitHubDeclaration "ibizaman" "skarabox" "").url;
 
-  buildOptionsDocs = args@{ modules, ... }:
+  buildOptionsDocs =
+    args@{ modules, ... }:
     let
       config = {
         _module.check = false;
-        _module.args = {};
+        _module.args = { };
         system.stateVersion = "22.11";
       };
 
@@ -48,28 +53,42 @@ let
       };
 
       options = lib.filterAttrs (name: v: name == "skarabox") eval.options;
-    in buildPackages.nixosOptionsDoc ({
-      inherit options;
+    in
+    buildPackages.nixosOptionsDoc (
+      {
+        inherit options;
 
-      transformOptions = opt:
-        opt // {
-          # Clean up declaration sites to not refer to the Home Manager
-          # source tree.
-          declarations = map (decl:
-            gitHubDeclaration "ibizaman" "skarabox"
-              (lib.removePrefix "/" (lib.removePrefix shbPath (toString decl)))) opt.declarations;
-        };
-    } // builtins.removeAttrs args [ "modules" "includeModuleSystemOptions" ]);
+        transformOptions =
+          opt:
+          opt
+          // {
+            # Clean up declaration sites to not refer to the Home Manager
+            # source tree.
+            declarations = map (
+              decl:
+              gitHubDeclaration "ibizaman" "skarabox" (
+                lib.removePrefix "/" (lib.removePrefix shbPath (toString decl))
+              )
+            ) opt.declarations;
+          };
+      }
+      // builtins.removeAttrs args [
+        "modules"
+        "includeModuleSystemOptions"
+      ]
+    );
 
   scrubbedModule = {
     _module.args.pkgs = lib.mkForce (nmd.scrubDerivations "pkgs" pkgs);
     _module.check = false;
   };
 
-  mkOptionsDocs = modules: (buildOptionsDocs {
-    modules = modules ++ [ scrubbedModule ];
-    variablelistId = "skarabox-options";
-  }).optionsJSON;
+  mkOptionsDocs =
+    modules:
+    (buildOptionsDocs {
+      modules = modules ++ [ scrubbedModule ];
+      variablelistId = "skarabox-options";
+    }).optionsJSON;
 
   nmd = import nmdsrc {
     inherit lib;
@@ -77,15 +96,15 @@ let
     # `nmd` uses to work around the broken stylesheets in
     # `docbook-xsl-ns`, so we restore the patched version here.
     pkgs = pkgs // {
-      docbook-xsl-ns =
-        pkgs.docbook-xsl-ns.override { withManOptDedupPatch = true; };
+      docbook-xsl-ns = pkgs.docbook-xsl-ns.override { withManOptDedupPatch = true; };
     };
   };
 
   outputPath = "share/doc/skarabox";
 
-  manpage-urls = pkgs.writeText "manpage-urls.json" ''{}'';
-in stdenv.mkDerivation {
+  manpage-urls = pkgs.writeText "manpage-urls.json" "{}";
+in
+stdenv.mkDerivation {
   name = "skarabox-manual";
 
   nativeBuildInputs = [ nixos-render-docs ];
