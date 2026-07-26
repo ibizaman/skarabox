@@ -675,11 +675,11 @@
         "nmdsrc": "nmdsrc"
       },
       "locked": {
-        "lastModified": 1784931926,
-        "narHash": "sha256-rrG2ajqr3GIiuOZ5G2nuQCLwK4W/+jasGqN0OfUtRzQ=",
+        "lastModified": 1784974587,
+        "narHash": "sha256-5WI9NTk93IJzAWHx7LoKt3KEDNGyIRGH4EYGm9VBP2c=",
         "owner": "ibizaman",
         "repo": "selfhostblocks",
-        "rev": "e505bb87986f36ca72dd94ad492b0b7fbdfd494c",
+        "rev": "15a76bc00d4c383c09e22bf6af0a96f5e08bca0b",
         "type": "github"
       },
       "original": {
@@ -697,11 +697,11 @@
         "nmdsrc": "nmdsrc_2"
       },
       "locked": {
-        "lastModified": 1784896799,
-        "narHash": "sha256-kyImy73wduzQPUH0m2SbkKgzyNs9h1Ap1WZTW6euIPw=",
+        "lastModified": 1784986120,
+        "narHash": "sha256-GUY0WGHvAZ3V+YDG3nDY6naqrQNpcFctY0UOuLrek8E=",
         "owner": "ibizaman",
         "repo": "skarabox",
-        "rev": "1be3b373117da48915c96e98745f1be9cde88f3e",
+        "rev": "19ce9ff2ad9ab033d36887f366d375b32875aee5",
         "type": "github"
       },
       "original": {
