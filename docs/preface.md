@@ -47,7 +47,7 @@ and also afterwards:
   and 0 or 2 disks in raid1 using ZFS mirroring for the data disks.
 - Backed by [tests][] for all disk variants
   and [CI][] to make sure the installation procedure does work!
-  Why don't you try them yourself: `nix run github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData -- -g`.
+  Why don't you try them yourself: `nix build github:ibizaman/skarabox#checks.x86_64-linux.oneOStwoData`.
 - [nixos-facter][] to handle hardware configuration.
 - [sops-nix][] to handle secrets: the user's password and the root and data ZFS pool passphrases.
 - Uses [deploy-rs][] or [colmena][] to deploy updates.
