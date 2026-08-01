@@ -1,5 +1,6 @@
 {
   dataPool,
+  deploymentTests ? false,
   inputs,
   legacyNixpkgs ? false,
   name,
@@ -12,19 +13,23 @@
   system,
 }:
 let
-  testFixture = import ./test-flake.nix {
-    inherit
-      dataPool
-      inputs
-      legacyNixpkgs
-      rootDisk2
-      skarabox
-      sshBootPort
-      sshPort
-      staticNetwork
-      system
-      ;
-  };
+  mkTestFixture =
+    deploymentModule:
+    import ./test-flake.nix {
+      inherit
+        dataPool
+        deploymentModule
+        inputs
+        legacyNixpkgs
+        rootDisk2
+        skarabox
+        sshBootPort
+        sshPort
+        staticNetwork
+        system
+        ;
+    };
+  testFixture = mkTestFixture null;
   testFlake = testFixture.flake;
   targetConfig = testFlake.nixosConfigurations.test.config;
   targetSystem = targetConfig.system.build.toplevel;
@@ -54,11 +59,68 @@ let
     targetSystem
     "--no-substitute-on-destination"
   ];
+  skaraboxFlakeUrl = "path:${skarabox.outPath}?narHash=${skarabox.narHash}";
+  templateFlakeUrl = "${skaraboxFlakeUrl}&dir=template";
+  # The deployment CLIs require a flake on disk. Reopen the locked template
+  # inputs, replacing only Skarabox with the source under test.
+  mkDeploymentFlake =
+    deploymentModule:
+    let
+      flakeNix = pkgs.writeText "${deploymentModule}-flake.nix" ''
+        {
+          outputs = _:
+            let
+              skarabox = builtins.getFlake "${skaraboxFlakeUrl}";
+              template = builtins.getFlake "${templateFlakeUrl}";
+            in
+            (import ./test-flake.nix {
+                dataPool = ${builtins.toJSON dataPool};
+                deploymentModule = "${deploymentModule}";
+                inputs = template.inputs;
+                legacyNixpkgs = ${builtins.toJSON legacyNixpkgs};
+                rootDisk2 = ${builtins.toJSON rootDisk2};
+                inherit skarabox;
+                sshBootPort = ${toString sshBootPort};
+                sshPort = ${toString sshPort};
+                system = "${system}";
+              }).deploymentFlake;
+        }
+      '';
+    in
+    pkgs.runCommand "${deploymentModule}-flake" { } ''
+      mkdir "$out"
+      cp ${flakeNix} "$out/flake.nix"
+      cp ${./test-flake.nix} "$out/test-flake.nix"
+      cp -r ${./fixtures} "$out/fixtures"
+    '';
+  colmenaFlake = mkDeploymentFlake "colmena";
+  deployRsFlake = mkDeploymentFlake "deploy-rs";
+  colmenaFixture = mkTestFixture "colmena";
+  deployRsFixture = mkTestFixture "deploy-rs";
+
+  # Flake evaluation needs every transitive input source in the offline VM.
+  flakeInputSources =
+    input:
+    [ input.outPath ]
+    ++ pkgs.lib.concatMap flakeInputSources (builtins.attrValues (input.inputs or { }));
+  # Preload the CLIs, evaluation-only dependencies, and deployed systems.
+  deploymentDependencies = [
+    inputs.colmena.packages.${system}.colmena
+    inputs.deploy-rs.packages.${system}.deploy-rs
+    inputs.selfhostblocks.lib.${system}.patchedNixpkgs
+    colmenaFixture.deploymentFlake.colmenaHive.toplevel.test
+    deployRsFixture.deploymentFlake.deploy.nodes.test.profiles.system.path
+  ]
+  ++ builtins.attrValues deployRsFixture.deploymentFlake.checks.${system};
 in
 pkgs.testers.runNixOSTest {
   inherit name;
 
   nodes.installer = {
+    nix.settings.experimental-features = pkgs.lib.optionals deploymentTests [
+      "nix-command"
+      "flakes"
+    ];
     environment.systemPackages = [
       pkgs.jq
       pkgs.openssh
@@ -67,7 +129,16 @@ pkgs.testers.runNixOSTest {
     system.extraDependencies = [
       diskoScript
       targetSystem
-    ];
+    ]
+    ++ pkgs.lib.optionals deploymentTests (
+      [
+        colmenaFlake
+        deployRsFlake
+        skarabox.outPath
+      ]
+      ++ deploymentDependencies
+      ++ pkgs.lib.unique (pkgs.lib.concatMap flakeInputSources (builtins.attrValues inputs))
+    );
     environment.etc = {
       # These fixed SOPS files are deliberately public test data used by the
       # generated install and unlock wrappers.
@@ -243,6 +314,33 @@ pkgs.testers.runNixOSTest {
             target_command(command="sudo cat /var/lib/nixos/gid-map")
         ).strip() == gid_map
         assert target_password_hash() == password_hash
+
+    ${pkgs.lib.optionalString deploymentTests ''
+      with subtest("deploy with deploy-rs"):
+          installer.succeed(
+              "mkdir -p /tmp/codex && "
+              "cp -r ${deployRsFlake} /tmp/codex/deploy-rs-flake"
+          )
+          installer.succeed(
+              "cd /tmp/codex/deploy-rs-flake && "
+              "nix run path:.#deploy-rs -- "
+              "--debug-logs --temp-path /tmp/codex/deploy-rs",
+              timeout=600,
+          )
+          installer.succeed(target_command(command="true"))
+
+      with subtest("deploy with Colmena"):
+          installer.succeed(
+              "cp -r ${colmenaFlake} /tmp/codex/colmena-flake && "
+              "cd /tmp/codex/colmena-flake && "
+              "nix run path:.#colmena -- apply --show-trace",
+              timeout=600,
+          )
+          installer.succeed(target_command(command="true"))
+
+      with subtest("password survives deployment"):
+          assert target_password_hash() == password_hash
+    ''}
 
     with subtest("shut down through SSH"):
         installer.succeed(

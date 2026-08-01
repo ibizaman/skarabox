@@ -25,12 +25,14 @@ in
     name = "oneOSnoData";
     rootDisk2 = false;
     dataPool = false;
+    deploymentTests = true;
   };
 
   oneOStwoData = templateTest {
     name = "oneOStwoData";
     rootDisk2 = false;
     dataPool = true;
+    deploymentTests = true;
     sshPort = 3222;
     sshBootPort = 3223;
   };
@@ -39,6 +41,7 @@ in
     name = "twoOSnoData";
     rootDisk2 = true;
     dataPool = false;
+    deploymentTests = true;
     sshPort = 4222;
     sshBootPort = 4223;
   };
@@ -47,6 +50,7 @@ in
     name = "twoOStwoData";
     rootDisk2 = true;
     dataPool = true;
+    deploymentTests = true;
     sshPort = 5222;
     sshBootPort = 5223;
   };
@@ -55,6 +59,7 @@ in
     name = "legacyNixpkgs";
     rootDisk2 = false;
     dataPool = false;
+    deploymentTests = true;
     legacyNixpkgs = true;
     sshPort = 6222;
     sshBootPort = 6223;

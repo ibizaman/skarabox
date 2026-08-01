@@ -1,5 +1,6 @@
 {
   dataPool ? false,
+  deploymentModule ? null,
   inputs,
   legacyNixpkgs ? false,
   rootDisk2 ? false,
@@ -15,6 +16,8 @@ let
     self = testFlake;
     inherit skarabox;
     inherit (inputs)
+      colmena
+      deploy-rs
       flake-parts
       nixos-anywhere
       nixos-generators
@@ -28,6 +31,15 @@ let
 
       imports = [
         skarabox.flakeModules.default
+      ]
+      ++ inputs.nixpkgs.lib.optional (deploymentModule == "colmena") skarabox.flakeModules.colmena
+      ++ inputs.nixpkgs.lib.optionals (deploymentModule == "deploy-rs") [
+        skarabox.flakeModules.deploy-rs
+        {
+          # Updating GRUB in the QEMU target takes longer than deploy-rs's
+          # 30-second default confirmation timeout.
+          flake.deploy.nodes.test.confirmTimeout = 600;
+        }
       ];
 
       skarabox.sopsKeyPath = "/etc/scenario/sops-key";
@@ -72,6 +84,8 @@ let
                 skarabox = {
                   hostname = "test";
                   username = "skarabox";
+                  sshPort = sshPort;
+                  boot.sshPort = sshBootPort;
                   hashedPasswordFile = builtins.toFile "hashed-password" testPasswordHash;
                   facter-config = builtins.toFile "empty-facter.json" "";
                   hostId = "00000000";
@@ -103,6 +117,20 @@ let
     };
 in
 {
+  deploymentFlake =
+    if deploymentModule == "colmena" then
+      {
+        apps.${system}.colmena = testFlake.apps.${system}.colmena;
+        inherit (testFlake) colmenaHive;
+      }
+    else if deploymentModule == "deploy-rs" then
+      {
+        apps.${system}.deploy-rs = testFlake.apps.${system}.deploy-rs;
+        checks.${system} = testFlake.checks.${system};
+        inherit (testFlake) deploy;
+      }
+    else
+      null;
   flake = testFlake;
   inherit testPasswordHash;
 }
