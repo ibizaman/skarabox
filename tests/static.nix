@@ -1,153 +1,26 @@
 {
+  inputs,
+  pkgs,
+  skarabox,
   system,
-  nix,
-  jq,
-  setsid,
-  writeShellScriptBin,
 }:
 {
-  staticIP = writeShellScriptBin "staticIP" ''
-    set -e
-
-    e () {
-      echo -e "\e[1;31mSKARABOX-TEMPLATE:\e[0m \e[1;0m$@\e[0m"
-    }
-
-    group () {
-      if [ -z "$CI" ]; then
-        e "$@"
-      else
-        echo "::group::$@"
-      fi
-    }
-
-    endgroup () {
-      if [ -z "$CI" ]; then
-        e "$@"
-      else
-        e "$@"
-        echo "::endgroup::"
-      fi
-    }
-
-    graphic=-nographic
-    tmpdir=
-    remove_tmpdir=false
-    beacon_vm_pid=
-
-    cleanup () {
-      status="$1"
-      # Disable traps while cleaning up so cleanup does not recursively call itself.
-      trap - INT TERM EXIT
-
-      if [ -n "$beacon_vm_pid" ]; then
-        # A leading '-' makes kill signal that process group, not just that PID.
-        kill -- "-$beacon_vm_pid" 2>/dev/null || true
-        wait "$beacon_vm_pid" 2>/dev/null || true
-      fi
-
-      if [ "$remove_tmpdir" = true ]; then
-        rm -rf -- "$tmpdir"
-      fi
-
-      exit "$status"
-    }
-    # Preserve the original exit status, and use conventional statuses for signals.
-    trap 'cleanup $?' EXIT
-    trap 'cleanup 130' INT
-    trap 'cleanup 143' TERM
-
-    while getopts "gp:" o; do
-      case "''${o}" in
-        g)
-          graphic=
-          ;;
-        p)
-          tmpdir=''${OPTARG}
-          ;;
-        *)
-          exit 1
-          ;;
-      esac
-    done
-    shift $((OPTIND-1))
-
-    if [ -z "$tmpdir" ]; then
-      group "Creating tmpdir"
-      tmpdir="$(mktemp -d)"
-      remove_tmpdir=true
-      e "Created temp dir at $tmpdir, will be cleaned up on exit or abort"
-      endgroup "Done creating tmpdir"
-    else
-      e "Using provided temp dir $tmpdir, it will not be cleaned up"
-    fi
-    cd "$tmpdir"
-
-    group "Initialising template"
-    echo skarabox1234 | ${nix} run ${../.}#init -- -v -y -s
-    sed -i "s/\(ip =\) \"192.168.1.30\"/\1 \"127.0.0.1\"/" "flake.nix"
-    sed -i "s/\(system =\) \"x86_64-linux\"/\1 \"${system}\"/" "flake.nix"
-    # Using a git repo here allows to only copy in the nix store non temporary files.
-    # In particular, we avoid copying the disk*.qcow2 files.
-    git init
-    echo ".skarabox-tmp" > .gitignore
-    git add .
-    git config user.name "skarabox"
-    git config user.email "skarabox@skarabox.com"
-    git commit -m 'init repository'
-    ${nix} flake update --override-input skarabox ${../.} skarabox
-    git add flake.lock
-    git commit -m 'use local skarabox input'
-    ${nix} run .#myskarabox-gen-knownhosts-file
-    git add ./myskarabox/known_hosts
-    git commit -m 'generate known hosts'
-    endgroup "Initialisation done"
-
-    sed -i 's-staticNetwork = null-staticNetwork = { ip="10.0.2.15"; gateway="10.0.2.255"; }-' ./myskarabox/configuration.nix
-
-    group "Nix flake show"
-    ${nix} flake show
-    endgroup "Done nix flake show"
-
-    e "Starting beacon VM."
-
-    ${setsid} ${nix} run .#myskarabox-beacon-vm -- $graphic &
-    beacon_vm_pid=$!
-
-    sleep 10
-
-    group "Starting ssh loop to figure out when beacon started."
-    e "You might see some flickering on the command line."
-    # We can't yet be strict on the host key check since the beacon
-    # initially has a random one.
-    while ! ${nix} run .#myskarabox-ssh -- -F none -o CheckHostIP=no -o StrictHostKeyChecking=no echo "connected"; do
-      sleep 5
-    done
-    endgroup "Beacon VM has started."
-
-    group "Generating hardware config."
-    ${nix} run .#myskarabox-get-facter > ./myskarabox/facter.json
-    ${jq}/bin/jq < ./myskarabox/facter.json
-    git add ./myskarabox/facter.json
-    git commit -m 'generate hardware config'
-    endgroup "Generation succeeded."
-
-    group "Starting installation on beacon VM."
-    ${nix} run .#myskarabox-install-on-beacon -- --no-substitute-on-destination
-    endgroup "Installation succeeded."
-
-    group "Starting unlock loop to decrypt root dataset."
-    e "You might see some flickering on the command line."
-    while ! ${nix} run .#myskarabox-unlock -- -F none; do
-      sleep 5
-    done
-    endgroup "Decryption done."
-
-    group "Starting ssh loop to figure out when VM has booted."
-    e "You might see some flickering on the command line."
-    while ! ${nix} run .#myskarabox-ssh -- -F none echo "connected"; do
-      sleep 5
-    done
-    endgroup "Beacon VM has started."
-  '';
+  staticIP = import ./scenario.nix {
+    inherit
+      inputs
+      pkgs
+      skarabox
+      system
+      ;
+    name = "staticIP";
+    dataPool = false;
+    rootDisk2 = false;
+    # Keep host forwards distinct from the other VM checks.
+    sshPort = 7222;
+    sshBootPort = 7223;
+    staticNetwork = {
+      ip = "10.0.2.15";
+      gateway = "10.0.2.2";
+    };
+  };
 }
