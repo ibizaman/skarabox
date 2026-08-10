@@ -139,7 +139,12 @@
             };
 
             checks = import ./tests {
-              inherit pkgs system nix-flake-tests;
+              inherit
+                pkgs
+                self
+                system
+                nix-flake-tests
+                ;
             };
 
             # Used to experiment with ruamel library.
