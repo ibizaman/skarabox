@@ -662,6 +662,7 @@ in
               name = "unlock";
 
               runtimeInputs = [
+                pkgs.coreutils
                 sops
                 boot-ssh
               ];
@@ -670,7 +671,21 @@ in
               # so this path must not allocate a TTY that could echo the passphrase.
               text = ''
                 root_passphrase="$(sops decrypt --extract "${cfg'.secretsRootPassphrasePath}" "${cfg'.secretsFilePath}")"
-                printf '%s\n' "$root_passphrase" | boot-ssh -T "$@"
+                timeout=300
+                started_at=$SECONDS
+                deadline=$((started_at + timeout))
+
+                # QEMU can accept a forwarded TCP connection before initrd SSH sends
+                # its banner, which ConnectionAttempts alone does not retry.
+                while ! printf '%s\n' "$root_passphrase" | boot-ssh -T -o ConnectionAttempts=10 "$@"; do
+                  if ((SECONDS >= deadline)); then
+                    printf 'Timed out waiting for initrd SSH.\n' >&2
+                    exit 1
+                  fi
+
+                  printf 'Initrd SSH is not ready; retrying (%d/%d seconds elapsed).\n' "$((SECONDS - started_at))" "$timeout" >&2
+                  sleep 1
+                done
               '';
             };
           in
