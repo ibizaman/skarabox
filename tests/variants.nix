@@ -174,9 +174,7 @@ let
 
       group "Starting unlock loop to decrypt root dataset."
       e "You might see some flickering on the command line."
-      while ! ${nix} run .#myskarabox-unlock -- -F none; do
-        sleep 5
-      done
+      ${nix} run .#myskarabox-unlock -- -F none
       endgroup "Decryption done."
 
       group "Starting ssh loop to figure out when VM has booted."
@@ -214,9 +212,7 @@ let
 
       group "Starting unlock loop to decrypt root dataset."
       e "You might see some flickering on the command line."
-      while ! ${nix} run .#myskarabox-unlock -- -F none; do
-        sleep 5
-      done
+      ${nix} run .#myskarabox-unlock -- -F none
       endgroup "Decryption done."
 
       group "Starting ssh loop to figure out when VM has booted."
