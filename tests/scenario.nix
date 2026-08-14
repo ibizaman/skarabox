@@ -41,6 +41,8 @@ let
   diskoScript = targetConfig.system.build.diskoScript;
   hostPackages = testFlake.packages.${fixture.host.system};
   beaconVM = hostPackages."${fixture.host.name}-beacon-vm";
+  initPackage = skarabox.packages.${fixture.host.system}.init;
+  installPackage = hostPackages."${fixture.host.name}-install-on-beacon";
 
   repository = "/tmp/codex/repository";
   hostDirectory = "${repository}/${fixture.host.name}";
@@ -51,12 +53,22 @@ let
   ssh = nixRun "${fixture.host.name}-ssh";
   unlock = nixRun "${fixture.host.name}-unlock";
 
-  deploymentDependencies = [
+  scenarioPackages = [
+    initPackage
+    hostPackages."${fixture.host.name}-gen-knownhosts-file"
+    hostPackages."${fixture.host.name}-get-facter"
+    installPackage
+    hostPackages."${fixture.host.name}-ssh"
+    hostPackages."${fixture.host.name}-unlock"
+  ]
+  ++ pkgs.lib.optionals fullScenario [
     inputs.colmena.packages.${fixture.host.system}.colmena
     inputs.deploy-rs.packages.${fixture.host.system}.deploy-rs
-    colmenaTargetSystem
-  ]
-  ++ map (check: check.inputDerivation) (builtins.attrValues testFlake.checks.${fixture.host.system});
+    hostPackages.sops
+  ];
+  deploymentInputs = map (check: check.inputDerivation) (
+    builtins.attrValues testFlake.checks.${fixture.host.system}
+  );
 in
 pkgs.testers.runNixOSTest {
   inherit name;
@@ -73,13 +85,14 @@ pkgs.testers.runNixOSTest {
     virtualisation = {
       additionalPaths = [
         diskoScript
-        hostPackages."${fixture.host.name}-install-on-beacon".inputDerivation
-        skarabox.packages.${fixture.host.system}.init
+        initPackage.inputDerivation
+        installPackage.inputDerivation
         targetSystem
       ]
+      ++ scenarioPackages
       ++ templateSources
       ++ pkgs.lib.optional (hostNixpkgs != null) hostNixpkgs
-      ++ pkgs.lib.optionals fullScenario deploymentDependencies;
+      ++ pkgs.lib.optionals fullScenario ([ colmenaTargetSystem ] ++ deploymentInputs);
       # Nested Nix needs 2 GiB RAM; deploy-rs also needs 2 GiB disk and 4 GiB RAM.
       diskSize = if fullScenario then 2 * 1024 else 1024;
       memorySize = if fullScenario then 4096 else 2048;
