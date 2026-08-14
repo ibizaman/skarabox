@@ -1,14 +1,21 @@
 {
   pkgs,
+  self,
   system,
   nix-flake-tests,
 }:
 let
-  # It is necessary to add --allow-import-from-derivation explicitly because the flake show command
-  # does not pick it up from the config, on purpose.
-  nix = "${pkgs.nix}/bin/nix --allow-import-from-derivation --extra-experimental-features nix-command -L";
-  setsid = "${pkgs.util-linux}/bin/setsid";
-
+  # Installation scenarios must use the same pinned inputs as generated
+  # configurations while replacing only Skarabox itself with this source tree.
+  templateLock = builtins.fromJSON (builtins.readFile ../template/flake.lock);
+  # Register locked sources so Nix can evaluate the generated flake offline in the test derivation.
+  templateSources = pkgs.lib.unique (
+    map (node: (builtins.fetchTree node.locked).outPath) (
+      builtins.filter (node: node ? locked) (builtins.attrValues templateLock.nodes)
+    )
+  );
+  flakeCompat = import (builtins.fetchTree templateLock.nodes.flake-compat.locked);
+  templateInputs = (flakeCompat { src = ../template; }).outputs.inputs;
 in
 {
   lib = nix-flake-tests.lib.check {
@@ -16,11 +23,17 @@ in
     tests = pkgs.callPackage ./lib.nix { };
   };
 }
-// (import ./variants.nix {
-  inherit system nix setsid;
-  inherit (pkgs) gnugrep jq writeShellScriptBin;
-})
-// (import ./static.nix {
-  inherit system nix setsid;
-  inherit (pkgs) jq writeShellScriptBin;
-})
+# The VM topology and facter fixture model the x86_64 QEMU machine used by CI.
+# In particular, its IDE data disks are not available on QEMU's aarch64 virt machine.
+// pkgs.lib.optionalAttrs (system == "x86_64-linux") (
+  (import ./variants.nix {
+    inputs = templateInputs;
+    inherit pkgs system templateSources;
+    skarabox = self;
+  })
+  // (import ./static.nix {
+    inputs = templateInputs;
+    inherit pkgs system templateSources;
+    skarabox = self;
+  })
+)
