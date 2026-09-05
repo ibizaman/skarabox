@@ -53,7 +53,7 @@ and also afterwards:
 - Uses [deploy-rs][] or [colmena][] to deploy updates.
 - Configures DHCP or static IP for host.
 - Supports `x86_64-linux` and `aarch64-linux` platform.
-- Supports `x86_64-darwin` and `aarch64-darwin` as long as [cross-compilation][] is enabled.
+- Supports `aarch64-darwin` as long as [cross-compilation][] is enabled.
 - Integration with [Self Host Blocks][] which, similarly to Skarabox,
   provides an opinionated way to configure services in a seamless way.
 
