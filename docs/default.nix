@@ -180,8 +180,7 @@ stdenv.mkDerivation {
       --stylesheet static/tomorrow-night.min.css \
       --script static/highlight.min.js \
       --script static/highlight.load.js \
-      --toc-depth 1 \
-      --section-toc-depth 1 \
+      --sidebar-depth 1 \
       manual.md \
       out/index.html
   '';
