@@ -107,9 +107,9 @@ in
 
         common = {
           # From https://github.com/serokell/deploy-rs?tab=readme-ov-file#overall-usage
-          checks = builtins.mapAttrs (
-            system: deployLib: deployLib.deployChecks topLevelConfig.flake.deploy
-          ) inputs.deploy-rs.lib;
+          checks = lib.genAttrs topLevelConfig.systems (
+            system: inputs.deploy-rs.lib.${system}.deployChecks topLevelConfig.flake.deploy
+          );
         };
       in
       common // (concatMapAttrs mkFlake cfg.hosts);

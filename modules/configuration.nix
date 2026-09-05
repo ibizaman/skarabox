@@ -1,11 +1,18 @@
 {
   config,
   lib,
+  options,
   pkgs,
   ...
 }:
 let
   cfg = config.skarabox;
+  journalSettings = {
+    SystemMaxUse = "2G";
+    SystemKeepFree = "4G";
+    SystemMaxFileSize = "100M";
+    MaxFileSec = "1d";
+  };
 in
 {
   imports = [
@@ -37,13 +44,13 @@ in
       options = "--delete-older-than 30d";
     };
 
+    # services.journald.settings replaced extraConfig in NixOS 26.11.
     # See https://www.freedesktop.org/software/systemd/man/journald.conf.html#SystemMaxUse=
-    services.journald.extraConfig = ''
-      SystemMaxUse=2G
-      SystemKeepFree=4G
-      SystemMaxFileSize=100M
-      MaxFileSec=1d
-    '';
+    services.journald =
+      if options.services.journald ? settings then
+        { settings.Journal = journalSettings; }
+      else
+        { extraConfig = lib.generators.toKeyValue { } journalSettings; };
 
     # hashedPasswordFile only works if users are not mutable.
     users.mutableUsers = false;
