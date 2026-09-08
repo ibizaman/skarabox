@@ -442,11 +442,11 @@
     "nixos-mailserver": {
       "flake": false,
       "locked": {
-        "lastModified": 1785702596,
-        "narHash": "sha256-PnJsHRZyM3iA+0BeEikWm2piQCuwtGU4xxjsWOMRvTU=",
+        "lastModified": 1787963050,
+        "narHash": "sha256-yt4H/X9CU2iaLl2NJ/MBycQs7Jl0tbJP5uuDdGWiPGg=",
         "owner": "simple-nixos-mailserver",
         "repo": "nixos-mailserver",
-        "rev": "531aa78a9f03f3831aa45566630ab52f6483159b",
+        "rev": "27b3c74d96351b770ec8216430d5d947290917e9",
         "type": "gitlab"
       },
       "original": {
@@ -552,11 +552,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1788614874,
-        "narHash": "sha256-7QYjT2vHLuX9Z1pdxHXDKCbh1CR3D/2rywB9Tx0MPRg=",
+        "lastModified": 1788752844,
+        "narHash": "sha256-VaWGJ6+cIYN2erfSecbRV+4ljI185Ty2wUrXyvQbgOw=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0",
+        "rev": "dc5d91f840324650bac8c379428c7037a416959a",
         "type": "github"
       },
       "original": {
@@ -568,11 +568,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1787323738,
-        "narHash": "sha256-7PcZV6h+rw/GvDcfTFGNqT/My6q7GeA6M59setK+2kM=",
+        "lastModified": 1788614874,
+        "narHash": "sha256-7QYjT2vHLuX9Z1pdxHXDKCbh1CR3D/2rywB9Tx0MPRg=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c32ae8ea6e5db97a16c3e9ef9f6d5dbdc5f348cc",
+        "rev": "c043004d1c6985732bcc1cbc5a9c9aecbbb4e0f0",
         "type": "github"
       },
       "original": {
@@ -669,11 +669,11 @@
         "nmdsrc": "nmdsrc"
       },
       "locked": {
-        "lastModified": 1788732740,
-        "narHash": "sha256-wffsla+NdF1MG97gDXtRpq6nkc0VKWkwuR5JU1ZQKS4=",
+        "lastModified": 1788800779,
+        "narHash": "sha256-r6S1nHeLtJrtPx/fQoRUHNF+xNY2SIaeZ/5xAv2TZoQ=",
         "owner": "ibizaman",
         "repo": "selfhostblocks",
-        "rev": "1654fe529992a21f7709a4f5e722fcbfba4cfa82",
+        "rev": "3ff794e1c8cf39b6e0427b9191ef9eea1e459bad",
         "type": "github"
       },
       "original": {
@@ -691,11 +691,11 @@
         "nmdsrc": "nmdsrc_2"
       },
       "locked": {
-        "lastModified": 1788695008,
-        "narHash": "sha256-JmMZkiXf/InlK6Bn7oaXmefSkcJRx1PE7Xv3YiYY3Xg=",
+        "lastModified": 1788747517,
+        "narHash": "sha256-FazC16JpNQgDjtK1ZPZPmMlwrNh4sVpjDzz+qypq624=",
         "owner": "ibizaman",
         "repo": "skarabox",
-        "rev": "8757f28e58971ca7c520509fa1e00bdd5f286f73",
+        "rev": "f5b9f5303cbc240a43133a43dcd7a29179d69882",
         "type": "github"
       },
       "original": {
