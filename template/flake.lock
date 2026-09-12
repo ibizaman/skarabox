@@ -568,11 +568,11 @@
     },
     "nixpkgs_4": {
       "locked": {
-        "lastModified": 1788881743,
-        "narHash": "sha256-2V9GZGvPfrNzxFozhI9dcqV+c3QdA8YZrvAAzqEB+dI=",
+        "lastModified": 1788904439,
+        "narHash": "sha256-qpjPXkXWvkAslFI8e5a2I3kG5K3HHpT81Ehivze3t44=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "d6524aaca2ff07876657ae2b323f24be4874944b",
+        "rev": "588ef4b91830f6042529481d4a6d1c7173496506",
         "type": "github"
       },
       "original": {
@@ -669,11 +669,11 @@
         "nmdsrc": "nmdsrc"
       },
       "locked": {
-        "lastModified": 1789006457,
-        "narHash": "sha256-7GW4uMmhfAvEVF1Bcuu2fj6TukfQIC3XBogsTxb5UQQ=",
+        "lastModified": 1789142548,
+        "narHash": "sha256-2BsYpsLdHRPBxcu8EmJbQLVqLIPDLWh3cSoAUmisU1o=",
         "owner": "ibizaman",
         "repo": "selfhostblocks",
-        "rev": "9692fadfbf2875603b0f5c753f6acc1fe956e950",
+        "rev": "a252d9165a7d575c3a9408a8e8718303dcfbbd77",
         "type": "github"
       },
       "original": {
@@ -691,11 +691,11 @@
         "nmdsrc": "nmdsrc_2"
       },
       "locked": {
-        "lastModified": 1789007474,
-        "narHash": "sha256-ifL7JrirA40vle1n/cPKV7uGT7PITxqpkEoZjdl+U1A=",
+        "lastModified": 1789093658,
+        "narHash": "sha256-az9dVutYEzcmnEFnpf6IQ80HVZ/573G42/Dn/Z3zz80=",
         "owner": "ibizaman",
         "repo": "skarabox",
-        "rev": "5d33d711b6be47f8d4c533134882fa1a0259f94d",
+        "rev": "27d8eb02c7e132fe9e70ef7b33b06700e7674e64",
         "type": "github"
       },
       "original": {
