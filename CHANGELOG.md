@@ -16,16 +16,41 @@ Template:
 
 # Upcoming Release
 
+# v1.7.0
+
+## Breaking Changes
+
+- Removed `x86_64-darwin` from supported systems.
+
+## New Features
+
+- Support bios bootloader.
+- Handle using ssh agent to store private ssh key.
+- Add options to override how to access the beacon. Mostly needed when using cloud services where
+  Skarabox does not handle creating the beacon.
+
 ## User Facing Backwards Compatible Changes
 
-- Deprecated `skarabox.sshAuthorizedKey` in favor of
-  `skarabox.sshAuthorizedKeys`, which accepts a list of non-empty, single-line
-  SSH public key strings or paths to files containing one such key. This change
-  applies only to target hosts.
-
+- Deprecated `skarabox.sshAuthorizedKey` in favor of `skarabox.sshAuthorizedKeys`, which accepts a
+  list of non-empty, single-line SSH public key strings or paths to files containing one such key.
+  This change applies only to target hosts.
 - Deprecated the beacon module's `skarabox.sshAuthorizedKey` option in favor of
-  `skarabox.sshAuthorizedKeys`. The new option requires a list while preserving
-  the beacon's existing handling of string and path entries.
+  `skarabox.sshAuthorizedKeys`. The new option requires a list while preserving the beacon's
+  existing handling of string and path entries.
+- Switch to systemd initrd from scripted initrd.
+- `known_hosts` file is now mutable. It makes for a much nicer user experience.
+
+## Other Changes
+
+- `<hostname>-unlock` now retries for 5 minutes until success instead of stopping after first
+  failure.
+- Add `nixfmt-tree` and format codebase.
+- Print host key when starting beacon.
+- Print ssh listening port when starting beacon.
+- Accept host key on first connection to beacon.
+- SSH public keys used for authorized keys entries are validated.
+- Handle if nixos-facter is not installed on beacon. This happens mostly on cloud services where
+  Skarabox did not create the beacon.
 
 # v1.6.0
 
