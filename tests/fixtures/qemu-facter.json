@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "system": "x86_64-linux",
+  "virtualisation": "kvm",
+  "uefi": {
+    "supported": true,
+    "platform_size": 64
+  },
+  "hardware": {
+    "cpu": [
+      {
+        "vendor_name": "AuthenticAMD",
+        "features": []
+      }
+    ],
+    "disk": [
+      {
+        "driver_modules": [
+          "nvme"
+        ]
+      },
+      {
+        "driver_modules": [
+          "ata_piix",
+          "sd_mod"
+        ]
+      },
+      {
+        "driver_modules": [
+          "floppy"
+        ]
+      }
+    ],
+    "graphics_card": [
+      {
+        "driver_modules": [
+          "bochs"
+        ]
+      }
+    ],
+    "monitor": [
+      {}
+    ],
+    "network_controller": [
+      {
+        "driver_modules": [
+          "e1000"
+        ]
+      }
+    ],
+    "network_interface": [
+      {
+        "sub_class": {
+          "name": "Ethernet"
+        },
+        "unix_device_names": [
+          "ens3"
+        ]
+      }
+    ],
+    "storage_controller": []
+  }
+}
