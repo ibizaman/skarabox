@@ -152,24 +152,72 @@ let
 
       sleep 10
 
-      group "Starting ssh loop to figure out when beacon started."
+      group "Starting beacon trust loop to figure out when beacon started."
       e "You might see some flickering on the command line."
-      # We can't yet be strict on the host key check since the beacon
-      # initially has a random one.
-      while ! ${nix} run .#myskarabox-ssh -- -F none -o CheckHostIP=no -o StrictHostKeyChecking=no echo "connected"; do
+      deadline=$((SECONDS + 300))
+      while ! ${nix} run .#myskarabox-beacon-trust -- --yes; do
+        if [ "$SECONDS" -ge "$deadline" ]; then
+          echo "Timed out waiting for beacon trust to succeed"
+          exit 1
+        fi
         sleep 5
       done
       endgroup "Beacon VM has started."
 
+      group "Checking final host key is not trusted for beacon."
+      final_host_pub="$(cut -d' ' -f-2 ./myskarabox/host_key.pub)"
+      printf 'myskarabox-beacon %s\n' "$final_host_pub" > ./myskarabox/beacon_known_hosts
+      deadline=$((SECONDS + 120))
+      while true; do
+        if beacon_ssh_error="$(${nix} run .#myskarabox-beacon-ssh -- -F none echo "connected" 2>&1)"; then
+          echo "Beacon SSH unexpectedly accepted the final host key"
+          exit 1
+        fi
+        case "$beacon_ssh_error" in
+          *"Host key verification failed"*) break ;;
+        esac
+        if [ "$SECONDS" -ge "$deadline" ]; then
+          printf '%s\n' "$beacon_ssh_error" >&2
+          echo "Timed out waiting for beacon SSH to reject the final host key"
+          exit 1
+        fi
+        sleep 5
+      done
+      printf '%s\n' "$beacon_ssh_error" >&2
+      deadline=$((SECONDS + 120))
+      until ${nix} run .#myskarabox-beacon-trust -- --yes --force; do
+        if [ "$SECONDS" -ge "$deadline" ]; then
+          echo "Timed out restoring beacon trust"
+          exit 1
+        fi
+        sleep 5
+      done
+      deadline=$((SECONDS + 120))
+      until ${nix} run .#myskarabox-beacon-ssh -- -F none echo "connected"; do
+        if [ "$SECONDS" -ge "$deadline" ]; then
+          echo "Timed out waiting for beacon SSH to accept commands"
+          exit 1
+        fi
+        sleep 5
+      done
+      endgroup "Beacon trust is separate from final host trust."
+
       group "Generating hardware config."
-      ${nix} run .#myskarabox-get-facter > ./myskarabox/facter.json
+      deadline=$((SECONDS + 120))
+      until ${nix} run .#myskarabox-beacon-get-facter > ./myskarabox/facter.json; do
+        if [ "$SECONDS" -ge "$deadline" ]; then
+          echo "Timed out waiting for beacon facter collection to succeed"
+          exit 1
+        fi
+        sleep 5
+      done
       ${jq}/bin/jq < ./myskarabox/facter.json
       git add ./myskarabox/facter.json
       git commit -m 'generate hardware config'
       endgroup "Generation succeeded."
 
       group "Starting installation on beacon VM."
-      ${nix} run .#myskarabox-install-on-beacon -- --no-substitute-on-destination
+      ${nix} run .#myskarabox-beacon-install -- --no-substitute-on-destination
       endgroup "Installation succeeded."
 
       group "Starting unlock loop to decrypt root dataset."

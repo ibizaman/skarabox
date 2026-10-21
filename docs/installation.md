@@ -113,6 +113,15 @@ skarabox.hosts.<name> = {
 
 Then, start the VM using the following command which will create a graphical window:
 
+Generate the known hosts file:
+
+```bash
+nix run .#myskarabox-gen-knownhosts-file
+```
+
+This file is for the final installed system. The beacon VM has its own temporary
+SSH host key, which will be trusted after the VM starts.
+
 ```bash
 $ nix run .#myskarabox-beacon-vm &
 ```
@@ -123,6 +132,12 @@ will not be able to run in the background, like above.
 
 ```bash
 $ nix run .#myskarabox-beacon-vm -- -nographic
+```
+
+Trust the beacon SSH host key:
+
+```bash
+$ nix run .#myskarabox-beacon-trust
 ```
 
 For info, this VM has 4 hard drives:
@@ -236,7 +251,25 @@ Connecting to the beacon will thus depend on the chosen method.
    It is also possible to use a hostname as long as it can resolve to the correct IP,
    for example if you set up your ssh config accordingly.
 
-8. Open the various files just to see if everything looks good.
+8. Generate the known host file for the final installed system:
+
+   ```bash
+   $ nix run .#myskarabox-gen-knownhosts-file
+   ```
+
+   Redo this step if any of the ssh port or IP under the flake `skarabox.hosts.<name>` option changes.
+
+9. Trust the beacon SSH host key:
+
+   ```bash
+   $ nix run .#myskarabox-beacon-trust
+   ```
+
+   This writes `./myskarabox/beacon_known_hosts`, which is local trust state for
+   the temporary beacon environment. If the beacon is rebooted and its key
+   changes, rerun the command with `--force` after verifying the new fingerprint.
+
+10. Open the various files just to see if everything looks good.
 
 ### B. (option 3) Install on a Cloud Server {#b-beacon-cloud}
 
@@ -265,6 +298,21 @@ skarabox.hosts.<name>.beacon = {
 }
 ```
 
+This file is for the final installed system. To trust the cloud rescue
+environment used for installation, run:
+
+```bash
+nix run .#myskarabox-beacon-trust
+```
+
+[nixos-anywhere]: https://github.com/nix-community/nixos-anywhere
+
+Test the ssh connection with:
+
+```bash
+$ nix run .#myskarabox-beacon-ssh -- -v
+```
+
 ## C. Run the Installer {#c-installer}
 
 1. (Optional) Get into NixOS installer
@@ -282,31 +330,20 @@ $ nix run .#myskarabox-install-on-beacon -- --phases kexec
 Test the ssh connection with:
 
 ```bash
-$ nix run .#myskarabox-ssh-beacon
+$ nix run .#myskarabox-beacon-ssh
 ```
 
 Set verbose mode if something goes wrong with:
 
 ```bash
-$ nix run .#myskarabox-ssh-beacon -- -v
+$ nix run .#myskarabox-beacon-ssh -- -v
 ```
-
-Upon rebooting the beacon,
-a new host key is generating leading to the message
-saying there might be a man in the middle attack.
-This warning can be dismissed when connecting to the beacon.
-
-::: {.warning}
-This is not the case for the target host after installation.
-The ssh host key will not change after a reboot.
-Getting the warning a that time must be investigated and not blindly dismissed.
-:::
 
 3. Print the disk layout
 
 ```bash
-$ nix run .#myskarabox-ssh-beacon -- sudo fdisk -l
-$ nix run .#myskarabox-ssh-beacon -- lsblk
+$ nix run .#myskarabox-beacon-ssh -- sudo fdisk -l
+$ nix run .#myskarabox-beacon-ssh -- lsblk
 ```
 
 Set the options `skarabox.disks` in `./myskarabox/configuration.nix` accordingly.
@@ -317,7 +354,7 @@ Generate a `./myskarabox/facter.json` file containing
 the hardware specification of the host (or the VM) with:
 
 ```bash
-$ nix run .#myskarabox-get-facter > ./myskarabox/facter.json
+$ nix run .#myskarabox-beacon-get-facter > ./myskarabox/facter.json
 ```
 
 ::: {.warning}
@@ -349,7 +386,7 @@ so it is expected for the steps in this section to not care about it.
 Now, run the installation process on the target host:
 
 ```bash
-$ nix run .#myskarabox-install-on-beacon
+$ nix run .#myskarabox-beacon-install
 ```
 
 :::{.info}
