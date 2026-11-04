@@ -73,8 +73,6 @@ in
       }
     ];
 
-    boot.initrd.systemd.enable = true;
-
     environment.systemPackages = [
       pkgs.vim
       pkgs.curl
