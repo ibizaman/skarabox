@@ -1,4 +1,5 @@
 .skarabox-tmp
+*/beacon_known_hosts
 ssh
 host_key
 sops.key
